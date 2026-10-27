@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -62,7 +62,7 @@ function Editor({ lp }: { lp: LandingPage }) {
         <div className={`mx-auto overflow-hidden rounded-[var(--radius-panel)] border border-line bg-[#fbf8f2] text-[#211a10] ${device === "mobile" ? "max-w-[360px]" : "w-full"}`}>
           {blocks.map((b) => (
             <div key={b.id} className={`border-b border-[#eee8dd] p-5 ${b.kind === "apresentacao" ? "bg-[#15120e] text-[#f7f1e6]" : ""}`}>
-              <p className="text-xs uppercase tracking-widest text-[#a67c36]">{KIND_LABEL[b.kind]}</p>
+              <p className={`text-xs uppercase tracking-widest ${b.kind === "apresentacao" ? "text-[#e3c27d]" : "text-[#8a6420]"}`}>{KIND_LABEL[b.kind]}</p>
               {b.kind === "formulario" ? <div className="mt-2 space-y-2"><div className="h-9 rounded border border-[#d9cdb8] bg-white" /><div className="h-9 rounded border border-[#d9cdb8] bg-white" /><div className="h-10 rounded bg-[#765414]" /></div> : <p className={b.kind === "apresentacao" ? "mt-1 font-serif text-lg" : "mt-1"}>{b.text || "(vazio)"}</p>}
             </div>
           ))}

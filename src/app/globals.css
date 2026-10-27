@@ -46,7 +46,7 @@
   --brand: #765414;
   --brand-hover: #5f430f;
   --on-brand: #ffffff;
-  --accent: #a67c36;
+  --accent: #855e1c; /* ≥ 4,5:1 em branco, canvas, surface-muted e selection */
   --focus: #765414;
   --selection: #f3e7cc;
   --scrim: rgb(33 26 16 / 0.45);

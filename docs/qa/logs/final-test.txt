@@ -7,7 +7,7 @@
 
 
  Test Files  9 passed (9)
-      Tests  66 passed | 1 skipped (67)
-   Start at  09:28:09
-   Duration  288ms (import 54%, tests 18%, transform 16%, worker 11%)
+      Tests  67 passed | 1 skipped (68)
+   Start at  09:45:13
+   Duration  297ms (import 52%, tests 20%, transform 16%, worker 11%)
 

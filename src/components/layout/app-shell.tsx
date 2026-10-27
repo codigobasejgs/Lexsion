@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
           {groups.map((g) => (
             <div key={g.label}>
-              <p className={`mb-1 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-fg-muted/80 ${collapsed ? "sr-only" : "sr-only lg:not-sr-only lg:block"}`}>{g.label}</p>
+              <p className={`mb-1 px-3 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-fg-muted ${collapsed ? "sr-only" : "sr-only lg:not-sr-only lg:block"}`}>{g.label}</p>
               <div className="space-y-0.5">{g.items.map((i) => navLink(i, "rail"))}</div>
             </div>
           ))}

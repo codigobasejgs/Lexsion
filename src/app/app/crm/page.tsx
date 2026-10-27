@@ -36,11 +36,14 @@ export default function CrmPage() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropMsg, setDropMsg] = useState<string | null>(null);
   const newOpen = sp.get("novo") === "1";
+  const PAGE = 10;
+  const page = Math.max(1, Number(sp.get("pagina")) || 1);
 
   const set = (k: string, v: string | null) => {
     const p = new URLSearchParams(sp);
     if (v) p.set(k, v);
     else p.delete(k);
+    if (k !== "pagina") p.delete("pagina"); // filtro novo volta à primeira página
     router.replace(`${pathname}${p.size ? `?${p}` : ""}`, { scroll: false });
   };
 
@@ -48,6 +51,11 @@ export default function CrmPage() {
     const n = q.trim().toLowerCase();
     return (leads.data ?? []).filter((l) => (!n || `${l.name} ${l.phone} ${l.service}`.toLowerCase().includes(n)) && (!origin || l.firstTouch.origin === origin));
   }, [leads.data, q, origin]);
+  // Lista: perdidos/arquivados só com o filtro ligado; paginação na URL.
+  const listVisible = rows.filter((l) => showLost || l.stage !== "perdido");
+  const pages = Math.max(1, Math.ceil(listVisible.length / PAGE));
+  const cur = Math.min(page, pages);
+  const listRows = listVisible.slice((cur - 1) * PAGE, cur * PAGE);
   const origins = [...new Set((leads.data ?? []).map((l) => l.firstTouch.origin))].sort();
   const stages = STAGES.filter((s) => s.key !== "perdido" || showLost);
 
@@ -132,7 +140,7 @@ export default function CrmPage() {
                 <tr><th scope="col" className="px-4 py-3">Lead</th><th scope="col" className="px-4 py-3">Etapa</th><th scope="col" className="px-4 py-3">Origem</th><th scope="col" className="px-4 py-3 text-right">Dias na etapa</th><th scope="col" className="px-4 py-3">Responsável</th><th scope="col" className="px-4 py-3"><span className="sr-only">Ações</span></th></tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {rows.map((l) => (
+                {listRows.map((l) => (
                   <tr key={l.id}>
                     <td className="px-4 py-3"><Link href={`/app/crm/leads/${l.id}`} className="font-medium hover:underline">{l.name}</Link><span className="block text-fg-muted">{l.service}</span></td>
                     <td className="px-4 py-3">{STAGE_LABEL[l.stage]}</td>
@@ -144,6 +152,15 @@ export default function CrmPage() {
                 ))}
               </tbody>
             </table>
+            {pages > 1 && (
+              <nav aria-label="Paginação" className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-sm">
+                <span className="text-fg-muted" role="status">{(cur - 1) * PAGE + 1}–{Math.min(cur * PAGE, listVisible.length)} de {listVisible.length}</span>
+                <span className="flex gap-2">
+                  <button className="btn btn-secondary min-h-9" disabled={cur <= 1} onClick={() => set("pagina", String(cur - 1))}>Anterior</button>
+                  <button className="btn btn-secondary min-h-9" disabled={cur >= pages} onClick={() => set("pagina", String(cur + 1))}>Próxima</button>
+                </span>
+              </nav>
+            )}
           </div>
         )}
       </div>

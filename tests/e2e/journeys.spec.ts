@@ -198,6 +198,8 @@ const ROUTES = [
   "/app/propostas", "/app/propostas/pp-paulo", "/app/contratos/ct-ronaldo", "/app/financeiro/receber", "/app/financeiro/caixa", "/app/financeiro/conciliacao", "/app/financeiro/recibos", "/app/pagamentos",
   "/app/ia/agentes", "/app/ia/simulador", "/app/automacoes", "/app/marketing/campanhas", "/app/jornal", "/app/integracoes", "/app/integracoes/evolution", "/app/importacoes",
   "/app/relatorios", "/app/equipe", "/app/configuracoes", "/app/academia", "/app/ajuda", "/app/ajuda/baixa-parcial", "/app/boas-vindas",
+  "/app/assinaturas", "/app/automacoes/execucoes", "/app/financeiro/pagar", "/app/ia/execucoes", "/app/ia/objecoes", "/app/integracoes/eventos",
+  "/app/jornal/alertas", "/app/marketing/conteudos", "/app/marketing/paginas", "/design-system",
 ];
 test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", () => {
   for (const r of ROUTES) {
@@ -210,6 +212,31 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
       expect(await seriousAxe(page)).toEqual([]);
     });
   }
+  test("tema claro: telas principais sem violação séria de contraste", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("siwiltec.theme", "light"));
+    await signIn(page, /Helena Prado/);
+    for (const r of ["/app/inicio", "/app/crm", "/app/clientes/c-joao", "/app/previdenciario/analises/pa-joao", "/app/financeiro", "/app/minutas/dr-lucia", "/app/marketing/paginas", "/app/academia", "/app/ajuda/baixa-parcial", "/app/configuracoes"]) {
+      await page.goto(r);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+      expect(await seriousAxe(page), r).toEqual([]);
+    }
+  });
+  test("/portal/ajuda e /portal/documentos (cliente)", async ({ page }) => {
+    await signIn(page, /Cliente \(portal\)/);
+    for (const r of ["/portal/ajuda", "/portal/documentos"]) {
+      await page.goto(r);
+      await expect(page.locator("h1").first()).toBeVisible();
+      await noOverflow(page);
+      expect(await seriousAxe(page)).toEqual([]);
+    }
+  });
+  test("/offline e / (públicas)", async ({ page }) => {
+    await page.goto("/offline");
+    await expect(page.getByRole("heading", { name: /sem conexão/i })).toBeVisible();
+    expect(await seriousAxe(page)).toEqual([]);
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/entrar/);
+  });
   test("/recuperar-acesso (público)", async ({ page }) => {
     await page.goto("/recuperar-acesso");
     await page.getByLabel("E-mail").fill("pessoa@exemplo.test");

@@ -3,6 +3,23 @@
 Fonte do escopo: `../Documentação/SIWILTEC_Prompt_Claude_Code1.md` (prompt mestre v2, Black & Gold + PWA).
 Data de referência da demo: 26/10/2026 (relógio fixo em `src/mocks/clock.ts`).
 
+## Atualização 27/10/2026 — Auditoria e QA Master
+
+Relatório: [`qa/10-RELATORIO_FINAL_QA_MASTER.md`](qa/10-RELATORIO_FINAL_QA_MASTER.md). Veredito: **frontend demo aprovado com restrições não críticas**.
+
+- Novo: DOCX real, modo memória com storage bloqueado, publicação explícita no portal, triagem por área, perfil Controladoria, ajuda contextual em todas as telas, paginação no CRM, caixa por mês.
+- 13 bugs corrigidos com teste de regressão (`qa/04`).
+- Verificação: lint 0 · typecheck ok · Vitest 67 · build ok · E2E **204** passaram (Chromium), 0 falhas.
+- Bloqueado por rede: Firefox, WebKit, Lighthouse. Não testado: aparelhos físicos e leitores de tela.
+
+### Próximo passo (retomar daqui)
+1. Em máquina com internet: `pnpm exec playwright install firefox webkit`, Lighthouse, `pnpm audit`.
+2. Homologação com a cliente (`roteiros-demo.md`) e aparelhos reais (`qa/06`).
+3. Itens da cliente (`ITENS_DEPENDENTES_CLIENTE.md`).
+4. Fase backend (`INTEGRACOES_BACKEND_FASE_2.md`).
+
+---
+
 ## Atualização 26/10/2026 (3) — E3 a E7 concluídas no frontend
 
 Todos os 23 módulos têm rotas navegáveis e fluxo funcional (real local ou simulação rotulada). Detalhe por módulo e critério: [`matriz-requisitos.md`](matriz-requisitos.md). Resultados: [`relatorio-testes.md`](relatorio-testes.md).

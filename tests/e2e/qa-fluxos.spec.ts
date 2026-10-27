@@ -175,3 +175,30 @@ test("ADM-01: perfil Controladoria vê prazos e agenda, não vê financeiro nem 
     await expect(page.getByRole("heading", { name: "Você não tem acesso a esta área" })).toBeVisible();
   }
 });
+
+test("FIN-06: filtro por mês no caixa recalcula totais e saldo inicial", async ({ page }) => {
+  await signIn(page, /Caio Martins/);
+  await page.goto("/app/financeiro/caixa");
+  const total = await page.getByText("Resultado do período").locator("..").locator(".num").innerText();
+  await page.getByLabel("Período").selectOption("2026-09");
+  await expect(page).toHaveURL(/mes=2026-09/);
+  await expect(page.getByText(/Saldo inicial R\$\s1\.200,00/)).toBeVisible(); // ago/2026: 800 + 400
+  const sep = await page.getByText("Resultado do período").locator("..").locator(".num").innerText();
+  expect(sep).not.toBe(total);
+  await page.reload();
+  await expect(page.getByLabel("Período")).toHaveValue("2026-09");
+});
+
+test("CRM-05: lista com paginação, filtro volta à página 1 e limpar filtro restaura", async ({ page }) => {
+  await signIn(page, /Helena Prado/);
+  await page.goto("/app/crm?ver=lista");
+  await expect(page.getByRole("status").filter({ hasText: /^1–10 de \d+/ })).toBeVisible();
+  await page.getByRole("button", { name: "Próxima" }).click();
+  await expect(page).toHaveURL(/pagina=2/);
+  await expect(page.getByRole("status").filter({ hasText: /^11–/ })).toBeVisible();
+  await page.getByPlaceholder("Nome, telefone ou serviço").fill("Joana");
+  await expect(page).not.toHaveURL(/pagina=/);
+  await expect(page.getByRole("link", { name: "Joana Batista Teste" })).toBeVisible();
+  await page.getByPlaceholder("Nome, telefone ou serviço").fill("");
+  await expect(page.getByRole("status").filter({ hasText: /^1–10 de/ })).toBeVisible();
+});
