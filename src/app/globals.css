@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+/* SIWILTEC Black & Gold — tokens semânticos (seção 4.2 do prompt mestre).
+   Escuro é o padrão; claro e "sistema" por preferência (data-theme no <html>). */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #090807;
+  --surface: #15120e;
+  --surface-muted: #211b14;
+  --surface-raised: #1c1813;
+  --text-primary: #f7f1e6;
+  --text-secondary: #c4b8a5;
+  --border: #493d2a;
+  --border-strong: #6b5a3e;
+  --brand: #d6ae62;
+  --brand-hover: #e2bf7c;
+  --on-brand: #171108;
+  --accent: #f1d397;
+  --focus: #f1d397;
+  --selection: #3a2f1e;
+  --scrim: rgb(0 0 0 / 0.6);
+  --success: #6fcf97;
+  --success-bg: #12261a;
+  --warning: #f2c94c;
+  --warning-bg: #2a2310;
+  --danger: #ff8a80;
+  --danger-bg: #2e1513;
+  --info: #8ab4f8;
+  --info-bg: #131d2c;
+  --ai: #e8c98a;
+  --ai-bg: #2a2214;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #f7f4ee;
+  --surface: #ffffff;
+  --surface-muted: #eee8dd;
+  --surface-raised: #ffffff;
+  --text-primary: #211a10;
+  --text-secondary: #655744;
+  --border: #d9cdb8;
+  --border-strong: #b7a684;
+  --brand: #765414;
+  --brand-hover: #5f430f;
+  --on-brand: #ffffff;
+  --accent: #a67c36;
+  --focus: #765414;
+  --selection: #f3e7cc;
+  --scrim: rgb(33 26 16 / 0.45);
+  --success: #1e6b3a;
+  --success-bg: #e3f3e8;
+  --warning: #7a5a00;
+  --warning-bg: #fbf0cf;
+  --danger: #a3261b;
+  --danger-bg: #fbe4e1;
+  --info: #1d4f91;
+  --info-bg: #e2ecfa;
+  --ai: #6b4e12;
+  --ai-bg: #f6ecd6;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-secondary);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-selection: var(--selection);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-ai: var(--ai);
+  --color-ai-bg: var(--ai-bg);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-dialog: 16px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 72px;
+  scroll-padding-bottom: 88px;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-feature-settings: "cv11", "ss01";
+}
+
+::selection {
+  background: var(--selection);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-10 max-w-full items-center justify-center gap-2 rounded-[var(--radius-control)] px-4 text-center text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+    touch-action: manipulation;
+  }
+  .btn-primary {
+    @apply bg-brand text-on-brand hover:bg-brand-hover;
+  }
+  .btn-secondary {
+    @apply border border-line bg-surface-muted text-fg hover:border-line-strong;
+  }
+  .btn-ghost {
+    @apply text-fg-muted hover:bg-surface-muted hover:text-fg;
+  }
+  .btn-danger {
+    @apply border border-danger/40 bg-danger-bg text-danger hover:border-danger;
+  }
+  .field {
+    @apply min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-fg placeholder:text-fg-muted/70 focus-visible:border-brand;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-fg;
+  }
+  .panel {
+    @apply rounded-[var(--radius-panel)] border border-line bg-surface;
+  }
+}
+
+/* Toque: alvos ≥ 44px (WCAG 2.5.8 + ergonomia mobile). */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--border-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

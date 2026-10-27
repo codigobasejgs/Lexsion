@@ -1,0 +1,118 @@
+﻿
+> siwiltec@0.1.0 build J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> node scripts/stamp-sw.mjs && next build
+
+sw.js versão 20261027114831
+▲ Next.js 16.4.3 (Turbopack)
+✓ Running next.config.ts took 31ms
+- Experiments (use with caution):
+  ✓ useOffline
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.1s
+  Running TypeScript ...
+  Finished TypeScript in 1870ms ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/91) ...
+  Generating static pages using 19 workers (22/91) 
+  Generating static pages using 19 workers (45/91) 
+  Generating static pages using 19 workers (68/91) 
+✓ Generating static pages using 19 workers (91/91) in 704ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin/organizacoes
+├ ○ /app/academia
+├ ○ /app/agenda
+├ ○ /app/ajuda
+├   /app/ajuda/[slug]
+│ ├ ● /app/ajuda/entender-modo-demo
+│ ├ ● /app/ajuda/primeiro-acesso
+│ ├ ● /app/ajuda/operar-no-celular
+│ └ ● [+21 more paths]
+├ ○ /app/assinaturas
+├ ○ /app/atendimento
+├ ƒ /app/atendimento/[conversationId]
+├ ○ /app/audiencias
+├ ○ /app/automacoes
+├ ƒ /app/automacoes/[id]
+├ ○ /app/automacoes/execucoes
+├ ○ /app/boas-vindas
+├ ○ /app/calculos
+├ ƒ /app/calculos/[id]
+├ ○ /app/casos
+├ ƒ /app/casos/[id]
+├ ○ /app/clientes
+├ ƒ /app/clientes/[id]
+├ ○ /app/clientes/novo
+├ ○ /app/configuracoes
+├ ○ /app/contratos
+├ ƒ /app/contratos/[id]
+├ ○ /app/crm
+├ ○ /app/crm/captura
+├ ƒ /app/crm/leads/[id]
+├ ○ /app/documentos
+├ ƒ /app/documentos/[id]
+├ ○ /app/documentos/solicitacoes
+├ ○ /app/equipe
+├ ○ /app/financeiro
+├ ○ /app/financeiro/caixa
+├ ○ /app/financeiro/conciliacao
+├ ○ /app/financeiro/pagar
+├ ○ /app/financeiro/receber
+├ ○ /app/financeiro/recibos
+├ ○ /app/ia/agentes
+├ ƒ /app/ia/agentes/[id]
+├ ○ /app/ia/execucoes
+├ ○ /app/ia/objecoes
+├ ○ /app/ia/simulador
+├ ○ /app/importacoes
+├ ƒ /app/importacoes/[id]
+├ ○ /app/inicio
+├ ○ /app/integracoes
+├ ƒ /app/integracoes/[provider]
+├ ○ /app/integracoes/eventos
+├ ○ /app/jornal
+├ ƒ /app/jornal/[id]
+├ ○ /app/jornal/alertas
+├ ○ /app/marketing/campanhas
+├ ○ /app/marketing/conteudos
+├ ○ /app/marketing/paginas
+├ ○ /app/minutas
+├ ƒ /app/minutas/[id]
+├ ○ /app/modelos
+├ ○ /app/pagamentos
+├ ○ /app/pericias
+├ ○ /app/pesquisa
+├ ○ /app/prazos
+├ ○ /app/previdenciario
+├ ƒ /app/previdenciario/analises/[id]
+├ ƒ /app/previdenciario/planejamentos/[id]
+├ ○ /app/processos
+├ ○ /app/propostas
+├ ƒ /app/propostas/[id]
+├ ○ /app/propostas/nova
+├ ○ /app/publicacoes
+├ ○ /app/relatorios
+├ ○ /app/requisitorios
+├ ƒ /app/requisitorios/[id]
+├ ○ /app/tarefas
+├ ○ /boas-vindas
+├ ○ /design-system
+├ ○ /entrar
+├ ○ /manifest.webmanifest
+├ ○ /offline
+├ ○ /portal
+├ ○ /portal/ajuda
+├ ƒ /portal/casos/[id]
+├ ○ /portal/documentos
+├ ○ /portal/pagamentos
+└ ○ /recuperar-acesso
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
