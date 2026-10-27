@@ -5,6 +5,8 @@ import type { AuditEvent, Case, Client, Conversation, Lead, Message, StageKey } 
 import { applyStageChange, buildTouch, findClientMatches, formatPhone, normalizePhone, STAGE_ERROR_MSG } from "@/domain/crm";
 import type { ClientInput, LeadInput, CaseInput, CampaignLeadInput } from "@/domain/schemas";
 import { triageChecklist, triageMissing, triageScript } from "@/domain/triage";
+import { tenantRepo } from "./tenant-repo";
+import { checkQuota } from "@/domain/quotas";
 
 const cid = () => crypto.randomUUID().slice(0, 8);
 const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: cid() });
@@ -161,6 +163,16 @@ function buildClient(ctx: RequestContext, input: ClientInput, extra: Partial<Cli
 
 export const clientService = {
   create: async (input: ClientInput, ctx: RequestContext): Promise<Result<Client>> => {
+    // Valida quota do tenant (demo)
+    const tenant = await tenantRepo.getById(ctx.organizationId);
+    if (tenant) {
+      const usage = await tenantRepo.getUsage(tenant.id);
+      if (usage) {
+        const check = checkQuota(tenant, usage, "clients");
+        if (!check.allowed) return fail("quota_exceeded", check.reason ?? "Limite atingido.");
+      }
+    }
+
     const clients = await readAll("clients");
     const orgClients = clients.filter((c) => c.organizationId === ctx.organizationId);
     const byDoc = findClientMatches(orgClients, { document: input.document }).find((m) => m.by === "documento");

@@ -1,10 +1,11 @@
-feat(saas): wizard criação tenant + suspend/reactivate
+feat(saas): quotas refletidas no ERP - bloqueio criação cliente
 
-- admin/tenant-wizard.tsx: 2 steps (nome/slug, plano/ciclo)
-- admin/organizacoes: botão "Nova organização", ações suspend/reactivate
-- Wizard valida slug (lowercase, sanitize), cria tenant via tenantRepo
-- Botões Pause/Play por tenant status (ativa → suspend, suspensa → reactivate)
-- Trial 14 dias default, branding padrão Black & Gold
+- domain/quotas.ts: checkQuota(), quotaWarning() (80% threshold)
+- crm-repo.ts: clientService.create valida quota "clients" antes de criar
+- Erro "quota_exceeded" se tenant excede limite do plano
+- Demo: tenantRepo.getUsage() retorna contagens mock
+
+Próximos: warning UI ao criar, quota members (equipe), storage, aiMessages
 
 Build OK, typecheck OK
 

@@ -1,6 +1,6 @@
 /* SIWILTEC service worker — política explícita (docs/politica-offline.md).
    VERSION é reescrita a cada build por scripts/stamp-sw.mjs (muda os bytes ⇒ navegador detecta atualização). */
-const VERSION = "20261027135804";
+const VERSION = "20261027140015";
 const PREFIX = "siwiltec-";
 
 // Extrai tenant do cookie; fallback "default" se ausente.
