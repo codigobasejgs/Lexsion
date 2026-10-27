@@ -127,13 +127,14 @@ export function Dialog({ open, onClose, title, children, wide }: { open: boolean
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className={`m-auto max-h-[min(90dvh,800px)] w-[calc(100vw-2rem)] ${wide ? "max-w-3xl" : "max-w-lg"} rounded-[var(--radius-dialog)] border border-line bg-surface p-0 text-fg backdrop:bg-[var(--scrim)]`}
+      className={`m-auto max-h-[min(90dvh,800px)] w-[calc(100vw-2rem)] ${wide ? "max-w-3xl" : "max-w-lg"} flex-col rounded-[var(--radius-dialog)] border border-line bg-surface p-0 text-fg backdrop:bg-[var(--scrim)] open:flex`}
     >
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-4">
         <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
         <button className="btn btn-ghost min-h-9 px-2" onClick={onClose} aria-label="Fechar">✕</button>
       </div>
-      <div className="overflow-y-auto px-5 py-4">{children}</div>
+      {/* Corpo rolável: em telas baixas (zoom 200%, teclado virtual aberto) as ações continuam alcançáveis. */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
     </dialog>
   );
 }

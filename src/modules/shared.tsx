@@ -104,7 +104,7 @@ export function ResponsiveList<T>({ rows, columns, rowKey, caption, cardTitle, c
 }) {
   return (
     <>
-      <div className="panel hidden overflow-x-auto md:block">
+      <div className="panel relative hidden overflow-x-auto md:block" tabIndex={0} role="region" aria-label={`${caption} (tabela; role horizontalmente se necessário)`}>
         <table className="w-full text-sm">
           <caption className="sr-only">{caption}</caption>
           <thead className="border-b border-line bg-surface-muted text-left text-xs uppercase tracking-wider text-fg-muted">

@@ -31,7 +31,7 @@ export default function EquipePage() {
             </li>
           ))}
         </ul>
-        <section className="panel mb-6 overflow-x-auto p-4" tabIndex={0} aria-label="Matriz de acesso por perfil (role horizontalmente)">
+        <section className="panel relative mb-6 overflow-x-auto p-4" tabIndex={0} aria-label="Matriz de acesso por perfil (role horizontalmente)">
           <h2 className="mb-2 font-semibold">Matriz de acesso por perfil</h2>
           <table className="w-full text-sm"><caption className="sr-only">Permissões</caption>
             <thead><tr><th className="py-1 text-left">Módulo</th>{roles.map((r) => <th key={r} className="px-2 text-left text-xs">{ROLE_LABEL[r]}</th>)}</tr></thead>

@@ -34,10 +34,10 @@ export default function PagamentosPage() {
 
   return (
     <Guard area="pagamentos">
-      <div className="mx-auto max-w-[1200px]">
+      <div className="mx-auto min-w-0 max-w-[1200px]">
         <PageHeader title="Central de pagamentos" description="Cobranças de honorários do escritório. A assinatura SaaS da plataforma é outra conta e outra conciliação. Nenhuma cobrança real é criada." actions={<SimulatedBadge />} />
         <FinanceNav />
-        <section className="mb-6 grid gap-3 md:grid-cols-3">
+        <section className="mb-6 grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-3">
           {PROVIDERS.map((p) => {
             const conn = ints.data?.find((i) => i.provider === p.key);
             return (
@@ -53,7 +53,7 @@ export default function PagamentosPage() {
 
         <section className="panel mb-6 space-y-3 p-4">
           <h2 className="font-semibold">Nova cobrança (simulada)</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
             <label className="block"><span className="label">Parcela</span><select className="field" value={inst} onChange={(e) => { setInst(e.target.value); key.current = crypto.randomUUID(); }}><option value="">Escolha…</option>{open.map((i) => <option key={i.id} value={i.id}>{label(i.id)} · {formatBRL(i.amount - i.paid)}</option>)}</select></label>
             <label className="block"><span className="label">Provedor</span><select className="field" value={provider} onChange={(e) => setProvider(e.target.value as Charge["provider"])}>{PROVIDERS.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}</select></label>
             <label className="block"><span className="label">Meio</span><select className="field" value={method} onChange={(e) => setMethod(e.target.value as Charge["method"])}><option value="pix">Pix</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="link">Link de pagamento</option></select></label>
@@ -75,7 +75,7 @@ export default function PagamentosPage() {
                   <Badge icon={false}>{c.provider} · {c.method}</Badge>
                   <Badge tone={CHARGE_STATUS[c.status].tone}>{CHARGE_STATUS[c.status].label}</Badge>
                 </div>
-                <p className="mt-1 font-mono text-xs text-fg-muted">externalId {c.externalId} · link demonstrativo (não leva a pagamento real): {c.link}</p>
+                <p className="mt-1 font-mono text-xs text-fg-muted [overflow-wrap:anywhere]">externalId {c.externalId} · link demonstrativo (não leva a pagamento real): {c.link}</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {([["retorno_checkout", "Cliente voltou do checkout"], ["confirmar", "Confirmar pagamento"], ["confirmar_duplicado", "Confirmação duplicada"], ["expirar", "Expirar"], ["erro", "Erro"], ["estornar", "Estornar"], ["cancelar", "Cancelar"]] as const).map(([k, l]) => (
                     <button key={k} className="btn btn-ghost min-h-8 border border-line text-xs" onClick={() => act.run((ctx) => chargeService.simulate(c.id, k, ctx), (r) => r.note)}>{l}</button>

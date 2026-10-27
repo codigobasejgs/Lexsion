@@ -115,7 +115,7 @@ export function ReceivablesView({ overview }: { overview?: boolean }) {
           <EmptyState title="Nenhuma parcela nesta visão" text="Troque a visão para ver outros lançamentos." />
         ) : (
           <>
-            <div className="panel hidden overflow-x-auto md:block">
+            <div className="panel relative hidden overflow-x-auto md:block" tabIndex={0} role="region" aria-label="Parcelas (tabela; role horizontalmente se necessário)">
               <table className="w-full text-sm">
                 <caption className="sr-only">Parcelas</caption>
                 <thead className="border-b border-line bg-surface-muted text-left text-xs uppercase tracking-wider text-fg-muted">

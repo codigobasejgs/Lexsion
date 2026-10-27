@@ -125,7 +125,7 @@ export default function CrmPage() {
             })}
           </div>
         ) : (
-          <div className="panel overflow-x-auto">
+          <div className="panel relative overflow-x-auto" tabIndex={0} role="region" aria-label="Leads (tabela; role horizontalmente se necessário)">
             <table className="w-full text-sm">
               <caption className="sr-only">Leads</caption>
               <thead className="border-b border-line bg-surface-muted text-left text-xs uppercase tracking-wider text-fg-muted">

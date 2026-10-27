@@ -42,7 +42,7 @@ export default function CaixaPage() {
           <div className="panel p-3"><p className="text-fg-muted">Saldo do período</p><p className="num text-lg font-semibold">{formatBRL(inflow + outflow)}</p></div>
         </div>
         {pays.isPending ? <LoadingBlock /> : !rows.length ? <EmptyState title="Sem movimentações" text="Registros aparecem ao dar baixa em parcelas ou pagar despesas." /> : (
-          <div className="panel overflow-x-auto" tabIndex={0} role="region" aria-label="Movimentações de caixa (role horizontalmente)">
+          <div className="panel relative overflow-x-auto" tabIndex={0} role="region" aria-label="Movimentações de caixa (role horizontalmente)">
             <table className="w-full text-sm"><caption className="sr-only">Movimentações de caixa</caption>
               <thead className="border-b border-line bg-surface-muted text-left text-xs uppercase tracking-wider text-fg-muted"><tr><th className="px-4 py-3">Data</th><th className="px-4 py-3">Descrição</th><th className="px-4 py-3">Categoria</th><th className="px-4 py-3 text-right">Valor</th><th className="px-4 py-3 text-right">Saldo</th></tr></thead>
               <tbody className="divide-y divide-line">{withBalance.map((r, i) => <tr key={i}><td className="num px-4 py-2">{formatCivil(r.date)}</td><td className="px-4 py-2">{r.desc}</td><td className="px-4 py-2 text-fg-muted">{r.kind}</td><td className={`num px-4 py-2 text-right ${r.amount < 0 ? "text-danger" : ""}`}>{formatBRL(r.amount)}</td><td className="num px-4 py-2 text-right">{formatBRL(r.balance)}</td></tr>)}</tbody>

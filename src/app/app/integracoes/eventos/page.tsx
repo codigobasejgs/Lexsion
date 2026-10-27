@@ -18,7 +18,7 @@ export default function EventosPage() {
         <PageHeader breadcrumb={[{ href: "/app/integracoes", label: "Integrações" }]} title="Log de eventos" description="correlationId, tipo, tentativa, horário e status. Dados pessoais mascarados." />
         <Feedback error={act.error} notice={act.notice} />
         {events.isPending ? <LoadingBlock /> : !rows.length ? <EmptyState title="Sem eventos" text="" /> : (
-          <div className="panel overflow-x-auto">
+          <div className="panel relative overflow-x-auto" tabIndex={0} role="region" aria-label="Eventos de integração (role horizontalmente se necessário)">
             <table className="w-full text-sm"><caption className="sr-only">Eventos de integração</caption>
               <thead className="border-b border-line bg-surface-muted text-left text-xs uppercase tracking-wider text-fg-muted"><tr><th className="px-3 py-2">Quando</th><th className="px-3 py-2">Provedor</th><th className="px-3 py-2">Tipo</th><th className="px-3 py-2">Tentativa</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Detalhe</th><th className="px-3 py-2">correlationId</th><th className="px-3 py-2"><span className="sr-only">Ações</span></th></tr></thead>
               <tbody className="divide-y divide-line">{rows.map((e) => (

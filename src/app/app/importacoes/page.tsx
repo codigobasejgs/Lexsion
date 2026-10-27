@@ -105,7 +105,7 @@ export default function ImportacoesPage() {
           {step === 3 && (
             <>
               <div className="flex flex-wrap gap-2"><Badge tone="success">{count("criar")} a criar</Badge><Badge tone="info">{count("atualizar")} a atualizar</Badge><Badge tone="neutral">{count("ignorar")} ignoradas</Badge><Badge tone="danger">{count("rejeitar")} rejeitadas</Badge></div>
-              <div className="overflow-x-auto"><table className="w-full text-xs"><caption className="sr-only">Prévia</caption>
+              <div className="relative overflow-x-auto" tabIndex={0} role="region" aria-label="Prévia da importação (role horizontalmente se necessário)"><table className="w-full text-xs"><caption className="sr-only">Prévia</caption>
                 <thead className="text-left text-fg-muted"><tr><th className="py-1 pr-3">Linha</th><th className="pr-3">Ação</th><th className="pr-3">Nome</th><th className="pr-3">Documento</th><th>Problemas</th></tr></thead>
                 <tbody>{preview.map((p) => <tr key={p.row} className="border-t border-line align-top"><td className="num py-1 pr-3">{p.row}</td><td className="pr-3">{p.action}{p.reason ? ` — ${p.reason}` : ""}</td><td className="pr-3 [overflow-wrap:anywhere]">{p.data.name ?? ""}</td><td className="num whitespace-nowrap pr-3">{p.data.document || "—"}</td><td className="text-warning">{p.issues.join("; ")}</td></tr>)}</tbody>
               </table></div>

@@ -83,7 +83,7 @@ export default function AnalisePage({ params }: PageProps<"/app/previdenciario/a
           </ol>
         </nav>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
             {/* Linha do tempo de vínculos */}
             <section className="panel p-4" aria-labelledby="tl-title">
@@ -101,7 +101,7 @@ export default function AnalisePage({ params }: PageProps<"/app/previdenciario/a
                   </button>
                 ))}
               </div>
-              <div className="num mt-2 ml-[calc(9rem+0.5rem)] flex justify-between text-xs text-fg-muted sm:ml-[calc(12rem+0.5rem)]"><span>{formatCivil(t0)}</span><span>{formatCivil(t1)}</span></div>
+              <div className="num mt-2 ml-[calc(9rem+0.5rem)] flex flex-wrap justify-between gap-x-2 text-xs text-fg-muted max-[400px]:ml-0 sm:ml-[calc(12rem+0.5rem)]"><span>{formatCivil(t0)}</span><span>{formatCivil(t1)}</span></div>
               <p className="mt-2 text-xs text-fg-muted">Cores: dourado = período sem alerta; azul = concomitância; vermelho = divergência. Cada barra também tem rótulo e alerta em texto na tabela abaixo.</p>
             </section>
 
