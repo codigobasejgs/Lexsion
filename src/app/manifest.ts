@@ -1,19 +1,28 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
+import { tenants } from "@/mocks/tenants";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const headersList = await headers();
+  const tenantSlug = headersList.get("x-tenant-slug") || "aurora-advocacia";
+  const tenant = tenants.find(t => t.slug === tenantSlug) || tenants[0];
+
+  // ponytail: id estável mesmo-origin por tenant; se mudar id, reinstala PWA.
+  const id = `/app/inicio?tenant=${tenant.slug}`;
+
   return {
-    id: "/app/inicio",
-    name: "SIWILTEC — Gestão Inteligente de Escritórios",
-    short_name: "SIWILTEC",
-    description: "Atendimento, clientes, casos, documentos, agenda e financeiro do escritório em um só lugar. Ambiente demonstrativo.",
+    id,
+    name: `${tenant.name} — SIWILTEC`,
+    short_name: tenant.name.length > 12 ? tenant.slug : tenant.name,
+    description: `Gestão inteligente para ${tenant.name}. Atendimento, casos, documentos, agenda e financeiro. Ambiente demonstrativo.`,
     lang: "pt-BR",
     dir: "ltr",
-    start_url: "/app/inicio?origem=pwa", // nunca token/cliente/organização na URL
+    start_url: `/app/inicio?origem=pwa&tenant=${tenant.slug}`,
     scope: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#090807",
-    theme_color: "#090807",
+    background_color: tenant.settings.primaryColor,
+    theme_color: tenant.settings.primaryColor,
     categories: ["business", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

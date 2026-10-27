@@ -1,0 +1,9 @@
+feat(saas): manifest dinâmico por tenant
+
+- manifest.ts: async, lê x-tenant-slug do proxy
+- id, name, short_name, description, start_url, colors por tenant
+- id estável por tenant (reinstala PWA se mudar)
+
+Build OK, typecheck OK
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>
