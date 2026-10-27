@@ -1,6 +1,6 @@
 /* SIWILTEC service worker — política explícita (docs/politica-offline.md).
    VERSION é reescrita a cada build por scripts/stamp-sw.mjs (muda os bytes ⇒ navegador detecta atualização). */
-const VERSION = "20261027190227";
+const VERSION = "20261027201958";
 const PREFIX = "siwiltec-";
 
 // Cache de shell separado por contexto, derivado da URL (o SW não lê cookies): admin, portal, escritório demo ou app.
@@ -16,7 +16,7 @@ const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 // Rotas cujo HTML é um shell sem dados pessoais NESTA DEMO (dados vêm do IndexedDB no cliente).
 // Em produção com backend: HTML autenticado passa a NetworkOnly — ver docs/politica-offline.md.
-const SHELL_ROUTES = /^\/(app(\/.*)?|portal(\/.*)?|admin(\/.*)?|demo\/tenant\/[a-z0-9-]+|entrar|offline)?$/;
+const SHELL_ROUTES = /^\/(app(\/.*)?|portal(\/.*)?|admin(\/.*)?|demo\/tenant\/[a-z0-9-]+|entrar|demonstracao|offline)?$/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)));

@@ -13,7 +13,7 @@ const ROUTES = [
 ];
 
 async function signIn(page: Page) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: /Helena Prado/ }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/app\//);

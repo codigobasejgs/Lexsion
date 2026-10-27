@@ -5,7 +5,7 @@ import { HELP_VERSION, SHOTS } from "./help-manifest";
 // Prints reais da academia/ajuda: roteiro independente da captura de QA (pnpm capture:help).
 // Cada teste começa com IndexedDB limpo: fixtures determinísticas, relógio de demo fixo.
 async function signIn(page: Page, profile: string) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   if (!profile) return;
   await page.getByRole("radio", { name: new RegExp(profile) }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();

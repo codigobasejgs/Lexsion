@@ -129,7 +129,7 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
       await clearShellCache();
       setDemoCookie(undefined); // entrada volta a mostrar a marca LexSion
       writeSession(null);
-      router.replace("/entrar");
+      router.replace("/demonstracao"); // toda sessão nesta fase é demonstrativa
     },
     restoreTenant: async () => {
       if (!org) return;

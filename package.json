@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "pwa:assets": "node scripts/pwa-assets.mjs",
     "capture:help": "node scripts/capture-help.mjs",
-    "test:smoke": "playwright test -c playwright.smoke.config.ts"
+    "test:smoke": "playwright test -c playwright.smoke.config.ts",
+    "capture:landing": "node scripts/capture-landing.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",

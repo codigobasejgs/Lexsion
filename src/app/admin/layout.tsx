@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (ready && user?.role !== "superadmin") router.replace("/entrar");
+    if (ready && user?.role !== "superadmin") router.replace("/demonstracao");
   }, [ready, user, router]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- fecha o menu móvel ao navegar
   useEffect(() => setOpen(false), [path]);

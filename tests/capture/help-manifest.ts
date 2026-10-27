@@ -9,7 +9,7 @@ export interface ShotSpec {
   mobile: boolean;
   caption: string;
   route: string;
-  profile: string; // nome do usuário fictício em /entrar
+  profile: string; // nome do usuário fictício em /demonstracao
   selector: string; // elemento que precisa estar visível antes da captura
   fixture: string;
   out: string; // caminho em public/
@@ -19,7 +19,7 @@ const ADMIN = "Helena Prado";
 const FIN = "Caio Martins";
 const WHERE: Record<string, { route: string; selector: string; profile?: string }> = {
   "entender-modo-demo:1": { route: "/app/inicio", selector: "text=Ambiente demonstrativo — dados fictícios" },
-  "primeiro-acesso:2": { route: "/entrar", selector: "role=radio[name=/Helena Prado/]", profile: "" },
+  "primeiro-acesso:2": { route: "/demonstracao", selector: "role=radio[name=/Helena Prado/]", profile: "" },
   "primeiro-acesso:4": { route: "/app/inicio", selector: '[data-tour="meu-dia-lista"]' },
   "operar-no-celular:1": { route: "/app/inicio", selector: 'nav[aria-label="Navegação rápida"]' },
   "operar-no-celular:2": { route: "/app/configuracoes?aba=dispositivo", selector: "text=Pedir armazenamento persistente" },

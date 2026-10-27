@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 // FLUXO J — falhas e recuperação.
 async function signIn(page: Page, who: RegExp) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/app\//);
@@ -17,7 +17,7 @@ test("ROB-01: localStorage e IndexedDB bloqueados ⇒ entra, opera em memória e
   });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: /Helena Prado/ }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await expect(page.getByRole("heading", { name: /Olá, Helena/ })).toBeVisible();
@@ -31,7 +31,7 @@ test("ROB-01: localStorage e IndexedDB bloqueados ⇒ entra, opera em memória e
 });
 
 test("ROB-02: sessão corrompida e banco de versão antiga não quebram a interface", async ({ page }) => {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.evaluate(async () => {
     localStorage.setItem("siwiltec.session", "{isto não é json");
     await new Promise<void>((resolve) => {
@@ -42,7 +42,7 @@ test("ROB-02: sessão corrompida e banco de versão antiga não quebram a interf
     });
   });
   await page.goto("/app/inicio");
-  await expect(page).toHaveURL(/\/entrar/); // sessão inválida ⇒ volta para entrar, sem tela branca
+  await expect(page).toHaveURL(/\/demonstracao/); // sessão inválida ⇒ volta para entrar, sem tela branca
   await signIn(page, /Helena Prado/);
   await expect(page.getByRole("heading", { name: /Olá, Helena/ })).toBeVisible();
   await page.goto("/app/clientes");

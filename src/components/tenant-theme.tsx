@@ -29,6 +29,11 @@ export function TenantTheme() {
     // Entrada pública do escritório (/demo/tenant/<slug>): o servidor já resolveu pelo endereço; não sobrescrever.
     const serverOwned = path.startsWith("/demo/tenant/");
     const syncManifest = () => {
+      // Navegação no cliente pode deixar metadados repetidos no <head>; mantém só o mais recente de cada (robots, description).
+      for (const sel of ['meta[name="robots"]', 'meta[name="description"]']) {
+        const all = [...document.head.querySelectorAll(sel)];
+        all.slice(0, -1).forEach((m) => m.remove());
+      }
       if (serverOwned) return;
       const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="manifest"]')];
       links.slice(1).forEach((l) => l.remove());

@@ -43,7 +43,7 @@ export default function DemoTenantPage({ params }: { params: Promise<{ slug: str
     <main id="conteudo" className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-5 text-center">
       <h1 className="text-2xl font-semibold">{title}</h1>
       <p className="text-fg-muted">{text}</p>
-      <Link href="/entrar" className="btn btn-secondary">Ir para a entrada</Link>
+      <Link href="/demonstracao" className="btn btn-secondary">Escolher outro perfil</Link>
     </main>
   );
 }

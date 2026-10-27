@@ -25,7 +25,7 @@ const base = { lang: "pt-BR", dir: "ltr" as const, display: "standalone" as cons
 
 export function buildManifest(key: string, tenants: Tenant[]): MetadataRoute.Manifest | null {
   if (key === "lexsion")
-    return { ...base, id: "/?app=lexsion", name: "LexSion — Plataforma Jurídica Inteligente", short_name: "LexSion", description: "Toda a advocacia. Uma plataforma. Ambiente demonstrativo.", start_url: "/?origem=pwa", scope: "/", background_color: OBSIDIAN, theme_color: OBSIDIAN, icons: LEXSION_ICONS };
+    return { ...base, id: "/?app=lexsion", name: "LexSion — Plataforma Jurídica Inteligente", short_name: "LexSion", description: "Toda a advocacia. Uma plataforma. Ambiente demonstrativo.", start_url: "/demonstracao?origem=pwa", scope: "/", background_color: OBSIDIAN, theme_color: OBSIDIAN, icons: LEXSION_ICONS };
   if (key === "admin")
     return { ...base, id: "/admin/?app=lexsion-admin", name: "LexSion Super Admin", short_name: "LexSion Admin", description: "Operação da plataforma LexSion. Ambiente demonstrativo.", start_url: "/admin/organizacoes?origem=pwa", scope: "/admin/", background_color: OBSIDIAN, theme_color: OBSIDIAN, icons: LEXSION_ICONS };
   const m = key.match(/^(erp|portal)-([a-z0-9-]+)$/);

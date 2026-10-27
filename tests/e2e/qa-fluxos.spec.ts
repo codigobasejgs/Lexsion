@@ -2,7 +2,7 @@
 
 // Fluxos A–J complementares aos de journeys.spec.ts (que cobre A, C, D, J parcial e I).
 async function signIn(page: Page, who: RegExp) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/(app|portal|admin)(\/|$)/);
@@ -19,7 +19,7 @@ test("FLUXO G / PORT-02: rascunho não vaza ao portal; publicado aparece só par
   await expect(portal.getByText("Rascunho interno — o cliente NÃO vê")).toBeVisible();
 
   // Cliente ainda não vê
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await signIn(page, /Cliente \(portal\)/);
   await page.goto("/portal/casos/k-maria-bpc");
   await expect(page.getByText("Recebemos o comprovante e o pedido seguirá ao INSS.")).toHaveCount(0);

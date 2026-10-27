@@ -10,7 +10,7 @@ test.afterAll(() => writeFileSync(SW, pristine)); // também cobre timeout do te
 test("atualização do service worker respeita edição não salva e não entra em loop", async ({ page }) => {
   const original = readFileSync(SW, "utf8");
   try {
-    await page.goto("/entrar");
+    await page.goto("/demonstracao");
     await page.getByRole("radio", { name: /Rafael Nunes/ }).check();
     await page.getByRole("button", { name: /^Entrar como/ }).click();
     await page.waitForURL(/inicio/);

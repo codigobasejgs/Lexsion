@@ -9,6 +9,7 @@ import { TenantTheme } from "@/components/tenant-theme";
 import { CONTEXT_HEADER, TENANT_HEADER } from "@/lib/tenant-resolver";
 import { manifestHref, type ManifestKey } from "@/lib/pwa-manifest";
 import { tenants } from "@/mocks/tenants";
+import { SITE_URL } from "./sitemap";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin", "latin-ext"], display: "swap" });
 
@@ -23,14 +24,16 @@ export async function generateMetadata(): Promise<Metadata> {
     ? { icon: [{ url: `/tenants/${t.slug}/icon-192.png`, sizes: "192x192" }], apple: `/tenants/${t.slug}/apple-touch-icon.png` }
     : { icon: [{ url: "/brand/lexsion/lexsion-favicon.svg", type: "image/svg+xml" }, { url: "/icons/favicon-32.png", sizes: "32x32" }], apple: "/icons/apple-touch-icon.png" };
   return {
+    metadataBase: new URL(SITE_URL),
     title: { default: brand === "LexSion" ? "LexSion — Plataforma Jurídica Inteligente" : brand, template: `%s · ${brand}` },
-    description: "LexSion — Toda a advocacia. Uma plataforma. Ambiente demonstrativo com dados fictícios.",
+    description: "LexSion — Toda a advocacia. Uma plataforma. Gestão completa para escritórios de advocacia.",
     applicationName: brand,
     manifest: manifestHref(key),
     appleWebApp: { capable: true, title: brand, statusBarStyle: "black-translucent" },
     icons,
-    openGraph: { title: "LexSion — Plataforma Jurídica Inteligente", description: "Toda a advocacia. Uma plataforma.", images: ["/brand/lexsion/lexsion-logo-horizontal-black-gold.png"], locale: "pt_BR", type: "website" },
-    robots: { index: false, follow: false }, // demonstração: não indexar
+    openGraph: { siteName: "LexSion", title: "LexSion — Plataforma Jurídica Inteligente", description: "Toda a advocacia. Uma plataforma.", images: ["/brand/lexsion/lexsion-logo-horizontal-black-gold.png"], locale: "pt_BR", type: "website" },
+    // Padrão: NÃO indexar (sistema, demonstração, portal, admin). Páginas institucionais sobrescrevem com index.
+    robots: { index: false, follow: false },
   };
 }
 

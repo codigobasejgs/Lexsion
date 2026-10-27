@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapseKey]);
   useEffect(() => {
-    if (ready && !user) router.replace("/entrar");
+    if (ready && !user) router.replace("/demonstracao");
     else if (ready && user?.role === "cliente") router.replace("/portal");
     else if (ready && user?.role === "superadmin") router.replace("/admin");
   }, [ready, user, router]);
@@ -198,7 +198,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 )}
                 <Link href="/app/configuracoes" className="flex min-h-10 items-center rounded px-3 text-sm hover:bg-surface-muted">Preferências e aparência</Link>
-                <Link href="/entrar" className="flex min-h-10 items-center rounded px-3 text-sm hover:bg-surface-muted">Trocar perfil de demonstração</Link>
+                <Link href="/demonstracao" className="flex min-h-10 items-center rounded px-3 text-sm hover:bg-surface-muted">Trocar perfil de demonstração</Link>
                 <button onClick={signOut} className="flex min-h-10 w-full items-center gap-2 rounded px-3 text-left text-sm text-danger hover:bg-danger-bg">
                   <LogOut aria-hidden className="size-4" /> Sair
                 </button>

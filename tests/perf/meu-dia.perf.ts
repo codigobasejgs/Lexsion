@@ -6,7 +6,7 @@ test.use({ serviceWorkers: "block" });
 
 for (const throttled of [false, true]) {
   test(`perf meu dia${throttled ? " (CPU 4× + 4G lenta)" : ""}`, async ({ page }, info) => {
-    await page.goto("/entrar");
+    await page.goto("/demonstracao");
     await page.getByRole("radio", { name: /Helena Prado/ }).check();
     await page.getByRole("button", { name: /^Entrar como/ }).click();
     await page.waitForURL(/inicio/);

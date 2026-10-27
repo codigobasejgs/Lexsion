@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // Seis jornadas do prompt mestre (seção 11) + isolamento do portal + axe/overflow das rotas E3–E7.
 async function signIn(page: Page, who: RegExp) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/(app|portal|admin)(\/|$)/);
@@ -236,13 +236,14 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
     await expect(page.getByRole("heading", { name: /sem conexão/i })).toBeVisible();
     expect(await seriousAxe(page)).toEqual([]);
     await page.goto("/");
-    await expect(page).toHaveURL(/\/entrar/);
+    await expect(page).toHaveURL(/\/$/); // raiz agora é a landing comercial (antes redirecionava para a entrada)
+    await expect(page.locator("h1")).toBeVisible();
   });
   test("/recuperar-acesso (público)", async ({ page }) => {
     await page.goto("/recuperar-acesso");
     await page.getByLabel("E-mail").fill("pessoa@exemplo.test");
-    await page.getByRole("button", { name: "Enviar link (simulação)" }).click();
-    await expect(page.getByText(/nada foi enviado/)).toBeVisible();
+    await page.getByRole("button", { name: "Enviar link" }).click();
+    await expect(page.getByText(/Nenhum e-mail foi enviado/)).toBeVisible();
     await noOverflow(page);
     expect(await seriousAxe(page)).toEqual([]);
   });

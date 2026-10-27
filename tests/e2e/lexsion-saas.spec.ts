@@ -4,7 +4,7 @@ import sharp from "sharp";
 
 // LexSion SaaS: dados que não se perdem, Super Admin, isolamento de marca e suspensão. IDs: DATA-*, QA-1xx, BRAND-*.
 async function signIn(page: Page, who: RegExp, url = /\/app\//) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(url);
@@ -24,7 +24,7 @@ test("DATA-02: sair e entrar de novo NÃO apaga cadastro feito na demo", async (
   await page.goto("/app/inicio");
   await page.locator("summary", { hasText: "Menu do usuário" }).click();
   await page.getByRole("button", { name: "Sair" }).click();
-  await page.waitForURL(/\/entrar/);
+  await page.waitForURL(/\/demonstracao/);
   await signIn(page, /Helena Prado/);
   await page.goto("/app/tarefas?ver=lista");
   await expect.poll(checkedCount).toBe(before + 1); // a conclusão sobreviveu ao sair/entrar
@@ -39,7 +39,7 @@ test("DATA-03: ao sair, nenhum cache de shell de sessão sobra no navegador", as
   await expect.poll(() => page.evaluate(async () => (await caches.keys()).some((k) => /-shell-/.test(k)))).toBe(true);
   await page.locator("summary", { hasText: "Menu do usuário" }).click();
   await page.getByRole("button", { name: "Sair" }).click();
-  await page.waitForURL(/\/entrar/);
+  await page.waitForURL(/\/demonstracao/);
   expect(await page.evaluate(async () => (await caches.keys()).filter((k) => /-shell-/.test(k)))).toEqual([]);
 });
 
@@ -113,7 +113,7 @@ test("BRAND-010: marca do escritório A não vaza para B; plataforma continua Le
   const css = await page.getByTestId("tenant-theme").textContent();
   expect(css).toContain("atlas-juridico");
   expect(css).not.toContain("aurora");
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await expect(page.locator("html")).not.toHaveAttribute("data-tenant", /.+/);
   await expect(page.getByRole("img", { name: /LexSion/ }).first()).toBeVisible();
   await expect(page.getByText("SIWILTEC")).toHaveCount(0);

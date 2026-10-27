@@ -20,7 +20,7 @@ export default function PortalLayout({ children }: LayoutProps<"/portal">) {
   const router = useRouter();
   const path = usePathname();
   useEffect(() => {
-    if (ready && (!user || user.role !== "cliente")) router.replace("/entrar");
+    if (ready && (!user || user.role !== "cliente")) router.replace("/demonstracao");
   }, [ready, user, router]);
   if (!ready || !user || user.role !== "cliente") return <div className="min-h-dvh bg-canvas" />;
   return (

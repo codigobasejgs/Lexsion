@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 
 // Capturas de revisão visual (não são os prints da academia). Rodar sob demanda: pnpm exec playwright test shots
 test("capturas CRM", async ({ page }, info) => {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: /Helena Prado/ }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/inicio/);

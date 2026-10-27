@@ -4,7 +4,7 @@ import { test } from "@playwright/test";
 test.use({ serviceWorkers: "block" });
 test("chunks do Meu dia", async ({ page }, info) => {
   test.skip(info.project.name !== "perf-desktop");
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: /Helena Prado/ }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/inicio/);

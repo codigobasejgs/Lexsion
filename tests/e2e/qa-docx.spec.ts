@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { unzip } from "../../src/lib/zip";
 
 async function signIn(page: Page, who: RegExp) {
-  await page.goto("/entrar");
+  await page.goto("/demonstracao");
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/app\//);
