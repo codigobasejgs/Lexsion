@@ -20,7 +20,7 @@ export interface Track {
 
 export const TRACKS: Track[] = [
   {
-    id: "comecando", title: "Começando na LexSion", level: "Iniciante", roles: ["admin", "advogado", "atendimento", "financeiro", "estagiario"],
+    id: "comecando", title: "Começando na LexSion", level: "Iniciante", roles: ["admin", "tenant_admin", "advogado", "atendimento", "financeiro", "estagiario", "controladoria", "external_collaborator"],
     lessons: [
       { key: "modo-demo", title: "O que é real e o que é simulado", minutes: 3, article: "entender-modo-demo" },
       { key: "primeiro-acesso", title: "Primeiro acesso e busca", minutes: 4, article: "primeiro-acesso", tour: "primeiro-acesso" },
@@ -29,7 +29,7 @@ export const TRACKS: Track[] = [
     ],
   },
   {
-    id: "atendimento", title: "Atendimento e funil", level: "Iniciante", roles: ["admin", "advogado", "atendimento"],
+    id: "atendimento", title: "Atendimento e funil", level: "Iniciante", roles: ["admin", "tenant_admin", "advogado", "atendimento"],
     lessons: [
       { key: "assumir", title: "Assumir conversa e pausar a assistente", minutes: 5, article: "assumir-conversa", tour: "atendimento" },
       { key: "lead", title: "Organizar lead no funil", minutes: 5, article: "organizar-lead", tour: "primeiro-lead", exercise: { text: "Mova um lead de “Novo” para “Em atendimento”.", href: "/app/crm" } },
@@ -38,7 +38,7 @@ export const TRACKS: Track[] = [
     ],
   },
   {
-    id: "juridico", title: "Operação jurídica", level: "Intermediário", roles: ["admin", "advogado", "estagiario"],
+    id: "juridico", title: "Operação jurídica", level: "Intermediário", roles: ["admin", "tenant_admin", "advogado", "estagiario", "controladoria"],
     lessons: [
       { key: "caso", title: "Abrir caso", minutes: 4, article: "abrir-caso", tour: "caso" },
       { key: "prazo", title: "Registrar e confirmar prazo", minutes: 6, article: "registrar-prazo", exercise: { text: "Confira e confirme o prazo de quesitos periciais.", href: "/app/prazos" } },
@@ -59,12 +59,20 @@ export const TRACKS: Track[] = [
     ],
   },
   {
-    id: "gestao", title: "Gestão e integrações", level: "Intermediário", roles: ["admin"],
+    id: "gestao", title: "Gestão e integrações", level: "Intermediário", roles: ["admin", "tenant_admin"],
     lessons: [
       { key: "importar", title: "Importar planilha CSV", minutes: 8, article: "importar-csv", exercise: { text: "Importe o CSV fictício de exemplo.", href: "/app/importacoes" } },
       { key: "notificacoes", title: "Configurar notificações", minutes: 3, article: "configurar-notificacoes" },
       { key: "whatsapp", title: "Conexão do WhatsApp (etapa futura)", minutes: 4, article: "conectar-whatsapp", tour: "integracoes" },
       { key: "erros", title: "Recuperar erros e pedir ajuda", minutes: 3, article: "recuperar-erros" },
+    ],
+  },
+  {
+    id: "rotina-marca", title: "Rotina e identidade do escritório", level: "Iniciante", roles: ["admin", "tenant_admin", "advogado", "atendimento", "financeiro", "estagiario", "controladoria"],
+    lessons: [
+      { key: "recorrentes", title: "Criar tarefas que se repetem", minutes: 3, article: "tarefas-recorrentes", exercise: { text: "Crie uma tarefa mensal e conclua para ver a próxima.", href: "/app/tarefas" } },
+      { key: "instalar-app", title: "Instalar o aplicativo do escritório", minutes: 3, article: "instalar-app-do-escritorio" },
+      { key: "marca", title: "Trocar o logotipo e as cores", minutes: 5, article: "trocar-logo-e-cores", tour: "identidade" },
     ],
   },
 ];

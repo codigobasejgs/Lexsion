@@ -63,3 +63,17 @@ test("QA-RBAC-06: administrador vê a assinatura do escritório só para leitura
   await page.goto("/app/configuracoes");
   await expect(page.getByRole("tab", { name: "Assinatura LexSion" })).toHaveCount(0);
 });
+
+test("QA-RBAC-07: tour guiado do Super Admin percorre painel, escritórios e faturas sem passo perdido", async ({ page, isMobile }) => {
+  await signIn(page, /Paula Operações/, /\/admin/);
+  if (isMobile) await page.getByRole("button", { name: "Abrir menu" }).click();
+  await page.getByRole("button", { name: "Tour guiado" }).click();
+  const pop = page.getByTestId("tour-popover");
+  for (const [title, url] of [["Indicadores", /\/admin$/], ["Novo escritório", /organizacoes/], ["Faturas da assinatura", /faturamento/]] as const) {
+    await expect(pop.getByRole("heading", { name: title })).toBeVisible();
+    await expect(page).toHaveURL(url);
+    await expect(pop).not.toContainText("não está visível");
+    await pop.getByRole("button", { name: /Avançar|Concluir/ }).click();
+  }
+  await expect(pop).toHaveCount(0);
+});

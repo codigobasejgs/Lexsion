@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Building2, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
+import { BarChart3, Building2, Compass, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
+import { useTour } from "@/tours/runner";
 
 const NAV = [
   { href: "/admin", label: "Painel geral", icon: BarChart3 },
@@ -24,6 +25,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const tour = useTour();
   useEffect(() => {
     if (ready && !isPlatformRole(user?.role)) router.replace("/demonstracao");
   }, [ready, user, router]);
@@ -44,6 +46,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           <Icon aria-hidden className="size-[18px]" /> {label}
         </Link>
       ))}
+      <button onClick={() => { setOpen(false); tour.start("super-admin"); }} className="flex min-h-11 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-sm text-fg-muted hover:bg-surface-muted hover:text-fg"><Compass aria-hidden className="size-[18px]" /> Tour guiado</button>
     </nav>
   );
   return (
