@@ -1,0 +1,13 @@
+
+> siwiltec@0.1.0 test J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> vitest run
+
+
+ RUN  v5.0.5 J:/AREA DE TRABALHO/Projetos/Siwiltec - Advogados/siwiltec
+
+
+ Test Files  17 passed (17)
+      Tests  119 passed | 1 skipped (120)
+   Start at  17:42:19
+   Duration  452ms (import 47%, transform 27%, tests 14%, worker 11%)
+

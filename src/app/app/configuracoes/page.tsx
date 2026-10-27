@@ -15,7 +15,6 @@ import { downloadText } from "@/domain/csv";
 import { formatCivil, formatInstant } from "@/lib/dates";
 import type { OrgSettings } from "@/domain/types";
 import { useQuery } from "@tanstack/react-query";
-import { allowed } from "@/domain/permissions";
 import { INVOICE_STATUS_LABEL } from "@/domain/saas";
 import { PLAN_LABEL, PLAN_QUOTAS, QUOTA_LABEL, STATUS_LABEL, UNLIMITED } from "@/domain/tenancy";
 import { formatBRL } from "@/lib/money";
@@ -40,7 +39,7 @@ export default function ConfiguracoesPage() {
   const settings = useCollection("settings");
   const s = settings.data?.[0];
   const { user } = useSession();
-  const seesBilling = allowed(user?.role, "gerir_equipe");
+  const seesBilling = user?.role === "admin"; // assinatura fica com o titular (ver permissions.ts)
   const tabs = TABS.filter(([k]) => k !== "assinatura" || seesBilling);
   return (
     <Guard area="configuracoes">

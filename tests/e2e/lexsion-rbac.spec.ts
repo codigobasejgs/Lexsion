@@ -49,7 +49,7 @@ test("QA-RBAC-05: cliente do portal digitando a rota do Super Admin é recusado"
   await expect(page.getByText("Contratantes")).toHaveCount(0);
 });
 
-test("QA-RBAC-05: administrador vê a assinatura do escritório só para leitura; advogado não vê a aba", async ({ page }) => {
+test("QA-RBAC-06: administrador vê a assinatura do escritório só para leitura; advogado não vê a aba", async ({ page }) => {
   await signIn(page, /Helena Prado/);
   await page.goto("/app/configuracoes?aba=assinatura");
   const sub = page.getByTestId("minha-assinatura");
