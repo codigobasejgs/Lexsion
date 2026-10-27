@@ -1,5 +1,5 @@
-﻿
-> siwiltec@0.1.0 test:e2e J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+
+> siwiltec@0.1.0 test:e2e <projeto>\siwiltec
 > playwright test
 
 node.exe : [WebServer] (node:23152) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.

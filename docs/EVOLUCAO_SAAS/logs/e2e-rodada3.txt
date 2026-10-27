@@ -1,5 +1,5 @@
-﻿
-> siwiltec@0.1.0 test:e2e J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+
+> siwiltec@0.1.0 test:e2e <projeto>\siwiltec
 > playwright test
 
 node.exe : [WebServer] (node:3776) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
@@ -317,7 +317,7 @@ Running 229 tests using 10 workers
       111 |     }
       112 |     const ids = new Set<string>();
       113 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:110:58
+        at <projeto>\siwiltec\tests\e2e\foundation.spec.ts:110:58
 
     Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-mobile-360\error-context.md
 
@@ -342,7 +342,7 @@ Running 229 tests using 10 workers
       190 |   await expect(page.getByRole("heading", { name: "Contratantes" })).toBeVisible();
       191 |   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
       192 |   expect(await seriousAxe(page)).toEqual([]);
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\journeys.spec.ts:189:22
+        at <projeto>\siwiltec\tests\e2e\journeys.spec.ts:189:22
 
     Error Context: test-results\journeys-superadmin-vê-só-organizações-agregadas-mobile-360\error-context.md
 
@@ -368,7 +368,7 @@ Running 229 tests using 10 workers
       111 |     }
       112 |     const ids = new Set<string>();
       113 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:110:58
+        at <projeto>\siwiltec\tests\e2e\foundation.spec.ts:110:58
 
     Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-desktop-1440\error-context.md
 
@@ -393,7 +393,7 @@ Running 229 tests using 10 workers
       190 |   await expect(page.getByRole("heading", { name: "Contratantes" })).toBeVisible();
       191 |   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
       192 |   expect(await seriousAxe(page)).toEqual([]);
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\journeys.spec.ts:189:22
+        at <projeto>\siwiltec\tests\e2e\journeys.spec.ts:189:22
 
     Error Context: test-results\journeys-superadmin-vê-só-organizações-agregadas-desktop-1440\error-context.md
 

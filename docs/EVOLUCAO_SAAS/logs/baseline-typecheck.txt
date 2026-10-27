@@ -1,6 +1,6 @@
 pnpm typecheck
 
-> siwiltec@0.1.0 typecheck J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> siwiltec@0.1.0 typecheck <projeto>\siwiltec
 > next typegen && tsc --noEmit
 
 Generating route types...

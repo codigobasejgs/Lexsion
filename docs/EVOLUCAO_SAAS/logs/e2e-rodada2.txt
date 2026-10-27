@@ -1,5 +1,5 @@
-﻿
-> siwiltec@0.1.0 test:e2e J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+
+> siwiltec@0.1.0 test:e2e <projeto>\siwiltec
 > playwright test
 
 node.exe : [WebServer] (node:19436) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
@@ -323,7 +323,7 @@ Running 229 tests using 10 workers
       19 |   await expect(page.getByRole("checkbox", { name: label, exact: true }).first()).toBeChecked();
       20 |   await page.goto("/app/inicio");
       21 |   await page.getByRole("button", { name: "Menu do usuário" }).or(page.getByLabel("Menu do usuário")).first().click();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:18:15
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:18:15
 
     Error Context: test-results\lexsion-saas-DATA-02-sair--c33bc-paga-cadastro-feito-na-demo-mobile-360\error-context.md
 
@@ -348,7 +348,7 @@ Running 229 tests using 10 workers
       45 |   await expect(page.getByText(/Receita recorrente mensal/)).toBeVisible();
       46 |   await page.goto("/admin/organizacoes");
       47 |   await page.getByRole("button", { name: "Novo escritório" }).click();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:44:69
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:44:69
 
     Error Context: test-results\lexsion-saas-QA-115-120-Su-aa5a3--reativa-auditoria-registra-mobile-360\error-context.md
 
@@ -374,7 +374,7 @@ Running 229 tests using 10 workers
       120 |   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAQ0lEQVR42u3OMQEAAAgDoK1/aBPj4QEPJJBKz1Q7AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgCMVDAAB6ZoiTwAAAABJRU5ErkJggg==", "base64");
       121 |   await page.getByTestId("logo-input").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png });
       122 |   await expect(page.getByText(/Logotipo aceito \(64 × 64 px\)/)).toBeVisible();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:119:41
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:119:41
 
     Error Context: test-results\lexsion-saas-QA-050-058-id-3d5da-tada-salva-só-no-escritório-mobile-360\error-context.md
 
@@ -402,7 +402,7 @@ Running 229 tests using 10 workers
       19 |   await expect(page.getByRole("checkbox", { name: label, exact: true }).first()).toBeChecked();
       20 |   await page.goto("/app/inicio");
       21 |   await page.getByRole("button", { name: "Menu do usuário" }).or(page.getByLabel("Menu do usuário")).first().click();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:18:15
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:18:15
 
     Error Context: test-results\lexsion-saas-DATA-02-sair--c33bc-paga-cadastro-feito-na-demo-desktop-1440\error-context.md
 
@@ -427,7 +427,7 @@ Running 229 tests using 10 workers
       45 |   await expect(page.getByText(/Receita recorrente mensal/)).toBeVisible();
       46 |   await page.goto("/admin/organizacoes");
       47 |   await page.getByRole("button", { name: "Novo escritório" }).click();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:44:69
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:44:69
 
     Error Context: test-results\lexsion-saas-QA-115-120-Su-aa5a3--reativa-auditoria-registra-desktop-1440\error-context.md
 
@@ -448,7 +448,7 @@ Running 229 tests using 10 workers
       104 |   await expect(page.locator("html")).toHaveAttribute("data-tenant", "atlas-juridico");
       105 |   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
       106 |   const css = await page.getByTestId("tenant-theme").textContent();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:103:14
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:103:14
 
     Error Context: test-results\lexsion-saas-BRAND-010-mar-ce461-plataforma-continua-LexSion-desktop-1440\error-context.md
 
@@ -474,7 +474,7 @@ Running 229 tests using 10 workers
       120 |   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAQ0lEQVR42u3OMQEAAAgDoK1/aBPj4QEPJJBKz1Q7AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgCMVDAAB6ZoiTwAAAABJRU5ErkJggg==", "base64");
       121 |   await page.getByTestId("logo-input").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png });
       122 |   await expect(page.getByText(/Logotipo aceito \(64 × 64 px\)/)).toBeVisible();
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:119:41
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:119:41
 
     Error Context: test-results\lexsion-saas-QA-050-058-id-3d5da-tada-salva-só-no-escritório-desktop-1440\error-context.md
 

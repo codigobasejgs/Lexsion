@@ -1,5 +1,5 @@
-﻿
-> siwiltec@0.1.0 test:e2e J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+
+> siwiltec@0.1.0 test:e2e <projeto>\siwiltec
 > playwright test
 
 node.exe : [WebServer] (node:29460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
@@ -318,7 +318,7 @@ Running 229 tests using 10 workers
       112 |     }
       113 |     const ids = new Set<string>();
       114 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:111:58
+        at <projeto>\siwiltec\tests\e2e\foundation.spec.ts:111:58
 
     Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-mobile-360\error-context.md
 
@@ -345,7 +345,7 @@ Running 229 tests using 10 workers
       108 |   await expect(page.getByRole("link", { name: /Aurora Advocacia — ir para Meu dia/ }).locator("visible=true").first()).toBeVisible();
       109 |   await page.goto("/demo/tenant/atlas-juridico");
       110 |   await page.waitForURL(/\/app\/inicio/);
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:107:38
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:107:38
 
     Error Context: test-results\lexsion-saas-BRAND-010-mar-ce461-plataforma-continua-LexSion-mobile-360\error-context.md
 
@@ -365,7 +365,7 @@ Running 229 tests using 10 workers
       140 |   expect(await serious(page)).toEqual([]);
       141 | });
       142 |
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:139:49
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:139:49
 
     Error Context: test-results\lexsion-saas-QA-050-058-id-3d5da-tada-salva-só-no-escritório-mobile-360\error-context.md
 
@@ -392,7 +392,7 @@ Running 229 tests using 10 workers
       112 |     }
       113 |     const ids = new Set<string>();
       114 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:111:58
+        at <projeto>\siwiltec\tests\e2e\foundation.spec.ts:111:58
 
     Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-desktop-1440\error-context.md
 
@@ -419,7 +419,7 @@ Running 229 tests using 10 workers
       108 |   await expect(page.getByRole("link", { name: /Aurora Advocacia — ir para Meu dia/ }).locator("visible=true").first()).toBeVisible();
       109 |   await page.goto("/demo/tenant/atlas-juridico");
       110 |   await page.waitForURL(/\/app\/inicio/);
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:107:38
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:107:38
 
     Error Context: test-results\lexsion-saas-BRAND-010-mar-ce461-plataforma-continua-LexSion-desktop-1440\error-context.md
 
@@ -439,7 +439,7 @@ Running 229 tests using 10 workers
       140 |   expect(await serious(page)).toEqual([]);
       141 | });
       142 |
-        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\lexsion-saas.spec.ts:139:49
+        at <projeto>\siwiltec\tests\e2e\lexsion-saas.spec.ts:139:49
 
     Error Context: test-results\lexsion-saas-QA-050-058-id-3d5da-tada-salva-só-no-escritório-desktop-1440\error-context.md
 

@@ -1,6 +1,6 @@
 pnpm build
 
-> siwiltec@0.1.0 build J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> siwiltec@0.1.0 build <projeto>\siwiltec
 > node scripts/stamp-sw.mjs && next build
 
 sw.js versão 20261027133430

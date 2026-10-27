@@ -1,6 +1,6 @@
 pnpm lint
 
-> siwiltec@0.1.0 lint J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> siwiltec@0.1.0 lint <projeto>\siwiltec
 > eslint
 
 
