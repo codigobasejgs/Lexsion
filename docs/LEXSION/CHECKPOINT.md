@@ -1,17 +1,19 @@
-# Checkpoint de execução LexSion (retomada após interrupção)
+# Checkpoint de execução LexSion
 
-Branch: `saas-multitenant`. Atualizar a cada etapa concluída (commit + teste).
+Branch: `saas-multitenant`. Estado consolidado em `docs/FINALIZACAO/STATUS.md` (fonte atual).
 
-| Etapa | Estado | Commit | Evidência |
-|---|---|---|---|
-| E0 baseline | feito | (logs) | `docs/EVOLUCAO_SAAS/logs/baseline-*.txt` — todos exit 0 |
-| E1 dados: migração sem perda, reset por escritório, tenants persistidos | feito | aeb28d7 | tests/unit/data-safety.test.ts |
-| E2 manifest/PWA por contexto, SW, proxy por host | código feito, falta E2E | | tests/unit/tenant-brand.test.ts (PWA-*, resolução) |
-| E3 LexSion: assets copiados, ícones, tokens | parcial (faltam superfícies: login, shell, portal, offline, 404) | | public/brand/lexsion, scripts/pwa-assets.mjs |
-| E4 white-label: tema seguro, upload, Meu aplicativo, QR | código feito, falta E2E | | logo-upload/tenant-tokens/qr + verify-qr.py (OpenCV 6/6) |
-| E5 Super Admin completo + 12 perfis | em andamento (organizacoes/page.tsx e tenant-wizard.tsx não compilam) | | |
-| E6 landing, onboarding, página pública, assinatura do escritório | pendente | | |
-| E7 recorrência, aniversariantes, densidade, linguagem simples | pendente | | |
-| E8 adapters/integrações, e-mails | pendente | | |
-| E9 tours/ajuda/prints | pendente | | |
-| E10 QA Master + docs | pendente | | |
+| Etapa | Estado | Commit |
+|---|---|---|
+| E0 baseline | feito | (logs) |
+| E1 dados sem perda | feito | aeb28d7 |
+| E2 manifest/PWA por contexto | feito | (fase SaaS) |
+| E3 marca LexSion | feito | (fase SaaS) |
+| E4 white-label, QR | feito | (fase SaaS) |
+| E5 Super Admin + 12 papéis | feito | adf3679, 6e3a974 |
+| E6 landing, login, demo, onboarding, assinatura do escritório | feito | f4f23d9, 3e82809, 6e3a974 |
+| E7 recorrência, aniversariantes, linguagem simples | feito | 485fc30 |
+| E8 adaptadores, e-mails, DOCX | feito | 77c5b9a |
+| E9 tours/ajuda/prints/academia | feito | 3e82809, 09b873d |
+| E10 QA Master + docs | feito | 61cdbd4, 1f9aa2a, (commit de docs) |
+
+Publicação: aguardando autorização (`docs/FINALIZACAO/16-PLANO-PUBLICACAO.md`).
