@@ -1,11 +1,15 @@
-feat(saas): quotas refletidas no ERP - bloqueio criação cliente
+feat(saas): Onda 3 - white-label settings UI (parcial)
 
-- domain/quotas.ts: checkQuota(), quotaWarning() (80% threshold)
-- crm-repo.ts: clientService.create valida quota "clients" antes de criar
-- Erro "quota_exceeded" se tenant excede limite do plano
-- Demo: tenantRepo.getUsage() retorna contagens mock
+- app/configuracoes/branding/page.tsx: identidade empresa
+- Logo upload (bloqueado demo), cores primária/destaque
+- Contraste AA check realtime (4.5:1 threshold)
+- Templates: Executivo/Clássico/Minimal/Moderno
+- Densidade: Compacta/Confortável/Espaçosa
+- Tamanho texto: Padrão/Grande/Extra grande
+- Checkboxes: reduzir animações, linguagem simplificada
+- Salva via tenantRepo.update(), invalida cache, refresh
 
-Próximos: warning UI ao criar, quota members (equipe), storage, aiMessages
+Próximos Onda 3: logo upload validation real, propagar branding para DOCX/emails/portal
 
 Build OK, typecheck OK
 
