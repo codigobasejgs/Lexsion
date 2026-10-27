@@ -17,7 +17,7 @@ export default function AdminPainel() {
       <PageHeader title="Painel geral" description="Indicadores da plataforma calculados a partir dos dados fictícios da demonstração — não são resultados reais." />
       {m && (
         <>
-          <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" data-tour="sa-indicadores">
             <Stat label="Receita recorrente mensal (MRR)" value={formatBRL(m.mrr)} href="/admin/faturamento" hint="Assinaturas ativas e inadimplentes" />
             <Stat label="Receita anual estimada (ARR)" value={formatBRL(m.arr)} href="/admin/faturamento" hint="MRR × 12" />
             <Stat label="Receita média por escritório (ARPA)" value={formatBRL(m.arpa)} href="/admin/organizacoes" hint="MRR ÷ escritórios pagantes" />

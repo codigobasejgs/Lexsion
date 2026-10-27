@@ -205,6 +205,8 @@ export const settings: OrgSettings[] = [
     calendarVersion: "2026.2-demo", dataRequests: [],
   },
   { id: "set-boreal", organizationId: B, hours: "Seg–sex, 9h às 17h", timezone: "America/Sao_Paulo", areas: ["Trabalhista", "Família"], financeCategories: ["Honorários", "Custas"], retentionYears: 10, notificationPrefs: {}, stageLabels: {}, onboardingDone: [], holidays: [{ date: "2026-11-02", name: "Finados", scope: "Nacional" }], calendarVersion: "2026.1-demo", dataRequests: [] },
+  // Escritório em período de teste: configuração mínima, onboarding por fazer.
+  { id: "set-novo", organizationId: "org-novo", hours: "Seg–sex, 9h às 18h", timezone: "America/Sao_Paulo", areas: ["Previdenciário", "Civil"], financeCategories: ["Honorários", "Custas"], retentionYears: 10, notificationPrefs: { "Prazo próximo": { app: true, email: true, whatsapp: false } }, stageLabels: {}, onboardingDone: [], holidays: [{ date: "2026-11-02", name: "Finados", scope: "Nacional" }, { date: "2026-11-15", name: "Proclamação da República", scope: "Nacional" }], calendarVersion: "2026.1-demo", dataRequests: [] },
 ];
 
 export const learning: LearningProgress[] = [];

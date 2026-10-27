@@ -12,6 +12,9 @@ import type { OrgSettings } from "@/domain/types";
 // Onboarding do escritório: cadastro inicial está em Configurações; aqui o checklist guiado.
 const CHECKLIST = [
   { key: "configurar", label: "Revisar nome, áreas, horários e fuso", href: "/app/configuracoes?aba=escritorio" },
+  { key: "identidade", label: "Colocar o logotipo e as cores do escritório", href: "/app/configuracoes/branding" },
+  { key: "equipe", label: "Convidar a equipe", href: "/app/equipe" },
+  { key: "aplicativo", label: "Instalar o aplicativo do escritório no celular", href: "/app/configuracoes/branding" },
   { key: "cliente", label: "Cadastrar o primeiro cliente", href: "/app/clientes/novo" },
   { key: "atendimento", label: "Revisar o fluxo de atendimento", href: "/app/atendimento" },
   { key: "agenda", label: "Configurar a agenda e feriados", href: "/app/configuracoes?aba=calendario" },

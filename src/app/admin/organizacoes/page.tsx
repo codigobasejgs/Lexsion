@@ -33,7 +33,7 @@ export default function ContratantesPage() {
 
   return (
     <>
-      <PageHeader title="Contratantes" description="Escritórios da plataforma: plano, situação e consumo agregado." actions={<button className="btn btn-primary" onClick={() => setWizard(true)}><Plus aria-hidden className="size-4" /> Novo escritório</button>} />
+      <PageHeader title="Contratantes" description="Escritórios da plataforma: plano, situação e consumo agregado." actions={<button className="btn btn-primary" data-tour="sa-novo" onClick={() => setWizard(true)}><Plus aria-hidden className="size-4" /> Novo escritório</button>} />
       <p className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-info/30 bg-info-bg p-3 text-sm text-info"><ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0" /> O Super Admin vê só dados agregados. Documentos, conversas e casos dos escritórios não ficam acessíveis; suporte com acesso exigirá autorização do escritório e auditoria (fase backend).</p>
       <div className="mb-4 flex flex-wrap gap-2">
         <input type="search" className="field max-w-xs" aria-label="Buscar escritório" placeholder="Buscar por nome, endereço ou responsável" defaultValue={busca} onChange={(e) => url.set("q", e.target.value || null)} />

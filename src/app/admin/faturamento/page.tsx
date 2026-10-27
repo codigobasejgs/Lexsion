@@ -39,7 +39,7 @@ export default function FaturamentoPage() {
     <>
       <PageHeader title="Financeiro da plataforma" description="Faturas da assinatura LexSion cobradas dos escritórios. Separado dos honorários que cada escritório cobra dos clientes dele." />
       <div aria-live="polite">{log && <p role="status" className="mb-4 rounded border border-info/30 bg-info-bg p-3 text-sm text-info" data-testid="webhook-log">{log}</p>}</div>
-      <section className="panel mb-6 overflow-x-auto" tabIndex={0} aria-label="Faturas SaaS (role horizontalmente)">
+      <section className="panel mb-6 overflow-x-auto" tabIndex={0} aria-label="Faturas SaaS (role horizontalmente)" data-tour="sa-faturas">
         <table className="w-full min-w-[760px] text-sm">
           <caption className="sr-only">Faturas da plataforma</caption>
           <thead><tr className="text-left text-xs text-fg-muted"><th className="p-3">Escritório</th><th>Plano</th><th>Período</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th className="p-3">Simular evento do provedor</th></tr></thead>

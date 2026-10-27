@@ -9,7 +9,7 @@ async function signIn(page: Page, profile: string) {
   if (!profile) return;
   await page.getByRole("radio", { name: new RegExp(profile) }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
-  await page.waitForURL(/\/app\//);
+  await page.waitForURL(/\/(app|admin)/);
 }
 
 for (const s of SHOTS) {
@@ -17,6 +17,15 @@ for (const s of SHOTS) {
     test.skip(s.mobile !== isMobile, "outro viewport");
     await signIn(page, s.profile);
     await page.goto(s.route);
+    if (s.article === "tarefas-recorrentes") {
+      await page.getByRole("button", { name: "Nova tarefa" }).click();
+      const d = page.getByRole("dialog", { name: "Nova tarefa" });
+      await d.getByLabel("Título").fill("Conferir publicações do mês");
+      await d.getByLabel("Repetir").selectOption("mes");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: s.out, fullPage: false, animations: "disabled", caret: "hide" });
+      return;
+    }
     if (s.article === "importar-csv") {
       await page.getByRole("button", { name: "Continuar" }).click();
       await page.getByRole("button", { name: "Usar exemplo fictício" }).click();

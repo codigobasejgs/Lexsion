@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-10-27T12:44:59.092Z",
+  "generatedAt": "2026-10-27T20:40:16.775Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -18,7 +18,7 @@
       "step": 2,
       "mobile": false,
       "caption": "Escolha do perfil de demonstração",
-      "route": "/entrar",
+      "route": "/demonstracao",
       "profile": "",
       "selector": "role=radio[name=/Helena Prado/]",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
@@ -419,6 +419,50 @@
       "selector": "text=Matriz de acesso por perfil",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/gerir-equipe-2.png"
+    },
+    {
+      "article": "trocar-logo-e-cores",
+      "step": 4,
+      "mobile": false,
+      "caption": "Identidade visual com prévia ao vivo",
+      "route": "/app/configuracoes/branding",
+      "profile": "Helena Prado",
+      "selector": "text=Prévia ao vivo",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/trocar-logo-e-cores-4.png"
+    },
+    {
+      "article": "instalar-app-do-escritorio",
+      "step": 1,
+      "mobile": false,
+      "caption": "Meu aplicativo com QR Code",
+      "route": "/app/configuracoes/branding",
+      "profile": "Helena Prado",
+      "selector": "role=img[name=/QR Code/]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/instalar-app-do-escritorio-1.png"
+    },
+    {
+      "article": "tarefas-recorrentes",
+      "step": 2,
+      "mobile": false,
+      "caption": "Nova tarefa com repetição",
+      "route": "/app/tarefas",
+      "profile": "Helena Prado",
+      "selector": "h1",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/tarefas-recorrentes-2.png"
+    },
+    {
+      "article": "super-admin-escritorios",
+      "step": 1,
+      "mobile": false,
+      "caption": "Painel geral do Super Admin",
+      "route": "/admin",
+      "profile": "Suporte LexSion",
+      "selector": "text=Receita recorrente mensal",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/super-admin-escritorios-1.png"
     }
   ]
 }

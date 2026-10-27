@@ -35,7 +35,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Observe a faixa “Ambiente demonstrativo — dados fictícios” no topo de todas as telas.",
       "Resultados com o selo “Simulação” não foram enviados a nenhum serviço externo.",
       "Cadastros e alterações ficam guardados apenas neste navegador.",
-      "Para voltar ao estado inicial, abra Configurações → Dados e LGPD e toque em “Restaurar demonstração”.",
+      "Para voltar ao estado inicial do seu escritório, abra Configurações → Dados e LGPD e toque em “Restaurar demonstração”. Os outros escritórios não são alterados, e sair do sistema nunca apaga dados.",
     ],
     buttons: ["Restaurar demonstração"],
     expected: "Você distingue com segurança o que é demonstração do que seria uma operação real.",
@@ -44,10 +44,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
   {
     slug: "primeiro-acesso", title: "Primeiro acesso", category: "Primeiros passos",
-    goal: "Entrar na demonstração com o perfil adequado.", prerequisites: "Navegador atualizado.", who: "Todos os perfis.",
+    goal: "Entrar na demonstração com o perfil adequado. (A tela Entrar, com e-mail e senha, fica ativa na versão em produção.)", prerequisites: "Navegador atualizado.", who: "Todos os perfis.",
     steps: [
-      "Abra a tela Entrar.",
-      "Escolha um perfil de demonstração, por exemplo “Advogado(a)”.",
+      "No site, toque em “Ver demonstração” (ou abra /demonstracao).",
+      "Escolha o escritório e a função, por exemplo “Advogado(a)” da Aurora. Use a busca para achar um perfil.",
       "Toque em “Entrar como …”.",
       "Você chega ao Meu dia do escritório. Use a busca no topo para achar qualquer cliente ou artigo.",
     ],
@@ -449,6 +449,69 @@ export const HELP_ARTICLES: HelpArticle[] = [
     expected: "O convite fica registrado na tela; nenhum e-mail é enviado.",
     errors: [{ problem: "O botão de convite está desativado.", fix: "Digite um e-mail válido (ex.: nome@exemplo.test)." }],
     related: ["primeiro-acesso"], keywords: ["usuário", "permissão", "acesso", "colaborador", "perfil"], shots: [{ step: 2, caption: "Matriz de acesso por perfil" }], ...R,
+  },
+  // Identidade e aplicativo do escritório
+  {
+    slug: "trocar-logo-e-cores", title: "Trocar o logotipo e as cores do escritório", category: "Administração",
+    goal: "Deixar o sistema, o portal do cliente, os documentos e o aplicativo com a marca do seu escritório.", prerequisites: "Logotipo em PNG, JPEG ou WebP, até 2 MB.", who: "Administrador do escritório.",
+    steps: [
+      "Abra Configurações → Aparência e toque em “Abrir Identidade visual e Meu aplicativo”.",
+      "Em Logotipo, toque em “Enviar logotipo” e escolha a imagem. Arquivos SVG não são aceitos por segurança.",
+      "Em Cores, escolha a cor principal e a de destaque. Se a combinação ficar difícil de ler, o sistema mostra o aviso e usa uma variação legível.",
+      "Confira a “Prévia ao vivo” nos temas escuro e claro e toque em “Salvar identidade”.",
+    ],
+    buttons: ["Abrir Identidade visual e Meu aplicativo", "Enviar logotipo", "Salvar identidade", "Descartar"],
+    expected: "A marca aparece no menu, no portal do cliente, no cabeçalho dos documentos Word e nos e-mails do escritório. Outros escritórios não são alterados.",
+    errors: [
+      { problem: "Apareceu “SVG não é aceito no envio”.", fix: "Exporte o logotipo em PNG (de preferência 512 × 512 px com fundo) e envie de novo." },
+      { problem: "A cor ficou diferente da que escolhi.", fix: "A cor escolhida fica salva; o sistema só usa uma variação mais escura ou mais clara onde ela ficaria ilegível." },
+    ],
+    related: ["instalar-app-do-escritorio", "gerir-equipe"], keywords: ["logo", "logotipo", "marca", "cor", "identidade", "white-label", "personalizar"], shots: [{ step: 4, caption: "Identidade visual com prévia ao vivo" }], ...R,
+  },
+  {
+    slug: "instalar-app-do-escritorio", title: "Instalar o aplicativo do escritório", category: "Primeiros passos",
+    goal: "Ter o sistema do escritório como aplicativo no celular, com o nome e o ícone do escritório.", prerequisites: "Celular com Chrome (Android) ou Safari (iPhone).", who: "Toda a equipe e clientes.",
+    steps: [
+      "O administrador abre Configurações → Identidade visual e Meu aplicativo e mostra o QR Code.",
+      "No celular, aponte a câmera para o QR Code e abra o endereço.",
+      "Android: menu ⋮ → “Instalar app”. iPhone: Compartilhar → “Adicionar à Tela de Início”.",
+      "Abra o aplicativo pelo ícone do escritório na tela inicial.",
+    ],
+    buttons: ["Abrir Identidade visual e Meu aplicativo"],
+    expected: "O aplicativo abre em tela cheia, com o nome e o ícone do escritório.",
+    errors: [
+      { problem: "O QR Code avisa “Endereço local”.", fix: "Esse endereço só abre na mesma rede. A instalação de qualquer lugar funciona depois da publicação com HTTPS." },
+      { problem: "Troquei o logotipo e o ícone instalado não mudou.", fix: "Alguns celulares só atualizam o ícone depois de um tempo ou ao reinstalar o aplicativo." },
+    ],
+    related: ["operar-no-celular", "trocar-logo-e-cores"], keywords: ["instalar", "app", "aplicativo", "qr", "celular", "ícone", "pwa"], shots: [{ step: 1, caption: "Meu aplicativo com QR Code" }], ...R,
+  },
+  {
+    slug: "tarefas-recorrentes", title: "Criar tarefas que se repetem", category: "Operação",
+    goal: "Não esquecer rotinas como conferir publicações todo mês ou ligar para clientes toda semana.", prerequisites: "Nenhum.", who: "Toda a equipe.",
+    steps: [
+      "Abra Tarefas e toque em “Nova tarefa”.",
+      "Preencha o título e o prazo. Em Repetir, escolha semana, quinzena, mês ou ano (e, se quiser, até quando).",
+      "Toque em “Criar tarefa”. Ao concluir, a próxima ocorrência é criada sozinha.",
+      "Para interromper, abra a tarefa e toque em “Pausar repetição” ou “Parar de repetir”.",
+    ],
+    buttons: ["Nova tarefa", "Criar tarefa", "Pausar repetição", "Parar de repetir"],
+    expected: "A próxima ocorrência aparece na lista com o prazo seguinte. Dia 31 em mês curto vira o último dia do mês.",
+    errors: [{ problem: "Reabri e concluí de novo: vai duplicar?", fix: "Não. Cada ocorrência gera a próxima uma única vez." }],
+    related: ["registrar-prazo"], keywords: ["repetir", "rotina", "mensal", "semanal", "recorrente", "lembrete"], shots: [{ step: 2, caption: "Nova tarefa com repetição" }], ...R,
+  },
+  {
+    slug: "super-admin-escritorios", title: "Gerir escritórios, planos e faturas (Super Admin)", category: "Plataforma",
+    goal: "Cadastrar escritórios, mudar plano, suspender ou reativar e acompanhar as faturas da assinatura.", prerequisites: "Perfil da plataforma LexSion.", who: "Superadmin e administrador da plataforma.",
+    steps: [
+      "No Painel geral, veja receita mensal, escritórios em teste e faturas em aberto, calculados a partir dos dados.",
+      "Em Contratantes, toque em “Novo escritório” e siga as 5 etapas. O endereço não pode ser reservado nem repetido.",
+      "Para suspender, toque em “Suspender” e informe o motivo; o escritório vê “Acesso suspenso” e os dados ficam preservados. “Reativar” desfaz.",
+      "Em Financeiro da plataforma, acompanhe as faturas da assinatura — separadas dos honorários que os escritórios cobram dos clientes.",
+    ],
+    buttons: ["Novo escritório", "Suspender", "Reativar", "Salvar plano"],
+    expected: "Toda ação fica registrada em Auditoria.",
+    errors: [{ problem: "“Endereço reservado pela plataforma”.", fix: "Escolha outro endereço: alguns nomes (como admin ou app) são reservados." }],
+    related: ["gerir-equipe"], keywords: ["superadmin", "plano", "assinatura", "fatura", "suspender", "trial", "teste", "escritório", "saas"], shots: [{ step: 1, caption: "Painel geral do Super Admin" }], ...R,
   },
 ];
 

@@ -90,7 +90,7 @@ export default function IdentidadePage() {
               <label className="block"><span className="label">Nome curto do aplicativo</span><input className="field" maxLength={14} value={draft.pwaShortName} onChange={(e) => set({ pwaShortName: e.target.value })} aria-describedby="curto-h" /><span id="curto-h" className="text-xs text-fg-muted">Aparece embaixo do ícone no celular. Até 12 letras fica melhor.</span></label>
             </section>
 
-            <section className="panel space-y-3 p-5" aria-labelledby="t-logo">
+            <section className="panel space-y-3 p-5" aria-labelledby="t-logo" data-tour="wl-logo">
               <h2 id="t-logo" className="font-semibold">Logotipo</h2>
               <p className="text-sm text-fg-muted">PNG, JPEG ou WebP, até 2 MB, de 64 a 4096 px. Para o ícone do aplicativo, prefira 512 × 512 px com fundo. SVG não é aceito no envio por segurança.</p>
               <div className="flex flex-wrap items-center gap-4">
@@ -103,7 +103,7 @@ export default function IdentidadePage() {
               </div>
             </section>
 
-            <section className="panel space-y-3 p-5" aria-labelledby="t-cores">
+            <section className="panel space-y-3 p-5" aria-labelledby="t-cores" data-tour="wl-cores">
               <h2 id="t-cores" className="font-semibold">Cores</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {COLORS.map(([k, label]) => (
@@ -137,7 +137,7 @@ export default function IdentidadePage() {
 
           <aside className="min-w-0 space-y-6" aria-label="Prévias">
             <Preview draft={draft} theme={theme} />
-            <section className="panel space-y-3 p-5" aria-labelledby="t-app">
+            <section className="panel space-y-3 p-5" aria-labelledby="t-app" data-tour="wl-app">
               <h2 id="t-app" className="flex items-center gap-2 font-semibold"><Smartphone aria-hidden className="size-4" /> Meu aplicativo</h2>
               <div className="flex items-center gap-3">
                 <span className="inline-flex size-16 items-center justify-center overflow-hidden rounded-2xl" style={{ background: draft.backgroundDark }}>

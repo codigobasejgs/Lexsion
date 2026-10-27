@@ -50,6 +50,10 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "ler-relatorios:2": { route: "/app/relatorios", selector: "figure" },
   "gerir-equipe:2": { route: "/app/equipe", selector: "text=Matriz de acesso por perfil" },
   "conectar-whatsapp:2": { route: "/app/integracoes/evolution", selector: '[data-tour="conexao-whatsapp"]' },
+  "trocar-logo-e-cores:4": { route: "/app/configuracoes/branding", selector: "text=Prévia ao vivo" },
+  "instalar-app-do-escritorio:1": { route: "/app/configuracoes/branding", selector: 'role=img[name=/QR Code/]' },
+  "tarefas-recorrentes:2": { route: "/app/tarefas", selector: "h1" },
+  "super-admin-escritorios:1": { route: "/admin", selector: "text=Receita recorrente mensal", profile: "Suporte LexSion" },
 };
 
 export const SHOTS: ShotSpec[] = HELP_ARTICLES.flatMap((a) =>

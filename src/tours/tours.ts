@@ -123,4 +123,20 @@ export const TOURS: Tour[] = [
       { route: "/portal", target: "portal-pagar", title: "Pagamentos", body: "Valores e vencimentos. Pagamento online virá numa próxima fase." },
     ],
   },
+  {
+    id: "identidade", title: "Marca e aplicativo do escritório", summary: "Logotipo, cores legíveis e QR para instalar.", area: "configuracoes", version: TOUR_VERSION,
+    steps: [
+      { route: "/app/configuracoes/branding", target: "wl-logo", title: "Logotipo", body: "Envie PNG, JPEG ou WebP. O arquivo é conferido e convertido com segurança." },
+      { route: "/app/configuracoes/branding", target: "wl-cores", title: "Cores", body: "Se a cor ficar difícil de ler, o sistema avisa e usa uma variação legível, sem perder sua escolha." },
+      { route: "/app/configuracoes/branding", target: "wl-app", title: "Meu aplicativo", body: "Mostre o QR Code para a equipe e os clientes instalarem o aplicativo do escritório." },
+    ],
+  },
+  {
+    id: "super-admin", title: "Gestão da plataforma (Super Admin)", summary: "Indicadores, escritórios, planos e faturas.", area: "admin", version: TOUR_VERSION,
+    steps: [
+      { route: "/admin", target: "sa-indicadores", title: "Indicadores", body: "Receita, escritórios em teste e faturas em aberto, calculados a partir dos dados — honorários dos escritórios não entram." },
+      { route: "/admin/organizacoes", target: "sa-novo", title: "Novo escritório", body: "Cadastre em 5 etapas. O endereço é validado e nomes reservados são recusados." },
+      { route: "/admin/faturamento", target: "sa-faturas", title: "Faturas da assinatura", body: "Simule eventos do provedor; repetir o mesmo evento não altera a fatura duas vezes." },
+    ],
+  },
 ];
