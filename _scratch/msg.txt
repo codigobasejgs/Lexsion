@@ -1,10 +1,11 @@
-feat(saas): SW cache namespace per tenant
+feat(saas): Onda 2 - Super Admin dashboard com métricas derivadas
 
-- sw.js: getTenantSlug() lê cookie
-- SHELL cache: siwiltec-tenant-${tenantSlug}-shell-${VERSION}
-- activate: limpa shells de versões antigas (todos tenants)
-- clearShellCache() já filtra pattern correto (preservado)
+- admin/organizacoes: MRR, ARR, ARPA, churn calculados dos planos ativos
+- Grid 4 cards: receita mensal/anual, média por tenant, taxa cancelamento
+- Lista tenants com usage (members, clients) via tenantRepo.getUsage()
+- Badge status: ativa/trial/suspensa
+- Métricas demo: churn 0 (sem histórico cancelamento)
 
-Build OK
+Build OK, typecheck OK
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>
