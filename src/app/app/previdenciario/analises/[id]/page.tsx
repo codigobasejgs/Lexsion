@@ -11,6 +11,7 @@ import { diffDays, formatCivil } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
 import type { ContributionPeriod } from "@/domain/types";
 import { PensionReport } from "@/modules/pension/report";
+import { allowed } from "@/domain/permissions";
 
 const STEPS = ["Cliente", "Documentos", "Vínculos", "Pendências", "Cenários", "Revisão", "Relatório"];
 
@@ -40,7 +41,7 @@ export default function AnalisePage({ params }: PageProps<"/app/previdenciario/a
   const stale = a.resultsVersion !== a.inputsVersion;
   const sel = a.periods.find((p) => p.id === selected) ?? a.periods[0];
   const evidenceDoc = docs.data?.find((d) => d.id === sel.evidence.documentId);
-  const canApprove = user?.role === "advogado" || user?.role === "admin";
+  const canApprove = allowed(user?.role, "aprovar_peca");
   const step = a.step;
 
   const run = async (fn: () => Promise<unknown>) => {

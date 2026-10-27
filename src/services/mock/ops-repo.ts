@@ -11,6 +11,7 @@ import { recompute } from "@/domain/finance";
 import { countDeadline } from "@/domain/deadlines";
 import { textHash } from "@/domain/metrics";
 import { DEMO_TODAY } from "@/mocks/clock";
+import { allowed } from "@/domain/permissions";
 
 // ---------------- Documentos (M09, A06) ----------------
 export const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"];
@@ -198,7 +199,7 @@ export const commercialService = {
     const p = props.find((x) => x.id === id && x.organizationId === ctx.organizationId);
     if (!p) return fail("not_found", "Proposta não encontrada.");
     if (status === "enviada" && p.status !== "aprovada") return fail("not_approved", "Aprove a proposta antes de enviar.");
-    if (status === "aprovada" && !["admin", "advogado"].includes((await readAll("users")).find((u) => u.id === ctx.actorId)?.role ?? "")) return fail("forbidden", "Somente advogado(a) ou administrador aprova propostas.");
+    if (status === "aprovada" && !allowed((await readAll("users")).find((u) => u.id === ctx.actorId)?.role, "aprovar_proposta")) return fail("forbidden", "Somente advogado(a) ou administrador aprova propostas.");
     if (status === "aceita" && p.status !== "enviada") return fail("not_sent", "Só proposta enviada pode ser aceita.");
     const next = { ...p, status, history: [...p.history, { at: nowIso(), actorId: ctx.actorId, text: `Status: ${status}${status === "enviada" ? " (simulação — nada foi enviado)" : ""}` }] };
     await writeMany({ proposals: props.map((x) => (x.id === id ? next : x)) });
@@ -441,7 +442,7 @@ export const draftService = {
     const d = drafts.find((x) => x.id === id && x.organizationId === ctx.organizationId);
     if (!d) return fail("not_found", "Minuta não encontrada.");
     const role = users.find((u) => u.id === ctx.actorId)?.role;
-    if (status === "aprovado" && role !== "advogado" && role !== "admin") return fail("forbidden", "Somente advogado(a) ou administrador aprova peças.");
+    if (status === "aprovado" && !allowed(role, "aprovar_peca")) return fail("forbidden", "Somente advogado(a) ou administrador aprova peças.");
     if (status === "aprovado" && missingFields(d.body).length) return fail("missing", `Preencha antes de aprovar: ${missingFields(d.body).join(", ")}.`);
     if (status === "exportado" && d.status !== "aprovado" && d.status !== "exportado") return fail("not_approved", "Aprove a minuta antes de exportar.");
     const next: LegalDraft = { ...d, status, approvedHash: status === "aprovado" ? textHash(d.body) : d.approvedHash, history: [...d.history, { at: nowIso(), actorId: ctx.actorId, text: `Status: ${status}` }] };
@@ -495,7 +496,7 @@ export const portalService = {
   publish: async (caseId: string, updateId: string, ctx: RequestContext): Promise<Result<Case>> => {
     const [cases, users, audit] = await Promise.all([readAll("cases"), readAll("users"), readAll("audit")]);
     const role = users.find((u) => u.id === ctx.actorId)?.role;
-    if (role !== "admin" && role !== "advogado") return fail("forbidden", "Somente advogado(a) ou administrador publica no portal.");
+    if (!allowed(role, "publicar_portal")) return fail("forbidden", "Somente advogado(a) ou administrador publica no portal.");
     const k = cases.find((c) => c.id === caseId && c.organizationId === ctx.organizationId);
     const u = k?.portalUpdates?.find((x) => x.id === updateId);
     if (!k || !u) return fail("not_found", "Atualização não encontrada.");

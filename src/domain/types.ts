@@ -4,7 +4,11 @@ import type { CivilDate } from "@/lib/dates";
 
 export type ID = string;
 
-export type Role = "admin" | "advogado" | "atendimento" | "controladoria" | "financeiro" | "estagiario" | "cliente" | "superadmin";
+// 12 papéis do produto (ver ROLE_PRODUCT em permissions.ts). Identificadores legados preservados para não migrar dados.
+export type Role =
+  | "superadmin" | "platform_admin" | "platform_support" // plataforma LexSion
+  | "admin" | "tenant_admin" | "advogado" | "controladoria" | "financeiro" | "atendimento" | "estagiario" // escritório
+  | "cliente" | "external_collaborator"; // externos ao escritório
 
 export interface Organization {
   id: ID;

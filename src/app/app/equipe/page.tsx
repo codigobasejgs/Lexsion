@@ -5,11 +5,13 @@ import { MailPlus } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Avatar, Badge, PageHeader, SimulatedBadge } from "@/components/ui";
-import { ROLE_LABEL, can, type Area } from "@/domain/permissions";
+import { ACTION_LABEL, ALL_ROLES, ROLE_LABEL, allowed, can, isPlatformRole, type Action, type Area } from "@/domain/permissions";
 import { users } from "@/mocks/fixtures";
 import type { Role } from "@/domain/types";
 
 const AREAS: Area[] = ["atendimento", "crm", "clientes", "casos", "documentos", "previdenciario", "financeiro", "pagamentos", "minutas", "integracoes", "configuracoes"];
+const ACTIONS: Action[] = ["aprovar_peca", "publicar_portal", "aprovar_proposta", "ver_honorarios", "ver_casos_sigilosos", "exportar", "gerir_equipe", "gerir_marca"];
+const OFFICE_ROLES = ALL_ROLES.filter((r) => !isPlatformRole(r));
 
 export default function EquipePage() {
   const { org } = useSession();
@@ -32,11 +34,16 @@ export default function EquipePage() {
           ))}
         </ul>
         <section className="panel relative mb-6 overflow-x-auto p-4" tabIndex={0} aria-label="Matriz de acesso por perfil (role horizontalmente)">
-          <h2 className="mb-2 font-semibold">Matriz de acesso por perfil</h2>
-          <table className="w-full text-sm"><caption className="sr-only">Permissões</caption>
-            <thead><tr><th className="py-1 text-left">Módulo</th>{roles.map((r) => <th key={r} className="px-2 text-left text-xs">{ROLE_LABEL[r]}</th>)}</tr></thead>
-            <tbody>{AREAS.map((a) => <tr key={a} className="border-t border-line"><th scope="row" className="py-1 text-left font-normal capitalize">{a}</th>{roles.map((r) => <td key={r} className="px-2">{can(r, a) ? "✓ acesso" : "— sem acesso"}</td>)}</tr>)}</tbody>
+          <h2 className="mb-1 font-semibold">Matriz de acesso por perfil</h2>
+          <p className="mb-3 text-sm text-fg-muted">Funções do escritório. Nesta demonstração a permissão é aplicada na interface e nos serviços simulados; na versão em produção será garantida no servidor.</p>
+          <table className="w-full min-w-[720px] text-sm" data-testid="matriz-acesso"><caption className="sr-only">Permissões por módulo e por ação</caption>
+            <thead><tr><th className="py-1 text-left">Módulo / ação</th>{OFFICE_ROLES.map((r) => <th key={r} scope="col" className="px-2 text-left text-xs">{ROLE_LABEL[r]}</th>)}</tr></thead>
+            <tbody>
+              {AREAS.map((a) => <tr key={a} className="border-t border-line"><th scope="row" className="py-1 text-left font-normal capitalize">{a}</th>{OFFICE_ROLES.map((r) => <td key={r} className="px-2">{can(r, a) ? "✓ acesso" : "— sem acesso"}</td>)}</tr>)}
+              {ACTIONS.map((x) => <tr key={x} className="border-t border-line bg-surface-muted/40"><th scope="row" className="py-1 text-left font-normal">{ACTION_LABEL[x]}</th>{OFFICE_ROLES.map((r) => <td key={r} className="px-2">{allowed(r, x) ? "✓ pode" : "— não"}</td>)}</tr>)}
+            </tbody>
           </table>
+          <p className="mt-2 text-xs text-fg-muted">Papéis da plataforma (Superadmin, administrador e suporte LexSion) não acessam dados dos escritórios. Presentes nesta equipe: {roles.map((r) => ROLE_LABEL[r]).join(", ")}.</p>
         </section>
         <section className="panel space-y-2 p-4 text-sm">
           <div className="flex items-center gap-2"><h2 className="flex-1 font-semibold">Convidar membro</h2><SimulatedBadge /></div>

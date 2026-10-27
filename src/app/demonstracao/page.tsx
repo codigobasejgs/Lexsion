@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Building2, FlaskConical, Search, ShieldCheck } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { organizations, users } from "@/mocks/fixtures";
-import { ROLE_LABEL } from "@/domain/permissions";
+import { isPlatformRole, ROLE_LABEL } from "@/domain/permissions";
 import { LexSionLogo } from "@/components/brand";
 import type { Role } from "@/domain/types";
 
@@ -20,6 +20,10 @@ const ROLE_PREVIEW: Record<Role, string> = {
   estagiario: "Apoio em casos, documentos e minutas, sem aprovar.",
   cliente: "Área do cliente: andamento em linguagem simples, documentos e pagamentos.",
   superadmin: "Painel da plataforma LexSion: escritórios, planos e faturas SaaS (fictício).",
+  platform_admin: "Opera a plataforma com permissões delegadas: escritórios, planos e faturas. Sem acesso a documentos dos escritórios.",
+  platform_support: "Atende chamados dos escritórios. Vê dados agregados; não altera planos nem faturas.",
+  tenant_admin: "Gestor(a) operacional: equipe, agenda e rotinas do escritório, sem aprovar peças nem alterar a marca.",
+  external_collaborator: "Correspondente ou parceiro: só os casos, documentos e compromissos que lhe forem atribuídos.",
 };
 
 const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -41,7 +45,7 @@ export default function DemonstracaoPage() {
 
   const enter = () => {
     signIn(userId);
-    router.push(selected.role === "cliente" ? "/portal" : selected.role === "superadmin" ? "/admin" : "/app/inicio");
+    router.push(selected.role === "cliente" ? "/portal" : isPlatformRole(selected.role) ? "/admin" : "/app/inicio");
   };
 
   return (

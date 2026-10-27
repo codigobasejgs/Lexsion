@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, Table2 } from "lucide-react";
 import { Guard } from "@/components/guard";
-import { useCollection } from "@/components/providers";
+import { useCollection, useSession } from "@/components/providers";
 import { PageHeader } from "@/components/ui";
 import { Chips } from "@/modules/shared";
 import { STAGES } from "@/domain/crm";
@@ -13,6 +13,7 @@ import { formatBRL } from "@/lib/money";
 import { diffDays } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { users } from "@/mocks/fixtures";
+import { isPlatformRole } from "@/domain/permissions";
 
 type Report = "funil" | "origem" | "carga" | "prazos" | "documentos" | "financeiro" | "ia";
 
@@ -45,6 +46,7 @@ function Bars({ title, rows, format = (n: number) => String(n) }: { title: strin
 
 export default function RelatoriosPage() {
   const [r, setR] = useState<Report>("funil");
+  const { org } = useSession();
   const leads = useCollection("leads");
   const tasks = useCollection("tasks");
   const deadlines = useCollection("deadlines");
@@ -67,7 +69,7 @@ export default function RelatoriosPage() {
       funnel: STAGES.map((s) => ({ label: s.label, value: L.filter((l) => l.stage === s.key).length })),
       conversion: pct(signed, eligible.length),
       origin: [...new Set(L.map((l) => l.firstTouch.origin))].map((o) => ({ label: o, value: L.filter((l) => l.firstTouch.origin === o).length })),
-      load: users.filter((u) => u.role !== "cliente" && u.role !== "superadmin").map((u) => ({ label: u.name, value: (tasks.data ?? []).filter((t) => t.assigneeId === u.id && !t.done).length })).filter((x) => x.value > 0),
+      load: users.filter((u) => u.role !== "cliente" && !isPlatformRole(u.role) && u.organizationId === org?.id).map((u) => ({ label: u.name, value: (tasks.data ?? []).filter((t) => t.assigneeId === u.id && !t.done).length })).filter((x) => x.value > 0),
       deadlines: [{ label: "Aguardando confirmação", value: (deadlines.data ?? []).filter((d) => d.status === "proposto").length }, { label: "Confirmados", value: (deadlines.data ?? []).filter((d) => d.status === "confirmado").length }, { label: "Cumpridos", value: (deadlines.data ?? []).filter((d) => d.status === "cumprido").length }],
       docs: ["solicitado", "recebido", "em_leitura", "precisa_revisar", "validado", "rejeitado"].map((s) => ({ label: s, value: (docs.data ?? []).filter((d) => d.status === s).length })),
       received: [...byMonth.entries()].sort().map(([k, v]) => ({ label: k.split("-").reverse().join("/"), value: v })),

@@ -12,6 +12,7 @@ import { DEFAULT_BRANDING, normalizeHex, type TenantBranding } from "@/domain/te
 import { tenantTheme } from "@/lib/tenant-tokens";
 import { processLogo } from "@/lib/logo-upload";
 import { qrSvg } from "@/lib/qr";
+import { allowed } from "@/domain/permissions";
 import { tenants as seedTenants } from "@/mocks/tenants";
 
 const TEMPLATES: [TenantBranding["template"], string, Partial<TenantBranding>][] = [
@@ -37,7 +38,7 @@ export default function IdentidadePage() {
   useDirtyGuard("identidade", dirty);
   const theme = useMemo(() => (draft ? tenantTheme(draft) : null), [draft]);
   if (!tenant || !draft || !theme) return null;
-  const canEdit = user?.role === "admin";
+  const canEdit = allowed(user?.role, "gerir_marca");
   const set = (patch: Partial<TenantBranding>) => { setNotice(null); setDraft({ ...draft, ...patch }); };
 
   const save = async () => {

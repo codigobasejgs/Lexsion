@@ -27,10 +27,14 @@ export const users: User[] = [
   { id: "u-caio", name: "Caio Martins", role: "financeiro", organizationId: A },
   { id: "u-lia", name: "Lia Torres", role: "estagiario", organizationId: A },
   { id: "u-dora", name: "Dora Sampaio", role: "controladoria", organizationId: A },
+  { id: "u-gil", name: "Gilberto Andrade", role: "tenant_admin", organizationId: A },
+  { id: "u-renan", name: "Renan Correspondente", role: "external_collaborator", organizationId: A },
   { id: "u-otavio", name: "Otávio Reis", role: "admin", organizationId: B },
   { id: "u-trial", name: "Carlos Exemplo", role: "admin", organizationId: N },
   { id: "u-portal-maria", name: "Maria das Graças Exemplo", role: "cliente", organizationId: A, clientId: "c-maria" },
   { id: "u-super", name: "Suporte LexSion", role: "superadmin", organizationId: null },
+  { id: "u-plat-admin", name: "Paula Operações", role: "platform_admin", organizationId: null },
+  { id: "u-plat-suporte", name: "Sérgio Atendimento LexSion", role: "platform_support", organizationId: null },
 ];
 
 // Documento sintético começando com "000." — inválido de propósito, nunca confundível com CPF real.

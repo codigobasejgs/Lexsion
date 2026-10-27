@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Building2, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, ScrollText, X } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
+import { isPlatformRole } from "@/domain/permissions";
 
 const NAV = [
   { href: "/admin", label: "Painel geral", icon: BarChart3 },
@@ -23,7 +24,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (ready && user?.role !== "superadmin") router.replace("/demonstracao");
+    if (ready && !isPlatformRole(user?.role)) router.replace("/demonstracao");
   }, [ready, user, router]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- fecha o menu móvel ao navegar
   useEffect(() => setOpen(false), [path]);
@@ -33,7 +34,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
   }, [open]);
-  if (!ready || user?.role !== "superadmin") return <div className="min-h-dvh bg-canvas" aria-busy="true" />;
+  if (!ready || !isPlatformRole(user?.role)) return <div className="min-h-dvh bg-canvas" aria-busy="true" />;
   const active = (href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));
   const nav = (
     <nav aria-label="Super Admin" className="space-y-0.5">

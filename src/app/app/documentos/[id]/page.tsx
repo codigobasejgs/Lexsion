@@ -11,6 +11,7 @@ import { DOC_STATUS } from "@/modules/cases/labels";
 import { UploadDialog } from "@/modules/documents/upload";
 import { docService } from "@/services/mock/ops-repo";
 import { readAll } from "@/services/mock/db";
+import { allowed } from "@/domain/permissions";
 import { formatInstant } from "@/lib/dates";
 import type { ExtractedField, StoredFile } from "@/domain/types";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ export default function DocumentoPage({ params }: PageProps<"/app/documentos/[id
   if (docs.isPending) return <LoadingBlock rows={5} />;
   if (!d) return <EmptyState title="Documento não encontrado" text="Pode ter sido removido ou pertencer a outro escritório." action={<Link className="btn btn-secondary" href="/app/documentos">Voltar</Link>} />;
   const health = d.type === "Laudo" || d.type === "Exame";
-  const restricted = health && user?.role !== "admin" && user?.role !== "advogado";
+  const restricted = health && !allowed(user?.role, "ver_casos_sigilosos");
   const client = clients.data?.find((c) => c.id === d.clientId);
 
   return (

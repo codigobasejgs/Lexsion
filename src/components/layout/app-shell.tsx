@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Building2, ChevronsLeft, ChevronsRight, FlaskConical, LogOut, Plus, Search } from "lucide-react";
 import { useSession } from "@/components/providers";
-import { can, ROLE_LABEL, type Area } from "@/domain/permissions";
+import { can, isPlatformRole, ROLE_LABEL, type Area } from "@/domain/permissions";
 import { organizations } from "@/mocks/fixtures";
 import { MOBILE_TABS, MORE_ICON, NAV_GROUPS } from "./nav";
 import dynamic from "next/dynamic";
@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready && !user) router.replace("/demonstracao");
     else if (ready && user?.role === "cliente") router.replace("/portal");
-    else if (ready && user?.role === "superadmin") router.replace("/admin");
+    else if (ready && isPlatformRole(user?.role)) router.replace("/admin");
   }, [ready, user, router]);
 
   useEffect(() => {
