@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useOffline } from "next/offline";
-import { Download, RefreshCw, Share, WifiOff, X } from "lucide-react";
+import { Download, HardDriveDownload, RefreshCw, Share, WifiOff, X } from "lucide-react";
+import { onStorageModeChange, storageMode } from "@/services/mock/db";
+import { isSessionVolatile } from "@/components/providers";
 
 // ---- Formulários sujos: atualização nunca descarta edição (seção 4.11) ----
 const dirty = new Set<string>();
@@ -145,6 +147,7 @@ export function PwaRegister() {
 
   return (
     <div className="no-print pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+76px)] z-40 flex flex-col items-center gap-2 px-4 lg:bottom-6">
+      <VolatileStorageNotice />
       {offline && (
         <div role="status" className="pointer-events-auto flex items-center gap-2 rounded-full border border-warning/40 bg-warning-bg px-4 py-2 text-sm text-warning shadow-lg">
           <WifiOff aria-hidden className="size-4" />
@@ -199,5 +202,21 @@ export function InstallCard({ force }: { force?: boolean }) {
         </button>
       )}
     </section>
+  );
+}
+
+/** ROB-01: armazenamento do navegador bloqueado ⇒ a demo roda em memória; avisa sem travar. */
+function VolatileStorageNotice() {
+  const volatile = useSyncExternalStore(
+    onStorageModeChange,
+    () => storageMode() === "memory" || isSessionVolatile(),
+    () => false,
+  );
+  if (!volatile) return null;
+  return (
+    <div role="status" data-testid="aviso-armazenamento" className="pointer-events-auto flex max-w-md items-center gap-2 rounded-[var(--radius-panel)] border border-warning/40 bg-warning-bg px-4 py-2 text-sm text-warning shadow-lg">
+      <HardDriveDownload aria-hidden className="size-4 shrink-0" />
+      Armazenamento do navegador indisponível: o que você fizer fica só nesta aba e some ao fechá-la.
+    </div>
   );
 }

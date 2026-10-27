@@ -418,6 +418,9 @@ export const chargeService = {
 };
 
 // ---------------- Minutas (M13) ----------------
+/** Campos de modelo não preenchidos: `[campo — não preenchido]` (gerado por fillTemplate). */
+export const missingFields = (body: string) => [...body.matchAll(/\[([\w.]+) — não preenchido\]/g)].map((m) => m[1]);
+
 export const draftService = {
   save: async (id: string, body: string, ctx: RequestContext): Promise<Result<LegalDraft>> => {
     const drafts = await readAll("drafts");
@@ -439,6 +442,7 @@ export const draftService = {
     if (!d) return fail("not_found", "Minuta não encontrada.");
     const role = users.find((u) => u.id === ctx.actorId)?.role;
     if (status === "aprovado" && role !== "advogado" && role !== "admin") return fail("forbidden", "Somente advogado(a) ou administrador aprova peças.");
+    if (status === "aprovado" && missingFields(d.body).length) return fail("missing", `Preencha antes de aprovar: ${missingFields(d.body).join(", ")}.`);
     if (status === "exportado" && d.status !== "aprovado" && d.status !== "exportado") return fail("not_approved", "Aprove a minuta antes de exportar.");
     const next: LegalDraft = { ...d, status, approvedHash: status === "aprovado" ? textHash(d.body) : d.approvedHash, history: [...d.history, { at: nowIso(), actorId: ctx.actorId, text: `Status: ${status}` }] };
     await writeMany({ drafts: drafts.map((x) => (x.id === id ? next : x)) });

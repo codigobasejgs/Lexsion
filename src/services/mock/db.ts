@@ -67,6 +67,19 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 export function storageMode(): StorageMode {
   return mode;
 }
+const modeListeners = new Set<() => void>();
+/** Assinatura para avisar a interface quando o armazenamento cai para memória. */
+export function onStorageModeChange(fn: () => void): () => void {
+  modeListeners.add(fn);
+  return () => {
+    modeListeners.delete(fn);
+  };
+}
+function toMemory() {
+  if (mode === "memory") return;
+  mode = "memory";
+  modeListeners.forEach((l) => l());
+}
 
 function seedValue(name: CollectionName): unknown[] {
   const rows = structuredClone(COLLECTIONS[name]) as unknown[];
@@ -95,9 +108,7 @@ function openDb(): Promise<IDBDatabase> {
     req.onerror = () => reject(req.error);
     req.onblocked = () => reject(new Error("IndexedDB bloqueado por outra aba"));
   });
-  dbPromise.catch(() => {
-    mode = "memory";
-  });
+  dbPromise.catch(toMemory);
   return dbPromise;
 }
 
@@ -116,6 +127,7 @@ export async function readAll<C extends CollectionName>(name: C): Promise<Row<C>
     const v = await tx(db, "readonly", (s) => s.get(name));
     return (v ?? seedValue(name)) as Row<C>[];
   } catch {
+    toMemory();
     if (!memory.has(name)) memory.set(name, seedValue(name));
     return memory.get(name) as Row<C>[];
   }
@@ -126,6 +138,7 @@ export async function writeAll<C extends CollectionName>(name: C, rows: Row<C>[]
     const db = await openDb();
     await tx(db, "readwrite", (s) => s.put(rows, name));
   } catch {
+    toMemory();
     memory.set(name, rows);
   }
   broadcast();
@@ -145,6 +158,7 @@ export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[]
       t.onabort = () => reject(t.error);
     });
   } catch {
+    toMemory();
     for (const [name, rows] of entries) memory.set(name, rows);
   }
   broadcast();

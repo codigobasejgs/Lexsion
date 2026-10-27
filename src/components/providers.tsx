@@ -13,12 +13,17 @@ import type { RequestContext } from "@/services/contracts";
 const SESSION_KEY = "siwiltec.session";
 type Session = { userId: string; organizationId: string | null };
 
-function readSession(): Session | null {
+// localStorage bloqueado (navegação privada, política do navegador): sessão fica só em memória nesta aba.
+let memorySession: string | null = null;
+let sessionInMemory = false;
+export const isSessionVolatile = () => sessionInMemory;
+
+function rawSession(): string | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
+    return localStorage.getItem(SESSION_KEY);
   } catch {
-    return null;
+    sessionInMemory = true;
+    return memorySession;
   }
 }
 
@@ -26,13 +31,14 @@ const sessionListeners = new Set<() => void>();
 let cachedRaw: string | null | undefined;
 let cachedSession: Session | null = null;
 function getSnapshot(): Session | null {
-  let raw: string | null = null;
-  try {
-    raw = localStorage.getItem(SESSION_KEY);
-  } catch {}
+  const raw = rawSession();
   if (raw !== cachedRaw) {
     cachedRaw = raw;
-    cachedSession = readSession();
+    try {
+      cachedSession = raw ? (JSON.parse(raw) as Session) : null;
+    } catch {
+      cachedSession = null; // valor corrompido ⇒ sem sessão (volta para /entrar)
+    }
   }
   return cachedSession;
 }
@@ -45,10 +51,14 @@ function subscribe(fn: () => void) {
   };
 }
 function writeSession(s: Session | null) {
+  const raw = s ? JSON.stringify(s) : null;
   try {
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    if (raw) localStorage.setItem(SESSION_KEY, raw);
     else localStorage.removeItem(SESSION_KEY);
-  } catch {}
+  } catch {
+    sessionInMemory = true;
+    memorySession = raw;
+  }
   sessionListeners.forEach((l) => l());
 }
 

@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { use, useState } from "react";
-import { Download, Printer, Sparkles } from "lucide-react";
+import { Download, FileText, Printer, Sparkles } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { useDirtyGuard } from "@/components/pwa";
 import { Badge, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/components/ui";
 import { Feedback, useAction, userName } from "@/modules/shared";
 import { DRAFT_STATUS } from "@/modules/drafts/labels";
-import { draftService } from "@/services/mock/ops-repo";
+import { draftService, missingFields } from "@/services/mock/ops-repo";
+import { buildDocx, docxFileName, DOCX_MIME } from "@/domain/docx";
 import { updateRow } from "@/services/mock/generic";
 import { downloadText } from "@/domain/csv";
 import { canApprove } from "@/domain/permissions";
@@ -24,21 +25,35 @@ export default function MinutaPage({ params }: PageProps<"/app/minutas/[id]">) {
   const d = drafts.data?.find((x) => x.id === id);
   if (drafts.isPending) return <LoadingBlock />;
   if (!d) return <EmptyState title="Minuta não encontrada" text="" action={<Link href="/app/minutas" className="btn btn-secondary">Voltar</Link>} />;
-  return <Editor key={d.id + d.updatedAt} d={d} />;
+  return <Editor key={d.id} d={d} />;
 }
 
 function Editor({ d }: { d: LegalDraft }) {
-  const { user } = useSession();
+  const { user, org } = useSession();
   const act = useAction("drafts");
   const [body, setBody] = useState(d.body);
+  // Sincroniza com o salvo (outra aba/restauração) sem remontar — remontar apagava o aviso de sucesso.
+  const [base, setBase] = useState(d.body);
+  if (d.body !== base) {
+    if (body === base) setBody(d.body);
+    setBase(d.body);
+  }
   const [comment, setComment] = useState("");
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const dirty = body !== d.body;
   useDirtyGuard(`draft-${d.id}`, dirty);
-  const missing = [...body.matchAll(/\[([\w.]+) — não preenchido\]/g)].map((m) => m[1]);
+  const missing = missingFields(body);
 
   const exportTxt = async () => {
     if (await act.run((ctx) => draftService.setStatus(d.id, "exportado", ctx))) downloadText(`${d.title}.txt`, `${body}\n\n— Documento gerado em ambiente demonstrativo —\n`, "text/plain;charset=utf-8");
+  };
+  const exportDocx = async () => {
+    if (!(await act.run((ctx) => draftService.setStatus(d.id, "exportado", ctx), "DOCX gerado (rascunho demonstrativo)."))) return;
+    const bytes = buildDocx({ title: d.title, body, header: org?.name, footer: "Ambiente demonstrativo — rascunho sem valor de protocolo. Revisão profissional obrigatória." });
+    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: DOCX_MIME }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: docxFileName(d.title) });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const printPdf = async () => {
     if (!(await act.run((ctx) => draftService.setStatus(d.id, "exportado", ctx)))) return;
@@ -75,15 +90,17 @@ function Editor({ d }: { d: LegalDraft }) {
               <div className="flex flex-wrap gap-2">
                 {d.status === "rascunho" && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => draftService.setStatus(d.id, "revisao", ctx))}>Enviar para revisão</button>}
                 {(d.status === "revisao" || d.status === "ajustes") && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => draftService.setStatus(d.id, "ajustes", ctx))}>Pedir ajustes</button>}
-                {(d.status === "revisao" || d.status === "ajustes") && user && canApprove(user.role) && <button className="btn btn-primary min-h-9" disabled={dirty} onClick={() => act.run((ctx) => draftService.setStatus(d.id, "aprovado", ctx), "Aprovada.")}>Aprovar</button>}
+                {(d.status === "revisao" || d.status === "ajustes") && user && canApprove(user.role) && <button className="btn btn-primary min-h-9" disabled={dirty || missing.length > 0} onClick={() => act.run((ctx) => draftService.setStatus(d.id, "aprovado", ctx), "Aprovada.")}>Aprovar</button>}
               </div>
               {dirty && <p className="text-xs text-fg-muted">Salve antes de aprovar.</p>}
+              {!dirty && missing.length > 0 && <p className="text-xs text-warning">Preencha os campos pendentes antes de aprovar.</p>}
               <h3 className="pt-2 font-medium">Exportar</h3>
               <div className="flex flex-wrap gap-2">
+                <button className="btn btn-primary min-h-9" data-tour="exportar-docx" disabled={dirty || (d.status !== "aprovado" && d.status !== "exportado")} onClick={exportDocx}><FileText aria-hidden className="size-4" /> Word (.docx)</button>
                 <button className="btn btn-secondary min-h-9" disabled={dirty || (d.status !== "aprovado" && d.status !== "exportado")} onClick={exportTxt}><Download aria-hidden className="size-4" /> Texto (.txt)</button>
                 <button className="btn btn-secondary min-h-9" disabled={dirty || (d.status !== "aprovado" && d.status !== "exportado")} onClick={printPdf}><Printer aria-hidden className="size-4" /> Imprimir / PDF</button>
               </div>
-              <p className="text-xs text-fg-muted">DOCX ainda não implementado (pendência registrada). Exportação só após aprovação.</p>
+              <p className="text-xs text-fg-muted">Exportação só após aprovação. O arquivo sai marcado como rascunho demonstrativo; nada é protocolado.</p>
             </section>
             <section className="panel space-y-2 p-4 text-sm">
               <div className="flex items-center gap-2"><h2 className="flex flex-1 items-center gap-1.5 font-semibold text-ai"><Sparkles aria-hidden className="size-4" /> Assistente</h2><SimulatedBadge /></div>
