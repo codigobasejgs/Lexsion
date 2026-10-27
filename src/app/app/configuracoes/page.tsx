@@ -14,9 +14,15 @@ import { ALL_AREAS } from "@/domain/areas";
 import { downloadText } from "@/domain/csv";
 import { formatCivil, formatInstant } from "@/lib/dates";
 import type { OrgSettings } from "@/domain/types";
+import { useQuery } from "@tanstack/react-query";
+import { allowed } from "@/domain/permissions";
+import { INVOICE_STATUS_LABEL } from "@/domain/saas";
+import { PLAN_LABEL, PLAN_QUOTAS, QUOTA_LABEL, STATUS_LABEL, UNLIMITED } from "@/domain/tenancy";
+import { formatBRL } from "@/lib/money";
+import { tenantRepo } from "@/services/mock/tenant-repo";
 
 type Theme = "dark" | "light" | "system";
-const TABS = [["aparencia", "Aparência"], ["escritorio", "Escritório"], ["calendario", "Feriados e calendário"], ["notificacoes", "Notificações"], ["dados", "Dados e LGPD"], ["dispositivo", "Dispositivo"]] as const;
+const TABS = [["aparencia", "Aparência"], ["escritorio", "Escritório"], ["assinatura", "Assinatura LexSion"], ["calendario", "Feriados e calendário"], ["notificacoes", "Notificações"], ["dados", "Dados e LGPD"], ["dispositivo", "Dispositivo"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 function applyTheme(t: Theme) {
@@ -33,15 +39,19 @@ export default function ConfiguracoesPage() {
   const tab = (url.get("aba") as Tab) ?? "aparencia";
   const settings = useCollection("settings");
   const s = settings.data?.[0];
+  const { user } = useSession();
+  const seesBilling = allowed(user?.role, "gerir_equipe");
+  const tabs = TABS.filter(([k]) => k !== "assinatura" || seesBilling);
   return (
     <Guard area="configuracoes">
       <div className="mx-auto max-w-3xl space-y-6">
         <PageHeader title="Configurações" description="Escritório, calendário, notificações, dados e aparência." />
         <div role="tablist" aria-label="Configurações" className="-mx-1 flex gap-1 overflow-x-auto px-1">
-          {TABS.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => url.set("aba", k === "aparencia" ? null : k)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${tab === k ? "border-brand bg-selection" : "border-line text-fg-muted"}`}>{l}</button>)}
+          {tabs.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => url.set("aba", k === "aparencia" ? null : k)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${tab === k ? "border-brand bg-selection" : "border-line text-fg-muted"}`}>{l}</button>)}
         </div>
         {tab === "aparencia" && <Appearance />}
         {tab === "escritorio" && s && <Office key={s.id} s={s} />}
+        {tab === "assinatura" && seesBilling && <Subscription />}
         {tab === "calendario" && s && <CalendarSettings key={s.calendarVersion + s.holidays.length} s={s} />}
         {tab === "notificacoes" && s && <Notifications key={s.id} s={s} />}
         {tab === "dados" && s && <DataLgpd s={s} />}
@@ -94,6 +104,50 @@ function Office({ s }: { s: OrgSettings }) {
       <label className="block"><span className="label">Categorias financeiras (uma por linha)</span><textarea rows={5} className="field py-2" value={cats} onChange={(e) => setCats(e.target.value)} /></label>
       <Feedback error={act.error} notice={act.notice} />
       <button className="btn btn-primary" onClick={() => act.run((ctx) => updateRow("settings", s.id, ctx, (x: OrgSettings) => ({ ...x, hours, areas, financeCategories: cats.split("\n").map((c) => c.trim()).filter(Boolean) }), "Configurações do escritório"), "Configurações salvas.")}>Salvar</button>
+    </section>
+  );
+}
+
+// Somente leitura: o escritório vê o próprio plano, consumo e faturas da assinatura. Alterações ficam com a plataforma.
+function Subscription() {
+  const { org, tenant } = useSession();
+  const q = useQuery({
+    queryKey: ["minha-assinatura", org?.id],
+    enabled: !!org,
+    queryFn: async () => ({ usage: await tenantRepo.getUsage(org!.id), invoices: (await readAll("saasInvoices")).filter((i) => i.organizationId === org!.id).sort((a, b) => b.due.localeCompare(a.due)) }),
+  });
+  if (!tenant) return <p className="text-sm text-fg-muted">Assinatura indisponível para este escritório na demonstração.</p>;
+  const quotas = PLAN_QUOTAS[tenant.plan];
+  return (
+    <section className="space-y-4 text-sm" data-testid="minha-assinatura">
+      <div className="panel space-y-2 p-5">
+        <h2 className="font-semibold">Plano {PLAN_LABEL[tenant.plan]} · {tenant.cycle}</h2>
+        <p>Situação: <Badge tone={tenant.status === "ativa" ? "success" : tenant.status === "trial" ? "info" : "warning"}>{STATUS_LABEL[tenant.status]}</Badge>{tenant.status === "trial" && tenant.trialEndsAt ? ` · teste até ${formatInstant(tenant.trialEndsAt).split(" ")[0]}` : ""}</p>
+        <p className="text-fg-muted">Para mudar de plano, fale com o suporte LexSion. Valores desta demonstração são fictícios; nada é cobrado.</p>
+      </div>
+      {q.data && (
+        <div className="panel p-5">
+          <h2 className="mb-3 font-semibold">Consumo do plano</h2>
+          <ul className="space-y-2">
+            {(Object.keys(QUOTA_LABEL) as (keyof typeof QUOTA_LABEL)[]).map((k) => {
+              const used = q.data.usage[k], max = quotas[k];
+              return <li key={k} className="flex justify-between gap-3"><span>{QUOTA_LABEL[k]}</span><span className="num">{used} de {max === UNLIMITED ? "ilimitado" : max}</span></li>;
+            })}
+          </ul>
+        </div>
+      )}
+      <div className="panel overflow-x-auto p-5">
+        <h2 className="mb-3 font-semibold">Faturas da assinatura</h2>
+        {q.data && q.data.invoices.length === 0 && <p className="text-fg-muted">Nenhuma fatura até agora.</p>}
+        {!!q.data?.invoices.length && (
+          <table className="w-full min-w-[480px]">
+            <caption className="sr-only">Faturas da assinatura LexSion</caption>
+            <thead><tr className="text-left text-xs text-fg-muted"><th className="py-1">Período</th><th>Vencimento</th><th>Valor</th><th>Situação</th></tr></thead>
+            <tbody>{q.data.invoices.map((i) => <tr key={i.id} className="border-t border-line"><td className="num py-2">{formatCivil(i.periodStart)} – {formatCivil(i.periodEnd)}</td><td className="num">{formatCivil(i.due)}</td><td className="num">{formatBRL(i.amount)}</td><td>{INVOICE_STATUS_LABEL[i.status]}</td></tr>)}</tbody>
+          </table>
+        )}
+        <p className="mt-3 text-xs text-fg-muted">Separado dos honorários que o escritório cobra dos clientes.</p>
+      </div>
     </section>
   );
 }

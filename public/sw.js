@@ -1,6 +1,6 @@
 /* SIWILTEC service worker — política explícita (docs/politica-offline.md).
    VERSION é reescrita a cada build por scripts/stamp-sw.mjs (muda os bytes ⇒ navegador detecta atualização). */
-const VERSION = "20261027203950";
+const VERSION = "20261027204359";
 const PREFIX = "siwiltec-";
 
 // Cache de shell separado por contexto, derivado da URL (o SW não lê cookies): admin, portal, escritório demo ou app.

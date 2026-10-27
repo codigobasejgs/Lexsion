@@ -48,3 +48,18 @@ test("QA-RBAC-05: cliente do portal digitando a rota do Super Admin é recusado"
   await expect(page).toHaveURL(/\/demonstracao/);
   await expect(page.getByText("Contratantes")).toHaveCount(0);
 });
+
+test("QA-RBAC-05: administrador vê a assinatura do escritório só para leitura; advogado não vê a aba", async ({ page }) => {
+  await signIn(page, /Helena Prado/);
+  await page.goto("/app/configuracoes?aba=assinatura");
+  const sub = page.getByTestId("minha-assinatura");
+  await expect(sub).toContainText(/Plano/);
+  await expect(sub.getByRole("table", { name: "Faturas da assinatura LexSion" })).toBeVisible();
+  await expect(sub.getByRole("button")).toHaveCount(0); // nada editável
+  await page.goto("/demonstracao");
+  await page.getByRole("radio", { name: /Rafael Nunes/ }).check();
+  await page.getByRole("button", { name: /^Entrar como/ }).click();
+  await page.waitForURL(/\/app/);
+  await page.goto("/app/configuracoes");
+  await expect(page.getByRole("tab", { name: "Assinatura LexSion" })).toHaveCount(0);
+});
