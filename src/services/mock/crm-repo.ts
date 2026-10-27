@@ -4,6 +4,7 @@ import type { RequestContext, Result } from "../contracts";
 import type { AuditEvent, Case, Client, Conversation, Lead, Message, StageKey } from "@/domain/types";
 import { applyStageChange, buildTouch, findClientMatches, formatPhone, normalizePhone, STAGE_ERROR_MSG } from "@/domain/crm";
 import type { ClientInput, LeadInput, CaseInput, CampaignLeadInput } from "@/domain/schemas";
+import { triageChecklist, triageMissing, triageScript } from "@/domain/triage";
 
 const cid = () => crypto.randomUUID().slice(0, 8);
 const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: cid() });
@@ -81,6 +82,25 @@ export const crmService = {
     if (!r.ok) return fail(r.error, STAGE_ERROR_MSG[r.error]);
     await writeMany({ leads: leads.map((l) => (l.id === id ? r.lead : l)), audit: [...(await readAll("audit")), auditRow(ctx, "lead.stageChanged", "Lead", id, `${lead.stage} → ${to}`)] });
     return ok(r.lead);
+  },
+
+  /** Triagem (FLUXO A): registra respostas, gera checklist, atribui responsável e leva o lead à etapa Triagem. */
+  triage: async (id: string, area: string, answers: Record<string, string>, routedTo: string, ctx: RequestContext): Promise<Result<Lead>> => {
+    const [leads, audit] = await Promise.all([readAll("leads"), readAll("audit")]);
+    const lead = leads.find((l) => l.id === id && l.organizationId === ctx.organizationId);
+    if (!lead) return fail("not_found", "Lead não encontrado.");
+    const script = triageScript(area);
+    const missing = triageMissing(script, answers);
+    if (missing.length) return fail("missing", `Responda antes de encaminhar: ${missing[0]}`);
+    if (!routedTo) return fail("owner", "Escolha para quem encaminhar.");
+    const at = now();
+    let next: Lead = { ...lead, area, ownerId: routedTo, triage: { area, answers, checklist: triageChecklist(script, answers), at, actorId: ctx.actorId, routedTo }, nextAction: "Revisão profissional da triagem" };
+    if (lead.stage === "novo" || lead.stage === "atendimento") {
+      const r = applyStageChange(next, "triagem", ctx.actorId, at, "Triagem registrada");
+      if (r.ok) next = r.lead;
+    }
+    await writeMany({ leads: leads.map((l) => (l.id === id ? next : l)), audit: [...audit, auditRow(ctx, "lead.triaged", "Lead", id, `Triagem ${area}`)] });
+    return ok(next);
   },
 
   update: async (id: string, patch: Partial<Pick<Lead, "ownerId" | "nextAction" | "tags">>, ctx: RequestContext): Promise<Result<Lead>> => {

@@ -8,7 +8,9 @@ import { useSession } from "@/components/providers";
 import { can, ROLE_LABEL, type Area } from "@/domain/permissions";
 import { organizations } from "@/mocks/fixtures";
 import { MOBILE_TABS, MORE_ICON, NAV_GROUPS } from "./nav";
-import { CommandPalette } from "./command-palette";
+import dynamic from "next/dynamic";
+// Paleta (com o índice de artigos da ajuda) só é baixada quando aberta.
+const CommandPalette = dynamic(() => import("./command-palette").then((m) => m.CommandPalette), { ssr: false });
 import { NotificationBell } from "./notifications";
 import { ScreenHelp } from "./screen-help";
 import { Dialog } from "@/components/ui";
@@ -218,7 +220,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </Dialog>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {paletteOpen && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />}
     </div>
   );
 }

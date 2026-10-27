@@ -143,3 +143,35 @@ test("SEC-03: exportação CSV do caixa neutraliza fórmula vinda de dado digita
   const cells = text.split(/[;,\r\n]/).map((c) => c.replace(/^"|"$/g, "").trim());
   expect(cells.some((c) => /^[=+@]/.test(c))).toBe(false);
 });
+
+test("FLUXO A: atendimento → triagem → atribuição → conversão → caso → indicador do funil", async ({ page }) => {
+  test.setTimeout(60_000);
+  await signIn(page, /Beatriz Lima/);
+  const count = async () => { await page.goto("/app/crm"); return Number((await page.getByRole("listitem", { name: /^Triagem, \d+ lead/ }).getAttribute("aria-label"))!.match(/(\d+)/)![1]); };
+  const triagemAntes = await count();
+  await page.goto("/app/crm/leads/l-novo");
+  const tri = page.locator('[data-tour="triagem"]');
+  await tri.getByLabel("Área do Direito").selectOption("Previdenciário");
+  await tri.getByRole("button", { name: "Registrar triagem e encaminhar" }).click();
+  await expect(tri.getByText(/Responda antes de encaminhar/)).toBeVisible(); // CRM-02: falta resposta
+  for (const q of ["Já teve pedido negado pelo INSS?", "Trabalhou exposto a ruído, calor ou agentes nocivos?", "Há doença ou incapacidade envolvida?"]) await tri.getByRole("group", { name: q }).getByLabel("Não").check();
+  await tri.getByRole("group", { name: "Trabalhou no campo em algum período?" }).getByLabel("Sim").check();
+  await expect(tri.getByText("Provas de atividade rural (sindicato, notas, ITR)")).toBeVisible();
+  await tri.getByLabel("Encaminhar para").selectOption({ label: "Rafael Nunes" });
+  await tri.getByRole("button", { name: "Registrar triagem e encaminhar" }).click();
+  await expect(page.getByText("Triagem registrada e encaminhada para revisão profissional.")).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "Triagem" }).and(page.locator('[aria-current="step"]'))).toBeVisible();
+  await expect(page.getByLabel("Responsável", { exact: true })).toHaveValue("u-rafael");
+  // Indicador do funil reflete a mudança
+  expect(await count()).toBe(triagemAntes + 1);
+});
+
+test("ADM-01: perfil Controladoria vê prazos e agenda, não vê financeiro nem CRM", async ({ page }) => {
+  await signIn(page, /Dora Sampaio/);
+  await page.goto("/app/prazos");
+  await expect(page.getByRole("heading", { name: "Prazos" })).toBeVisible();
+  for (const r of ["/app/financeiro", "/app/crm"]) {
+    await page.goto(r);
+    await expect(page.getByRole("heading", { name: "Você não tem acesso a esta área" })).toBeVisible();
+  }
+});

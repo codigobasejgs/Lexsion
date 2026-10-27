@@ -7,7 +7,7 @@ import type {
 import { at } from "./clock";
 import { CNJ_JOSE, CNJ_SONIA } from "./fixtures-ops";
 
-export const FIXTURE_VERSION = 3;
+export const FIXTURE_VERSION = 4;
 
 const A = "org-aurora";
 const B = "org-boreal";
@@ -23,6 +23,7 @@ export const users: User[] = [
   { id: "u-bia", name: "Beatriz Lima", role: "atendimento", organizationId: A },
   { id: "u-caio", name: "Caio Martins", role: "financeiro", organizationId: A },
   { id: "u-lia", name: "Lia Torres", role: "estagiario", organizationId: A },
+  { id: "u-dora", name: "Dora Sampaio", role: "controladoria", organizationId: A },
   { id: "u-otavio", name: "Otávio Reis", role: "admin", organizationId: B },
   { id: "u-portal-maria", name: "Maria das Graças Exemplo", role: "cliente", organizationId: A, clientId: "c-maria" },
   { id: "u-super", name: "Suporte SIWILTEC", role: "superadmin", organizationId: null },

@@ -4,7 +4,7 @@ import type { CivilDate } from "@/lib/dates";
 
 export type ID = string;
 
-export type Role = "admin" | "advogado" | "atendimento" | "financeiro" | "estagiario" | "cliente" | "superadmin";
+export type Role = "admin" | "advogado" | "atendimento" | "controladoria" | "financeiro" | "estagiario" | "cliente" | "superadmin";
 
 export interface Organization {
   id: ID;
@@ -224,6 +224,7 @@ export interface Lead extends OrgEntity {
   tags: string[];
   history: { at: string; from?: StageKey; to: StageKey; actorId: ID; note?: string }[];
   createdAt: string;
+  triage?: { area: string; answers: Record<string, string>; checklist: string[]; at: string; actorId: ID; routedTo: ID };
 }
 
 export type DocType = "CNIS" | "CTPS" | "PPP" | "Laudo" | "Exame" | "HISCRE" | "Documento pessoal" | "Contrato" | "Comprovante" | "Carta de concessão" | "Peça" | "Outro";

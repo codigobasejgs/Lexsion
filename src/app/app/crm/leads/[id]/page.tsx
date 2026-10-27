@@ -9,6 +9,7 @@ import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader } from "@/component
 import { ClientForm } from "@/modules/clients/client-form";
 import { CaseForm } from "@/modules/cases/case-form";
 import { MoveStageDialog } from "@/modules/crm/lead-dialogs";
+import { TriagePanel } from "@/modules/crm/triage-panel";
 import { crmService } from "@/services/mock/crm-repo";
 import { formatPhone, STAGE_LABEL, STAGES } from "@/domain/crm";
 import { formatInstant } from "@/lib/dates";
@@ -91,6 +92,8 @@ export default function LeadPage({ params }: PageProps<"/app/crm/leads/[id]">) {
                 <p>Ainda não é cliente. Ao converter, o sistema verifica se a pessoa já está cadastrada para não duplicar.</p>
               </section>
             )}
+
+            {!l.clientId && <TriagePanel key={l.id} lead={l} />}
 
             <section className="panel p-4" aria-labelledby="att-t">
               <h2 id="att-t" className="mb-3 font-semibold">Origem (atribuição)</h2>

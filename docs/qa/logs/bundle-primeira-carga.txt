@@ -1,0 +1,5 @@
+﻿/app/inicio       11 chunks    799 KB brutos    247 KB gzip
+/app/financeiro   12 chunks    838 KB brutos    259 KB gzip
+/app/crm          12 chunks    923 KB brutos    283 KB gzip
+/portal           11 chunks    727 KB brutos    226 KB gzip
+/entrar           10 chunks    714 KB brutos    221 KB gzip

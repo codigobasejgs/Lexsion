@@ -1,0 +1,5 @@
+﻿PERF perf-mobile js=759KB css=51KB {"fcp":156,"lcp":156,"cls":0,"tbt":0,"load":119}
+PERF perf-desktop js=968KB css=51KB {"fcp":108,"lcp":108,"cls":0.009,"tbt":0,"load":71}
+PERF perf-mobile throttled js=759KB css=51KB {"fcp":4940,"lcp":4940,"cls":0.072,"tbt":5,"load":4821}
+PERF perf-desktop throttled js=968KB css=51KB {"fcp":4956,"lcp":4956,"cls":0.009,"tbt":19,"load":4793}
+  4 passed (11.7s)

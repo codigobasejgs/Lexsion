@@ -71,3 +71,8 @@ describe("cobertura rota → artigo → tour → print (HELP-01/02/04)", async (
     for (const q of ["prazo", "audiência", "CNIS", "boleto", "comprovante", "contrato", "receber"]) expect(find(q).length, q).toBeGreaterThan(0);
   });
 });
+
+it("títulos do índice leve de rotas batem com os artigos", async () => {
+  const { ROUTE_HELP } = await import("@/content/route-help");
+  for (const r of ROUTE_HELP) expect(r.title, r.article).toBe(HELP_ARTICLES.find((a) => a.slug === r.article)?.title);
+});
