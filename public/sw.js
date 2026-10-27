@@ -1,21 +1,22 @@
 /* SIWILTEC service worker — política explícita (docs/politica-offline.md).
    VERSION é reescrita a cada build por scripts/stamp-sw.mjs (muda os bytes ⇒ navegador detecta atualização). */
-const VERSION = "20261027140305";
+const VERSION = "20261027190227";
 const PREFIX = "siwiltec-";
 
-// Extrai tenant do cookie; fallback "default" se ausente.
-function getTenantSlug(cookieHeader) {
-  if (!cookieHeader) return "default";
-  const match = cookieHeader.match(/siwiltec-tenant-slug=([^;]+)/);
-  return match ? match[1] : "default";
+// Cache de shell separado por contexto, derivado da URL (o SW não lê cookies): admin, portal, escritório demo ou app.
+// Nenhum dado de escritório entra no Cache Storage: o HTML é shell; dados ficam no IndexedDB. Sair apaga todos os shells.
+function shellCacheFor(pathname) {
+  const demo = pathname.match(/^\/demo\/tenant\/([a-z0-9-]+)/);
+  const ctx = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/portal") ? "portal" : demo ? `tenant-${demo[1]}` : "app";
+  return `${PREFIX}${ctx}-shell-${VERSION}`;
 }
 
 const STATIC = `${PREFIX}static-${VERSION}`;
-const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
+const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 // Rotas cujo HTML é um shell sem dados pessoais NESTA DEMO (dados vêm do IndexedDB no cliente).
 // Em produção com backend: HTML autenticado passa a NetworkOnly — ver docs/politica-offline.md.
-const SHELL_ROUTES = /^\/(app(\/.*)?|portal(\/.*)?|entrar|offline)?$/;
+const SHELL_ROUTES = /^\/(app(\/.*)?|portal(\/.*)?|admin(\/.*)?|demo\/tenant\/[a-z0-9-]+|entrar|offline)?$/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)));
@@ -61,8 +62,7 @@ self.addEventListener("fetch", (event) => {
   if (req.headers.get("RSC") === "1" || url.searchParams.has("_rsc")) return;
 
   if (req.mode === "navigate") {
-    const tenantSlug = getTenantSlug(req.headers.get("cookie"));
-    const SHELL = `${PREFIX}tenant-${tenantSlug}-shell-${VERSION}`;
+    const SHELL = shellCacheFor(url.pathname);
     const cacheable = SHELL_ROUTES.test(url.pathname);
     event.respondWith(
       fetch(req)

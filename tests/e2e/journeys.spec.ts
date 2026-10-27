@@ -185,9 +185,10 @@ test("portal: cliente só vê o próprio caso e não acessa o painel interno", a
 });
 
 test("superadmin vê só organizações agregadas", async ({ page }) => {
-  await signIn(page, /Suporte SIWILTEC/);
-  await expect(page).toHaveURL(/\/admin\/organizacoes/);
-  await expect(page.getByRole("heading", { name: "Organizações (SaaS)" })).toBeVisible();
+  await signIn(page, /Suporte LexSion/);
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto("/admin/organizacoes");
+  await expect(page.getByRole("heading", { name: "Contratantes" })).toBeVisible();
   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
   expect(await seriousAxe(page)).toEqual([]);
 });

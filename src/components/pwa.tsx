@@ -146,8 +146,10 @@ export function PwaRegister() {
   };
 
   return (
+    <>
+    {/* Aviso permanente vai no topo, no fluxo da página: flutuando embaixo ele cobria botões (BUG LX-03, ROB-01 celular). */}
+    <VolatileStorageNotice />
     <div className="no-print pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+76px)] z-40 flex flex-col items-center gap-2 px-4 lg:bottom-6">
-      <VolatileStorageNotice />
       {offline && (
         <div role="status" className="pointer-events-auto flex items-center gap-2 rounded-full border border-warning/40 bg-warning-bg px-4 py-2 text-sm text-warning shadow-lg">
           <WifiOff aria-hidden className="size-4" />
@@ -167,6 +169,7 @@ export function PwaRegister() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
@@ -181,7 +184,7 @@ export function InstallCard({ force }: { force?: boolean }) {
     <section aria-labelledby="install-title" className="panel relative flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
       <Download aria-hidden className="size-6 shrink-0 text-accent" />
       <div className="flex-1">
-        <h2 id="install-title" className="font-medium">Instale a SIWILTEC no seu aparelho</h2>
+        <h2 id="install-title" className="font-medium">Instale o aplicativo no seu aparelho</h2>
         <p className="text-sm text-fg-muted">Abra pelo ícone, em tela cheia, como um aplicativo. Funciona também no navegador.</p>
         {iosHelp && (
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
@@ -214,7 +217,7 @@ function VolatileStorageNotice() {
   );
   if (!volatile) return null;
   return (
-    <div role="status" data-testid="aviso-armazenamento" className="pointer-events-auto flex max-w-md items-center gap-2 rounded-[var(--radius-panel)] border border-warning/40 bg-warning-bg px-4 py-2 text-sm text-warning shadow-lg">
+    <div role="status" data-testid="aviso-armazenamento" className="no-print fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 border-b border-warning/40 bg-warning-bg px-4 py-1.5 pt-[calc(env(safe-area-inset-top)+6px)] text-center text-sm text-warning">
       <HardDriveDownload aria-hidden className="size-4 shrink-0" />
       Armazenamento do navegador indisponível: o que você fizer fica só nesta aba e some ao fechá-la.
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Download, HardDrive, Monitor, Moon, RotateCcw, Sun } from "lucide-react";
+import { Download, HardDrive, Monitor, Moon, Palette, RotateCcw, Sun } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, Dialog, PageHeader } from "@/components/ui";
@@ -10,7 +11,6 @@ import { Feedback, useAction, useUrlState } from "@/modules/shared";
 import { storageMode, readAll } from "@/services/mock/db";
 import { updateRow } from "@/services/mock/generic";
 import { ALL_AREAS } from "@/domain/areas";
-import { ensureContrast, contrast } from "@/lib/contrast";
 import { downloadText } from "@/domain/csv";
 import { formatCivil, formatInstant } from "@/lib/dates";
 import type { OrgSettings } from "@/domain/types";
@@ -25,7 +25,7 @@ function applyTheme(t: Theme) {
   } catch {}
   const resolved = t === "system" ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : t;
   document.documentElement.dataset.theme = resolved;
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", resolved === "light" ? "#f7f4ee" : "#090807"));
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", resolved === "light" ? "#FCFAF6" : "#090A0D"));
 }
 
 export default function ConfiguracoesPage() {
@@ -40,7 +40,7 @@ export default function ConfiguracoesPage() {
         <div role="tablist" aria-label="Configurações" className="-mx-1 flex gap-1 overflow-x-auto px-1">
           {TABS.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => url.set("aba", k === "aparencia" ? null : k)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${tab === k ? "border-brand bg-selection" : "border-line text-fg-muted"}`}>{l}</button>)}
         </div>
-        {tab === "aparencia" && <Appearance s={s} />}
+        {tab === "aparencia" && <Appearance />}
         {tab === "escritorio" && s && <Office key={s.id} s={s} />}
         {tab === "calendario" && s && <CalendarSettings key={s.calendarVersion + s.holidays.length} s={s} />}
         {tab === "notificacoes" && s && <Notifications key={s.id} s={s} />}
@@ -51,18 +51,14 @@ export default function ConfiguracoesPage() {
   );
 }
 
-function Appearance({ s }: { s?: OrgSettings }) {
-  const act = useAction("settings");
+function Appearance() {
   const [theme, setTheme] = useState<Theme>("dark");
-  const [brand, setBrand] = useState(s?.brandColor ?? "#d6ae62");
   useEffect(() => {
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência local
       setTheme((localStorage.getItem("siwiltec.theme") as Theme) ?? "dark");
     } catch {}
   }, []);
-  const dark = ensureContrast(brand, "#15120e");
-  const light = ensureContrast(brand, "#ffffff");
   return (
     <>
       <section className="panel p-5" aria-labelledby="ap-t">
@@ -74,15 +70,9 @@ function Appearance({ s }: { s?: OrgSettings }) {
         </div>
       </section>
       <section className="panel space-y-3 p-5 text-sm">
-        <h2 className="font-semibold">Cor de destaque do escritório (white-label)</h2>
-        <label className="flex items-center gap-3"><input type="color" value={brand} onChange={(e) => setBrand(e.target.value)} aria-label="Cor de destaque" className="h-10 w-16 rounded border border-line" /><span className="font-mono">{brand}</span></label>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded p-3" style={{ background: "#15120e" }}><span className="inline-block rounded px-3 py-1.5 text-sm font-medium" style={{ color: dark.color, border: `1px solid ${dark.color}` }}>Prévia escuro</span><p className="mt-1 text-xs text-[#c4b8a5]">{dark.adjusted ? `Ajustada para ${dark.color}` : "Contraste ok"} ({contrast(dark.color, "#15120e").toFixed(1)}:1)</p></div>
-          <div className="rounded p-3" style={{ background: "#ffffff" }}><span className="inline-block rounded px-3 py-1.5 text-sm font-medium" style={{ color: light.color, border: `1px solid ${light.color}` }}>Prévia claro</span><p className="mt-1 text-xs text-[#655744]">{light.adjusted ? `Ajustada para ${light.color}` : "Contraste ok"} ({contrast(light.color, "#ffffff").toFixed(1)}:1)</p></div>
-        </div>
-        <p className="text-fg-muted">Cores de estado (erro, sucesso, alerta) não são personalizáveis. Logo oficial: pendente de envio pela cliente.</p>
-        {s && <button className="btn btn-secondary" onClick={() => act.run((ctx) => updateRow("settings", s.id, ctx, (x: OrgSettings) => ({ ...x, brandColor: brand }), "Cor de marca"), "Cor salva (aplicação completa do tema por escritório: próxima fase).")}>Salvar cor</button>}
-        <Feedback error={act.error} notice={act.notice} />
+        <h2 className="font-semibold">Identidade visual do escritório</h2>
+        <p className="text-fg-muted">Logotipo, cores, densidade, tamanho do texto, linguagem simples e o aplicativo do escritório (com QR Code de instalação).</p>
+        <Link href="/app/configuracoes/branding" className="btn btn-secondary w-fit"><Palette aria-hidden className="size-4" /> Abrir Identidade visual e Meu aplicativo</Link>
       </section>
     </>
   );

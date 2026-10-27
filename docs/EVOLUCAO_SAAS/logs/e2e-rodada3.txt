@@ -1,0 +1,408 @@
+﻿
+> siwiltec@0.1.0 test:e2e J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> playwright test
+
+node.exe : [WebServer] (node:3776) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+No <usuario>\AppData\Roaming\npm\pnpm.ps1:24 caractere:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([WebServer] (no... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:31588) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, 
+using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+
+Running 229 tests using 10 workers
+
+(node:14412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28936) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29404) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24024) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:352) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -    9 [mobile-360] › tests\e2e\foundation.spec.ts:89:5 › trocar de escritório não mistura dados (A12)
+  ✓   10 [mobile-360] › tests\e2e\foundation.spec.ts:99:5 › perfil sem permissão vê estado de acesso negado (1.5s)
+  -   12 [mobile-360] › tests\e2e\foundation.spec.ts:126:7 › PWA › service worker controla a página e serve offline após visita; não cacheia /api
+  ✓    6 [mobile-360] › tests\e2e\foundation.spec.ts:68:5 › baixa parcial com prévia e estorno reconciliam (A10) (2.2s)
+  ✘   11 [mobile-360] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam (1.9s)
+  ✓    7 [mobile-360] › tests\e2e\foundation.spec.ts:50:5 › assumir atendimento pausa a IA e permite resposta humana (A05) (2.3s)
+  ✓    5 [mobile-360] › tests\e2e\foundation.spec.ts:38:7 › telas de referência › portal do cliente (2.8s)
+(node:18912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    1 [mobile-360] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/clientes/c-joao renderiza, sem overflow e sem violações axe sérias (3.3s)
+  ✓    3 [mobile-360] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/atendimento/cv-maria renderiza, sem overflow e sem violações axe sérias (3.4s)
+  ✓    8 [mobile-360] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/financeiro renderiza, sem overflow e sem violações axe sérias (3.4s)
+  ✓    4 [mobile-360] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/previdenciario/analises/pa-joao renderiza, sem overflow e sem violações axe sérias (3.6s)
+  ✓   15 [mobile-360] › tests\e2e\journeys.spec.ts:20:5 › 1. campanha → proposta → contrato assinado → parcelas → portal (2.2s)
+  ✓    2 [mobile-360] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/inicio renderiza, sem overflow e sem violações axe sérias (4.9s)
+  ✓   16 [mobile-360] › tests\e2e\journeys.spec.ts:45:5 › 2. planejamento previdenciário: pendência invalida resultado e exige revisão (2.8s)
+  ✓   17 [mobile-360] › tests\e2e\journeys.spec.ts:57:5 › 3. operação jurídica: prazo proposto → confirmado → agenda e Meu dia (2.4s)
+  ✓   14 [mobile-360] › tests\e2e\journey-e2.spec.ts:95:5 › funil: mover sem arrastar, perda exige motivo, contratado exige cliente (3.6s)
+  ✓   19 [mobile-360] › tests\e2e\journeys.spec.ts:116:5 › 5. falha de integração: desconecta, fila, reconecta e reenvia sem duplicar (3.0s)
+  ✓   22 [mobile-360] › tests\e2e\journeys.spec.ts:164:5 › tour não fica preso quando o alvo não existe para o perfil (A15) (2.1s)
+  ✓   18 [mobile-360] › tests\e2e\journeys.spec.ts:80:5 › 4. financeiro: entrada + 7 parcelas, parcial, renegociação, recibo e conciliação (3.4s)
+  ✓   23 [mobile-360] › tests\e2e\journeys.spec.ts:176:5 › portal: cliente só vê o próprio caso e não acessa o painel interno (2.0s)
+  ✓   21 [mobile-360] › tests\e2e\journeys.spec.ts:138:5 › 6. aprendizagem: tour pausado e retomado; artigo abre (3.7s)
+  ✓   26 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/casos/k-maria-bpc (2.3s)
+  ✓   25 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/casos (2.4s)
+  ✓   20 [mobile-360] › tests\e2e\journey-e2.spec.ts:122:5 › novo cliente: validação no campo e cadastro persistido (4.6s)
+  ✓   13 [mobile-360] › tests\e2e\journey-e2.spec.ts:19:5 › jornada E2: campanha → lead → conversa → cliente → caso, sem duplicar (A03/A04/A05) (7.0s)
+  ✓   27 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/processos (2.6s)
+  ✓   28 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/publicacoes (2.6s)
+  ✓   29 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/prazos (2.5s)
+  ✓   30 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/tarefas (3.0s)
+  ✓   32 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/audiencias (1.9s)
+  ✓   31 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/agenda (2.8s)
+  ✓   33 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pericias (2.1s)
+  ✓   34 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/documentos (2.5s)
+  ✓   35 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/documentos/doc-cnis-joao (2.1s)
+  ✓   36 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/previdenciario (2.3s)
+  ✓   38 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/requisitorios (2.1s)
+  ✓   37 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/calculos (2.3s)
+  ✘   24 [mobile-360] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas (6.1s)
+  ✓   40 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/minutas (2.5s)
+  ✓   41 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/modelos (2.3s)
+  ✓   42 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/propostas (2.2s)
+  ✓   39 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pesquisa (2.6s)
+(node:26364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   44 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/contratos/ct-ronaldo (2.1s)
+  ✓   43 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/propostas/pp-paulo (2.2s)
+  ✓   46 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/caixa (2.0s)
+  ✓   45 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/receber (2.3s)
+  ✓   47 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/conciliacao (2.3s)
+  ✓   50 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/simulador (2.4s)
+  ✓   51 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/automacoes (2.4s)
+  ✓   49 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/agentes (2.5s)
+  ✓   48 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pagamentos (2.6s)
+  ✓   52 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/campanhas (2.8s)
+  ✓   54 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/jornal (3.1s)
+  ✓   53 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/recibos (2.9s)
+  ✓   55 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes (3.0s)
+  ✓   56 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes/evolution (2.9s)
+  ✓   57 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/importacoes (2.6s)
+  ✓   60 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/configuracoes (2.8s)
+  ✓   58 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/relatorios (2.8s)
+  ✓   59 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/equipe (2.9s)
+  ✓   62 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ajuda (2.5s)
+  ✓   61 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/academia (3.4s)
+  ✓   63 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ajuda/baixa-parcial (2.6s)
+  ✓   65 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/assinaturas (2.5s)
+  ✓   64 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/boas-vindas (2.8s)
+  ✓   66 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/automacoes/execucoes (2.8s)
+  ✓   67 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/pagar (2.8s)
+  ✓   68 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/execucoes (2.2s)
+  ✓   70 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes/eventos (2.2s)
+  ✓   69 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/objecoes (2.4s)
+  -   80 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:33:5 › DATA-03: ao sair, nenhum cache de shell de sessão sobra no navegador
+  ✓   72 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/conteudos (2.6s)
+  ✓   77 [mobile-360] › tests\e2e\journeys.spec.ts:233:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /offline e / (públicas) (1.6s)
+  ✓   71 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/jornal/alertas (2.9s)
+  -   82 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:91:5 › QA-165/166: webhook simulado repetido não altera a fatura duas vezes; honorários fora do MRR
+  ✓   73 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/paginas (2.7s)
+  ✓   78 [mobile-360] › tests\e2e\journeys.spec.ts:240:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /recuperar-acesso (público) (1.6s)
+  ✓   74 [mobile-360] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /design-system (2.8s)
+  ✓   76 [mobile-360] › tests\e2e\journeys.spec.ts:224:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /portal/ajuda e /portal/documentos (cliente) (3.0s)
+  ✓   83 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:104:5 › BRAND-010: marca do escritório A não vaza para B; plataforma continua LexSion (1.8s)
+  ✓   85 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:143:5 › QA-059: QR do aplicativo aponta para o endereço do próprio escritório e avisa sobre rede local (1.7s)
+  ✓   79 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:14:5 › DATA-02: sair e entrar de novo NÃO apaga cadastro feito na demo (3.0s)
+  ✓   86 [mobile-360] › tests\e2e\qa-docx.spec.ts:12:5 › DOC-03/04/05: campo faltante bloqueia aprovação; DOCX baixado é OOXML válido com acentos (2.2s)
+  ✓   87 [mobile-360] › tests\e2e\qa-docx.spec.ts:48:5 › DOC-07: marcação no editor não executa script na página (2.2s)
+  ✓   81 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:46:5 › QA-115/120: Super Admin cria escritório, suspende com motivo, ERP bloqueia, reativa, auditoria registra (4.2s)
+  ✓   91 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:71:5 › HELP-05: busca por sinônimo leigo encontra o artigo certo (1.6s)
+  ✓   89 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:42:5 › FLUXO E: notícia → caso → tarefa de revisão, sem duplicar no clique repetido (2.7s)
+  ✓   92 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:80:5 › ADM-09: livros da autora sem conteúdo fabricado (2.0s)
+  ✓   84 [mobile-360] › tests\e2e\lexsion-saas.spec.ts:122:5 › QA-050/058: identidade visual — SVG recusado, PNG aceito, cor ilegível ajustada, salva só no escritório (3.9s)
+  -   97 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:130:5 › SEC-03: exportação CSV do caixa neutraliza fórmula vinda de dado digitado
+  ✓   90 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:54:5 › HELP: “Como usar esta tela?” abre artigo e tour; artigo tem botões de ação (2.6s)
+  ✓   96 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:123:5 › A11Y-04: prefers-reduced-motion zera animações (1.3s)
+  -  102 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 320×640: nenhuma rota com rolagem horizontal global
+  -  103 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 360×800: nenhuma rota com rolagem horizontal global
+  -  104 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 390×844: nenhuma rota com rolagem horizontal global
+  -  105 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 768×1024: nenhuma rota com rolagem horizontal global
+  -  106 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1024×768: nenhuma rota com rolagem horizontal global
+  -  107 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1280×800: nenhuma rota com rolagem horizontal global
+  -  108 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1440×900: nenhuma rota com rolagem horizontal global
+  -  109 [mobile-360] › tests\e2e\qa-responsivo.spec.ts:50:7 › varredura responsiva › RESP-03: zoom 200% (1280px → 640px CSS) mantém navegação e ações
+  ✓   93 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:86:5 › FIN-10 / ADM-08: provedores de pagamento e assinatura não aparecem como conectados; sem credenciais na página (2.9s)
+  ✓   94 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:96:5 › GEN-01: cada perfil entra no painel adequado (3.3s)
+  ✓   88 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:11:5 › FLUXO G / PORT-02: rascunho não vaza ao portal; publicado aparece só para o cliente certo (5.7s)
+  ✓  110 [mobile-360] › tests\e2e\qa-robustez.spec.ts:11:5 › ROB-01: localStorage e IndexedDB bloqueados ⇒ entra, opera em memória e avisa (1.7s)
+  ✓  100 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:179:5 › FIN-06: filtro por mês no caixa recalcula totais e saldo inicial (2.6s)
+  ✓  101 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:192:5 › CRM-05: lista com paginação, filtro volta à página 1 e limpar filtro restaura (2.8s)
+  ✓   99 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:169:5 › ADM-01: perfil Controladoria vê prazos e agenda, não vê financeiro nem CRM (3.3s)
+  ✓   95 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:105:5 › GEN-09: restaurar demonstração apaga alterações e recria fixtures (3.9s)
+  ✓   98 [mobile-360] › tests\e2e\qa-fluxos.spec.ts:147:5 › FLUXO A: atendimento → triagem → atribuição → conversão → caso → indicador do funil (3.4s)
+(node:26744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  111 [mobile-360] › tests\e2e\qa-robustez.spec.ts:33:5 › ROB-02: sessão corrompida e banco de versão antiga não quebram a interface (2.4s)
+  ✓  114 [mobile-360] › tests\e2e\qa-robustez.spec.ts:83:5 › PWA-03: offline mostra aviso e some ao reconectar (1.4s)
+(node:17220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  112 [mobile-360] › tests\e2e\qa-robustez.spec.ts:52:5 › ROB-03: duas abas — alteração numa aba aparece na outra (2.4s)
+(node:2604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21712) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  113 [mobile-360] › tests\e2e\qa-robustez.spec.ts:69:5 › GEN-03/GEN-04: refresh em rota profunda e voltar/avançar preservam contexto (2.6s)
+(node:24880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  116 [desktop-1440] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/atendimento/cv-maria renderiza, sem overflow e sem violações axe sérias (3.1s)
+  ✓  117 [desktop-1440] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/clientes/c-joao renderiza, sem overflow e sem violações axe sérias (3.0s)
+  ✓  120 [desktop-1440] › tests\e2e\foundation.spec.ts:38:7 › telas de referência › portal do cliente (2.6s)
+  ✓  122 [desktop-1440] › tests\e2e\foundation.spec.ts:68:5 › baixa parcial com prévia e estorno reconciliam (A10) (2.2s)
+  ✓  118 [desktop-1440] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/previdenciario/analises/pa-joao renderiza, sem overflow e sem violações axe sérias (3.4s)
+  ✓  121 [desktop-1440] › tests\e2e\foundation.spec.ts:50:5 › assumir atendimento pausa a IA e permite resposta humana (A05) (2.6s)
+  ✓  119 [desktop-1440] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/financeiro renderiza, sem overflow e sem violações axe sérias (3.5s)
+  ✓  115 [desktop-1440] › tests\e2e\foundation.spec.ts:25:9 › telas de referência › /app/inicio renderiza, sem overflow e sem violações axe sérias (4.4s)
+  ✓  123 [desktop-1440] › tests\e2e\foundation.spec.ts:89:5 › trocar de escritório não mistura dados (A12) (2.1s)
+  ✓  124 [desktop-1440] › tests\e2e\foundation.spec.ts:99:5 › perfil sem permissão vê estado de acesso negado (1.6s)
+  ✘  125 [desktop-1440] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam (1.8s)
+(node:23028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  126 [desktop-1440] › tests\e2e\foundation.spec.ts:126:7 › PWA › service worker controla a página e serve offline após visita; não cacheia /api (3.1s)
+  ✓   75 [mobile-360] › tests\e2e\journeys.spec.ts:215:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › tema claro: telas principais sem violação séria de contraste (17.6s)
+  ✓  130 [desktop-1440] › tests\e2e\journeys.spec.ts:20:5 › 1. campanha → proposta → contrato assinado → parcelas → portal (3.8s)
+(node:9604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  131 [desktop-1440] › tests\e2e\journeys.spec.ts:45:5 › 2. planejamento previdenciário: pendência invalida resultado e exige revisão (4.4s)
+  ✓  132 [desktop-1440] › tests\e2e\journeys.spec.ts:57:5 › 3. operação jurídica: prazo proposto → confirmado → agenda e Meu dia (4.3s)
+  ✓  128 [desktop-1440] › tests\e2e\journey-e2.spec.ts:95:5 › funil: mover sem arrastar, perda exige motivo, contratado exige cliente (5.4s)
+  ✓  129 [desktop-1440] › tests\e2e\journey-e2.spec.ts:122:5 › novo cliente: validação no campo e cadastro persistido (5.5s)
+  ✓  133 [desktop-1440] › tests\e2e\journeys.spec.ts:80:5 › 4. financeiro: entrada + 7 parcelas, parcial, renegociação, recibo e conciliação (4.8s)
+  ✓  136 [desktop-1440] › tests\e2e\journeys.spec.ts:176:5 › portal: cliente só vê o próprio caso e não acessa o painel interno (2.9s)
+  ✓  137 [desktop-1440] › tests\e2e\journeys.spec.ts:164:5 › tour não fica preso quando o alvo não existe para o perfil (A15) (2.8s)
+  ✓  134 [desktop-1440] › tests\e2e\journeys.spec.ts:116:5 › 5. falha de integração: desconecta, fila, reconecta e reenvia sem duplicar (4.8s)
+  ✓  139 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/casos (3.5s)
+  ✓  135 [desktop-1440] › tests\e2e\journeys.spec.ts:138:5 › 6. aprendizagem: tour pausado e retomado; artigo abre (5.8s)
+  ✓  140 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/casos/k-maria-bpc (3.7s)
+  ✓  141 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/processos (3.6s)
+  ✓  142 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/publicacoes (3.8s)
+  ✓  143 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/prazos (4.0s)
+  ✘  138 [desktop-1440] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas (6.4s)
+  ✓  127 [desktop-1440] › tests\e2e\journey-e2.spec.ts:19:5 › jornada E2: campanha → lead → conversa → cliente → caso, sem duplicar (A03/A04/A05) (11.3s)
+  ✓  144 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/tarefas (4.1s)
+(node:20880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  145 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/agenda (4.0s)
+  ✓  146 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/audiencias (3.5s)
+  ✓  147 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pericias (3.6s)
+  ✓  149 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/documentos/doc-cnis-joao (4.1s)
+  ✓  148 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/documentos (4.4s)
+  ✓  150 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/previdenciario (3.8s)
+  ✓  151 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/calculos (4.1s)
+  ✓  152 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pesquisa (4.0s)
+  ✓  153 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/minutas (4.0s)
+  ✓  154 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/modelos (4.0s)
+  ✓  155 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/requisitorios (3.9s)
+  ✓  156 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/propostas (4.0s)
+  ✓  157 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/propostas/pp-paulo (4.5s)
+  ✓  158 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/contratos/ct-ronaldo (4.5s)
+  ✓  160 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/caixa (4.5s)
+  ✓  159 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/receber (4.8s)
+  ✓  161 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/conciliacao (4.1s)
+  ✓  162 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/recibos (3.9s)
+  ✓  163 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/pagamentos (4.3s)
+  ✓  164 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/agentes (4.2s)
+  ✓  165 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/simulador (4.1s)
+  ✓  166 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/automacoes (4.2s)
+  ✓  167 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/campanhas (4.5s)
+  ✓  168 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/jornal (4.4s)
+  ✓  169 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes (4.2s)
+  ✓  170 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes/evolution (4.0s)
+  ✓  171 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/importacoes (3.7s)
+  ✓  172 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/relatorios (3.8s)
+  ✓  173 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/equipe (4.3s)
+  ✓  174 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/configuracoes (4.3s)
+  ✓  176 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ajuda (4.4s)
+  ✓  175 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/academia (4.8s)
+  ✓  177 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ajuda/baixa-parcial (3.7s)
+  ✓  180 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/automacoes/execucoes (3.7s)
+  ✓  179 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/assinaturas (3.8s)
+  ✓  178 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/boas-vindas (4.1s)
+  ✓  182 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/execucoes (3.7s)
+  ✓  181 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/financeiro/pagar (4.0s)
+  ✓  183 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/ia/objecoes (4.2s)
+  ✓  184 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/integracoes/eventos (4.4s)
+  ✓  186 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/conteudos (4.0s)
+  ✓  192 [desktop-1440] › tests\e2e\journeys.spec.ts:240:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /recuperar-acesso (público) (2.3s)
+  ✓  185 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/jornal/alertas (4.4s)
+  ✓  187 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /app/marketing/paginas (4.3s)
+  ✓  191 [desktop-1440] › tests\e2e\journeys.spec.ts:233:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /offline e / (públicas) (3.1s)
+  ✓  188 [desktop-1440] › tests\e2e\journeys.spec.ts:206:9 › rotas E3–E7: render, sem overflow, sem violação axe séria › /design-system (4.5s)
+  ✓  190 [desktop-1440] › tests\e2e\journeys.spec.ts:224:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › /portal/ajuda e /portal/documentos (cliente) (5.0s)
+  ✓  194 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:33:5 › DATA-03: ao sair, nenhum cache de shell de sessão sobra no navegador (3.0s)
+  ✓  197 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:104:5 › BRAND-010: marca do escritório A não vaza para B; plataforma continua LexSion (2.7s)
+  ✓  196 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:91:5 › QA-165/166: webhook simulado repetido não altera a fatura duas vezes; honorários fora do MRR (2.8s)
+  ✓  199 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:143:5 › QA-059: QR do aplicativo aponta para o endereço do próprio escritório e avisa sobre rede local (2.9s)
+  ✓  193 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:14:5 › DATA-02: sair e entrar de novo NÃO apaga cadastro feito na demo (4.9s)
+  ✓  200 [desktop-1440] › tests\e2e\qa-docx.spec.ts:12:5 › DOC-03/04/05: campo faltante bloqueia aprovação; DOCX baixado é OOXML válido com acentos (3.3s)
+  ✓  201 [desktop-1440] › tests\e2e\qa-docx.spec.ts:48:5 › DOC-07: marcação no editor não executa script na página (3.4s)
+  ✓  195 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:46:5 › QA-115/120: Super Admin cria escritório, suspende com motivo, ERP bloqueia, reativa, auditoria registra (5.5s)
+  ✓  198 [desktop-1440] › tests\e2e\lexsion-saas.spec.ts:122:5 › QA-050/058: identidade visual — SVG recusado, PNG aceito, cor ilegível ajustada, salva só no escritório (5.6s)
+  ✓  205 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:71:5 › HELP-05: busca por sinônimo leigo encontra o artigo certo (2.8s)
+  ✓  204 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:54:5 › HELP: “Como usar esta tela?” abre artigo e tour; artigo tem botões de ação (4.0s)
+  ✓  203 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:42:5 › FLUXO E: notícia → caso → tarefa de revisão, sem duplicar no clique repetido (4.2s)
+  ✓  206 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:80:5 › ADM-09: livros da autora sem conteúdo fabricado (2.8s)
+  ✓  210 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:123:5 › A11Y-04: prefers-reduced-motion zera animações (1.8s)
+  ✓  207 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:86:5 › FIN-10 / ADM-08: provedores de pagamento e assinatura não aparecem como conectados; sem credenciais na página (4.0s)
+  ✓  211 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:130:5 › SEC-03: exportação CSV do caixa neutraliza fórmula vinda de dado digitado (3.6s)
+  ✓  208 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:96:5 › GEN-01: cada perfil entra no painel adequado (4.7s)
+  ✓  214 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:179:5 › FIN-06: filtro por mês no caixa recalcula totais e saldo inicial (3.3s)
+  ✓  209 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:105:5 › GEN-09: restaurar demonstração apaga alterações e recria fixtures (5.0s)
+  ✓  202 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:11:5 › FLUXO G / PORT-02: rascunho não vaza ao portal; publicado aparece só para o cliente certo (7.7s)
+  ✓  213 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:169:5 › ADM-01: perfil Controladoria vê prazos e agenda, não vê financeiro nem CRM (3.9s)
+  ✓  212 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:147:5 › FLUXO A: atendimento → triagem → atribuição → conversão → caso → indicador do funil (4.1s)
+  ✓  215 [desktop-1440] › tests\e2e\qa-fluxos.spec.ts:192:5 › CRM-05: lista com paginação, filtro volta à página 1 e limpar filtro restaura (3.7s)
+  ✓  224 [desktop-1440] › tests\e2e\qa-robustez.spec.ts:11:5 › ROB-01: localStorage e IndexedDB bloqueados ⇒ entra, opera em memória e avisa (2.3s)
+  ✓  223 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:50:7 › varredura responsiva › RESP-03: zoom 200% (1280px → 640px CSS) mantém navegação e ações (5.1s)
+  ✓  189 [desktop-1440] › tests\e2e\journeys.spec.ts:215:7 › rotas E3–E7: render, sem overflow, sem violação axe séria › tema claro: telas principais sem violação séria de contraste (20.0s)
+  ✓  225 [desktop-1440] › tests\e2e\qa-robustez.spec.ts:33:5 › ROB-02: sessão corrompida e banco de versão antiga não quebram a interface (4.3s)
+  ✓  226 [desktop-1440] › tests\e2e\qa-robustez.spec.ts:52:5 › ROB-03: duas abas — alteração numa aba aparece na outra (3.8s)
+  ✓  228 [desktop-1440] › tests\e2e\qa-robustez.spec.ts:83:5 › PWA-03: offline mostra aviso e some ao reconectar (2.5s)
+  ✓  227 [desktop-1440] › tests\e2e\qa-robustez.spec.ts:69:5 › GEN-03/GEN-04: refresh em rota profunda e voltar/avançar preservam contexto (6.3s)
+  ✓  216 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 320×640: nenhuma rota com rolagem horizontal global (22.5s)
+  ✓  218 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 390×844: nenhuma rota com rolagem horizontal global (22.1s)
+  ✓  217 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 360×800: nenhuma rota com rolagem horizontal global (22.4s)
+  ✓  221 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1280×800: nenhuma rota com rolagem horizontal global (22.2s)
+  ✓  220 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1024×768: nenhuma rota com rolagem horizontal global (22.3s)
+  ✓  219 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 768×1024: nenhuma rota com rolagem horizontal global (22.7s)
+  ✓  222 [desktop-1440] › tests\e2e\qa-responsivo.spec.ts:36:9 › varredura responsiva › 1440×900: nenhuma rota com rolagem horizontal global (22.3s)
+
+
+  1) [mobile-360] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('link[rel="manifest"]')
+    Expected pattern: /\/pwa\/erp-atlas-juridico\//
+    Error: strict mode violation: locator('link[rel="manifest"]') resolved to 2 elements:
+        1) <link rel="manifest" href="/pwa/lexsion/manifest.webmanifest"/> aka locator('link').nth(2)
+        2) <link rel="manifest" href="/pwa/erp-atlas-juridico/manifest.webmanifest"/> aka locator('link:nth-child(40)')
+
+    Call log:
+      - Expect "toHaveAttribute" locator('link[rel="manifest"]') with timeout 5000ms
+      - waiting for locator('link[rel="manifest"]')
+
+
+      108 |     for (const [route, expected] of pairs.slice(0, 3)) {
+      109 |       await page.goto(route);
+    > 110 |       await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", new RegExp(expected));
+          |                                                          ^
+      111 |     }
+      112 |     const ids = new Set<string>();
+      113 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
+        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:110:58
+
+    Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-mobile-360\error-context.md
+
+  2) [mobile-360] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas ─────
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/admin\/organizacoes/
+    Received string:  "http://localhost:3100/admin"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="pt-BR" data-theme="dark" data-motion="auto" data-text-size="padrao" data-density="confortavel" class="BMM7va_variable h-full antialiased">…</html>
+           - unexpected value "http://localhost:3100/admin"
+
+
+      187 | test("superadmin vê só organizações agregadas", async ({ page }) => {
+      188 |   await signIn(page, /Suporte LexSion/);
+    > 189 |   await expect(page).toHaveURL(/\/admin\/organizacoes/);
+          |                      ^
+      190 |   await expect(page.getByRole("heading", { name: "Contratantes" })).toBeVisible();
+      191 |   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
+      192 |   expect(await seriousAxe(page)).toEqual([]);
+        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\journeys.spec.ts:189:22
+
+    Error Context: test-results\journeys-superadmin-vê-só-organizações-agregadas-mobile-360\error-context.md
+
+  3) [desktop-1440] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: locator('link[rel="manifest"]')
+    Expected pattern: /\/pwa\/erp-atlas-juridico\//
+    Error: strict mode violation: locator('link[rel="manifest"]') resolved to 2 elements:
+        1) <link rel="manifest" href="/pwa/lexsion/manifest.webmanifest"/> aka locator('link').nth(2)
+        2) <link rel="manifest" href="/pwa/erp-atlas-juridico/manifest.webmanifest"/> aka locator('link:nth-child(40)')
+
+    Call log:
+      - Expect "toHaveAttribute" locator('link[rel="manifest"]') with timeout 5000ms
+      - waiting for locator('link[rel="manifest"]')
+
+
+      108 |     for (const [route, expected] of pairs.slice(0, 3)) {
+      109 |       await page.goto(route);
+    > 110 |       await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", new RegExp(expected));
+          |                                                          ^
+      111 |     }
+      112 |     const ids = new Set<string>();
+      113 |     for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
+        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\foundation.spec.ts:110:58
+
+    Error Context: test-results\foundation-PWA-PWA-013-cad-cb5c4--e-todos-os-ícones-carregam-desktop-1440\error-context.md
+
+  4) [desktop-1440] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas ───
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/admin\/organizacoes/
+    Received string:  "http://localhost:3100/admin"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="pt-BR" data-theme="dark" data-motion="auto" data-text-size="padrao" data-density="confortavel" class="BMM7va_variable h-full antialiased">…</html>
+           - unexpected value "http://localhost:3100/admin"
+
+
+      187 | test("superadmin vê só organizações agregadas", async ({ page }) => {
+      188 |   await signIn(page, /Suporte LexSion/);
+    > 189 |   await expect(page).toHaveURL(/\/admin\/organizacoes/);
+          |                      ^
+      190 |   await expect(page.getByRole("heading", { name: "Contratantes" })).toBeVisible();
+      191 |   await expect(page.getByText("Maria das Graças Exemplo")).toHaveCount(0);
+      192 |   expect(await seriousAxe(page)).toEqual([]);
+        at J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec\tests\e2e\journeys.spec.ts:189:22
+
+    Error Context: test-results\journeys-superadmin-vê-só-organizações-agregadas-desktop-1440\error-context.md
+
+  4 failed
+    [mobile-360] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam 
+    [mobile-360] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas ──────
+    [desktop-1440] › tests\e2e\foundation.spec.ts:106:7 › PWA › PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam 
+    [desktop-1440] › tests\e2e\journeys.spec.ts:187:5 › superadmin vê só organizações agregadas ────
+  13 skipped
+  1 did not run
+  211 passed (1.6m)
+ ELIFECYCLE  Command failed with exit code 1.

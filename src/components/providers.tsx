@@ -11,6 +11,7 @@ import { organizations, users } from "@/mocks/fixtures";
 import { tenants } from "@/mocks/tenants";
 import type { RequestContext } from "@/services/contracts";
 import { isShellCache } from "@/lib/shell-cache";
+import { DEMO_COOKIE } from "@/lib/tenant-resolver";
 
 // Sessão FICTÍCIA em localStorage (só ids — nunca credenciais).
 const SESSION_KEY = "siwiltec.session";
@@ -113,16 +114,20 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
       const u = users.find((x) => x.id === userId);
       if (!u) return;
       qc.clear();
-      writeSession({ userId, organizationId: organizationId ?? u.organizationId });
+      const orgId = organizationId ?? u.organizationId;
+      setDemoCookie(tenants.find((t) => t.id === orgId)?.slug);
+      writeSession({ userId, organizationId: orgId });
     },
     switchOrg: (organizationId) => {
       if (!session) return;
       qc.clear(); // nenhum dado de um escritório sobrevive na troca (A12)
+      setDemoCookie(tenants.find((t) => t.id === organizationId)?.slug);
       writeSession({ ...session, organizationId });
     },
     signOut: async () => {
       qc.clear();
       await clearShellCache();
+      setDemoCookie(undefined); // entrada volta a mostrar a marca LexSion
       writeSession(null);
       router.replace("/entrar");
     },
@@ -153,6 +158,14 @@ async function clearShellCache() {
     const keys = await caches.keys();
     await Promise.all(keys.filter(isShellCache).map((k) => caches.delete(k)));
   } catch {}
+}
+
+/**
+ * Cookie só com o slug PÚBLICO do escritório demo: diz ao servidor qual manifesto/título/ícone servir em /app e /portal.
+ * Gravado ANTES da navegação para o HTML do servidor já vir certo. Não é sessão nem autorização.
+ */
+export function setDemoCookie(slug: string | undefined) {
+  document.cookie = slug ? `${DEMO_COOKIE}=${encodeURIComponent(slug)}; path=/; max-age=31536000; samesite=lax` : `${DEMO_COOKIE}=; path=/; max-age=0; samesite=lax`;
 }
 
 /** Leitura de coleção escopada pela organização atual. */

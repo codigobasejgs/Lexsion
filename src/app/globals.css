@@ -1,65 +1,103 @@
 @import "tailwindcss";
 
-/* SIWILTEC Black & Gold — tokens semânticos (seção 4.2 do prompt mestre).
-   Escuro é o padrão; claro e "sistema" por preferência (data-theme no <html>). */
+/* LexSion — tokens semânticos a partir da paleta oficial (../LEXSION/GUIA_IDENTIDADE_LEXSION.md).
+   Obsidian #090A0D · Onyx #14171D · Graphite #232934 · Sovereign Gold #C59A4A · Radiant Gold #F6D88C
+   Champagne #F7F2E8 · Ivory #FCFAF6 · Ink #18202B · Emerald #15806B · Crimson #BF4247.
+   Escuro é o padrão; claro e "sistema" por preferência (data-theme no <html>).
+   Escritórios sobrepõem --brand/--accent/--focus via data-tenant (src/lib/tenant-tokens.ts), com contraste garantido. */
+
+:root {
+  --brand-obsidian: #090a0d;
+  --brand-onyx: #14171d;
+  --brand-graphite: #232934;
+  --brand-gold: #c59a4a;
+  --brand-gold-radiant: #f6d88c;
+  --brand-champagne: #f7f2e8;
+  --brand-ivory: #fcfaf6;
+  --brand-ink: #18202b;
+}
 
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --canvas: #090807;
-  --surface: #15120e;
-  --surface-muted: #211b14;
-  --surface-raised: #1c1813;
-  --text-primary: #f7f1e6;
-  --text-secondary: #c4b8a5;
-  --border: #493d2a;
-  --border-strong: #6b5a3e;
-  --brand: #d6ae62;
-  --brand-hover: #e2bf7c;
-  --on-brand: #171108;
-  --accent: #f1d397;
-  --focus: #f1d397;
-  --selection: #3a2f1e;
+  --canvas: #090a0d;
+  --surface: #14171d;
+  --surface-muted: #1c2028;
+  --surface-raised: #191c23;
+  --text-primary: #f7f2e8;
+  --text-secondary: #b9b4aa;
+  --border: #2e3440;
+  --border-strong: #4a5263;
+  --brand: #c59a4a;
+  --brand-hover: #d6ad5f;
+  --on-brand: #090a0d;
+  --accent: #f6d88c; /* texto dourado só no escuro: ≥ 10:1 sobre Obsidian/Onyx */
+  --focus: #f6d88c;
+  --selection: #2a2416;
   --scrim: rgb(0 0 0 / 0.6);
-  --success: #6fcf97;
-  --success-bg: #12261a;
+  --success: #5fc9a8; /* Emerald clareado para texto no escuro */
+  --success-bg: #0c241e;
   --warning: #f2c94c;
   --warning-bg: #2a2310;
-  --danger: #ff8a80;
-  --danger-bg: #2e1513;
+  --danger: #ef8a8d; /* Crimson clareado para texto no escuro */
+  --danger-bg: #2c1416;
   --info: #8ab4f8;
   --info-bg: #131d2c;
   --ai: #e8c98a;
-  --ai-bg: #2a2214;
+  --ai-bg: #231e14;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --canvas: #f7f4ee;
+  --canvas: #fcfaf6;
   --surface: #ffffff;
-  --surface-muted: #eee8dd;
+  --surface-muted: #f1ede4;
   --surface-raised: #ffffff;
-  --text-primary: #211a10;
-  --text-secondary: #655744;
-  --border: #d9cdb8;
-  --border-strong: #b7a684;
-  --brand: #765414;
-  --brand-hover: #5f430f;
+  --text-primary: #18202b;
+  --text-secondary: #535b68;
+  --border: #ddd6c8;
+  --border-strong: #b3a98f;
+  --brand: #7d581e;
+  --brand-hover: #654717;
   --on-brand: #ffffff;
-  --accent: #855e1c; /* ≥ 4,5:1 em branco, canvas, surface-muted e selection */
-  --focus: #765414;
-  --selection: #f3e7cc;
-  --scrim: rgb(33 26 16 / 0.45);
-  --success: #1e6b3a;
-  --success-bg: #e3f3e8;
+  --accent: #7d581e; /* guia LexSion: dourado escuro para texto no claro (≥ 4,5:1 em Ivory/branco/seleção) */
+  --focus: #7d581e;
+  --selection: #f3ead6;
+  --scrim: rgb(24 32 43 / 0.45);
+  --success: #0f6b59; /* Emerald #15806B escurecido: o oficial dá 4,1:1 sobre surface-muted */
+  --success-bg: #e2f3ee;
   --warning: #7a5a00;
   --warning-bg: #fbf0cf;
-  --danger: #a3261b;
-  --danger-bg: #fbe4e1;
+  --danger: #a8353a; /* Crimson escurecido: ≥ 4,5:1 sobre fundo de erro */
+  --danger-bg: #fbe6e6;
   --info: #1d4f91;
   --info-bg: #e2ecfa;
   --ai: #6b4e12;
   --ai-bg: #f6ecd6;
+}
+
+/* Preferências do escritório: densidade, tamanho de texto e movimento (data-* no <html>). */
+:root[data-text-size="grande"] {
+  font-size: 112.5%;
+}
+:root[data-text-size="extra-grande"] {
+  font-size: 125%;
+}
+:root[data-density="compacta"] .panel {
+  --tw-density: 0.85;
+}
+:root[data-density="compacta"] main {
+  padding-top: 0.75rem;
+}
+:root[data-density="espacosa"] main {
+  padding-top: 2rem;
+}
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @theme inline {

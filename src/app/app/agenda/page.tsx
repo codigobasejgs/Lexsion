@@ -36,7 +36,7 @@ export default function AgendaPage() {
     const stamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
     const esc = (s: string) => s.replace(/[\\;,]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
     const body = data.map((e) => ["BEGIN:VEVENT", `UID:${e.id}@siwiltec.demo`, `DTSTAMP:${stamp(new Date().toISOString())}`, `DTSTART:${stamp(e.start)}`, `DTEND:${stamp(e.end)}`, `SUMMARY:${esc(`[DEMO] ${e.title}`)}`, `LOCATION:${esc(e.location)}`, "END:VEVENT"].join("\r\n")).join("\r\n");
-    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SIWILTEC//Demo//PT-BR\r\n${body}\r\nEND:VCALENDAR\r\n`;
+    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//LexSion//Demo//PT-BR\r\n${body}\r\nEND:VCALENDAR\r\n`;
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" })), download: "agenda-siwiltec-demo.ics" });
     a.click();
   };

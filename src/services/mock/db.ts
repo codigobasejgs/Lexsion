@@ -3,6 +3,7 @@
 import * as fx from "@/mocks/fixtures";
 import * as ops from "@/mocks/fixtures-ops";
 import { tenants } from "@/mocks/tenants";
+import * as platform from "@/mocks/platform";
 
 const DB_NAME = "siwiltec-demo";
 // ponytail: mudar o formato das fixtures (FIXTURE_VERSION) recria a demo do zero; migração por campo quando houver dado real.
@@ -56,6 +57,10 @@ export const COLLECTIONS = {
   learning: ops.learning,
   files: ops.files,
   tenants,
+  plans: platform.plans,
+  saasInvoices: platform.saasInvoices,
+  platformProviders: platform.platformProviders,
+  supportTickets: platform.supportTickets,
 } as const;
 
 export type CollectionName = keyof typeof COLLECTIONS;
@@ -96,6 +101,8 @@ type fx_Installment = (typeof fx.installments)[number];
 
 // Catálogos da demo (escritórios, usuários, tenants): a fixture define nome/branding dos ids conhecidos.
 const CATALOG = new Set<CollectionName>(["organizations", "users", "tenants"]);
+// Dados da PLATAFORMA: nunca reiniciados pelo escritório (fatura SaaS, chamados, planos, provedores).
+const PLATFORM_OWNED = new Set<CollectionName>(["tenants", "plans", "saasInvoices", "platformProviders", "supportTickets"]);
 
 /**
  * Migração SEM PERDA (DATA-01): registros existentes ficam; só entram registros-semente cujo id ainda não existe.
@@ -190,7 +197,7 @@ export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[]
 export async function resetTenant(orgId: string): Promise<void> {
   const patch: Partial<{ [C in CollectionName]: Row<C>[] }> = {};
   for (const name of Object.keys(COLLECTIONS) as CollectionName[]) {
-    if (CATALOG.has(name)) continue;
+    if (CATALOG.has(name) || PLATFORM_OWNED.has(name)) continue;
     const rows = (await readAll(name)) as { organizationId?: string }[];
     if (!rows.some((r) => "organizationId" in r)) continue;
     const seed = (seedValue(name) as { organizationId?: string }[]).filter((r) => r.organizationId === orgId);

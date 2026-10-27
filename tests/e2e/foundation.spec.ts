@@ -103,13 +103,25 @@ test("perfil sem permissão vê estado de acesso negado", async ({ page }) => {
 });
 
 test.describe("PWA", () => {
-  test("manifest válido e ícones carregam", async ({ request }) => {
-    const res = await request.get("/manifest.webmanifest");
-    expect(res.ok()).toBe(true);
-    const m = await res.json();
-    expect(m).toMatchObject({ id: "/app/inicio", lang: "pt-BR", display: "standalone", scope: "/" });
-    expect(m.icons.some((i: { purpose: string }) => i.purpose === "maskable")).toBe(true);
-    for (const i of m.icons) expect((await request.get(i.src)).ok(), i.src).toBe(true);
+  test("PWA-013: cada contexto aponta para o próprio manifesto e todos os ícones carregam", async ({ page, request }) => {
+    const pairs: [string, string][] = [["/entrar", "/pwa/lexsion/"], ["/admin", "/pwa/admin/"], ["/demo/tenant/atlas-juridico", "/pwa/erp-atlas-juridico/"], ["/app/inicio", "/pwa/lexsion/"]];
+    for (const [route, expected] of pairs.slice(0, 3)) {
+      await page.goto(route);
+      await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+      await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", new RegExp(expected));
+    }
+    const ids = new Set<string>();
+    for (const key of ["lexsion", "admin", "erp-aurora-advocacia", "erp-atlas-juridico", "portal-aurora-advocacia"]) {
+      const res = await request.get(`/pwa/${key}/manifest.webmanifest`);
+      expect(res.ok(), key).toBe(true);
+      expect(res.headers()["content-type"]).toContain("application/manifest+json");
+      const m = await res.json();
+      expect(m).toMatchObject({ lang: "pt-BR", display: "standalone" });
+      ids.add(m.id);
+      for (const i of m.icons) expect((await request.get(i.src)).ok(), i.src).toBe(true);
+    }
+    expect(ids.size).toBe(5);
+    expect((await request.get("/pwa/erp-desconhecido/manifest.webmanifest")).status()).toBe(404);
   });
 
   test("service worker controla a página e serve offline após visita; não cacheia /api", async ({ page, context, isMobile }) => {

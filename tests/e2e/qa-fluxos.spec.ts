@@ -94,7 +94,7 @@ test("FIN-10 / ADM-08: provedores de pagamento e assinatura não aparecem como c
 });
 
 test("GEN-01: cada perfil entra no painel adequado", async ({ page }) => {
-  const cases: [RegExp, RegExp][] = [[/Helena Prado/, /\/app\/inicio/], [/Caio Martins/, /\/app\/inicio/], [/Cliente \(portal\)/, /\/portal$/], [/Suporte SIWILTEC/, /\/admin\/organizacoes/]];
+  const cases: [RegExp, RegExp][] = [[/Helena Prado/, /\/app\/inicio/], [/Caio Martins/, /\/app\/inicio/], [/Cliente \(portal\)/, /\/portal$/], [/Suporte LexSion/, /\/admin/]];
   for (const [who, url] of cases) {
     await signIn(page, who);
     await expect(page).toHaveURL(url);

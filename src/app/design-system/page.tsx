@@ -13,7 +13,7 @@ export default function DesignSystemPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-8">
-        <PageHeader title="Design system" description="SIWILTEC Black & Gold — tokens, componentes e estados. Alterne tema em Configurações para conferir claro/escuro." />
+        <PageHeader title="Design system" description="LexSion Black & Gold — tokens, componentes e estados. Alterne tema em Configurações para conferir claro/escuro." />
 
         <section>
           <h2 className="mb-3 font-semibold">Tokens de cor</h2>

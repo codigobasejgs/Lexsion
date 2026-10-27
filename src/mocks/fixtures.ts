@@ -30,7 +30,7 @@ export const users: User[] = [
   { id: "u-otavio", name: "Otávio Reis", role: "admin", organizationId: B },
   { id: "u-trial", name: "Carlos Exemplo", role: "admin", organizationId: N },
   { id: "u-portal-maria", name: "Maria das Graças Exemplo", role: "cliente", organizationId: A, clientId: "c-maria" },
-  { id: "u-super", name: "Suporte SIWILTEC", role: "superadmin", organizationId: null },
+  { id: "u-super", name: "Suporte LexSion", role: "superadmin", organizationId: null },
 ];
 
 // Documento sintético começando com "000." — inválido de propósito, nunca confundível com CPF real.

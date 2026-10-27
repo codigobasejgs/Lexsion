@@ -1,33 +1,42 @@
-// Gera ícones PWA a partir de um monograma PROVISÓRIO "SW" (sem vetor oficial da marca).
-// Substituir por vetor aprovado: troque `mark()` pelo SVG oficial e rode `pnpm pwa:assets`.
+// Gera ícones PWA a partir dos VETORES ORIGINAIS LexSion (public/brand/lexsion, cópia de ../LEXSION).
+// Plataforma: public/icons/*. Escritórios demo: public/tenants/<slug>/icon-*.png a partir do logo.svg do escritório.
+// Reprodutível: `pnpm pwa:assets`. Não desenha símbolo novo — só redimensiona/enquadra os SVGs fornecidos.
 import sharp from "sharp";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const out = new URL("../public/icons/", import.meta.url);
-mkdirSync(out, { recursive: true });
+const p = (rel) => fileURLToPath(new URL(`../${rel}`, import.meta.url));
+const icon = readFileSync(p("public/brand/lexsion/lexsion-pwa-icon-512.svg"));
+const emblem = readFileSync(p("public/brand/lexsion/lexsion-emblema-transparente.svg"));
+const OBSIDIAN = { r: 9, g: 10, b: 13, alpha: 1 };
 
-const mark = (size, safe) => {
-  const s = safe ? 0.62 : 0.8; // maskable: conteúdo dentro do círculo seguro de 80%
-  const fs = Math.round(size * 0.42 * s / 0.8);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1d397"/><stop offset=".55" stop-color="#d6ae62"/><stop offset="1" stop-color="#9c7230"/></linearGradient></defs>
-  <rect width="100%" height="100%" ${safe ? "" : `rx="${size * 0.2}"`} fill="#0d0b08"/>
-  <text x="50%" y="53%" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="700" font-size="${fs}" fill="url(#g)" letter-spacing="${-fs * 0.06}">SW</text>
-</svg>`;
-};
+async function render(svg, size, file) {
+  await sharp(svg, { density: 384 }).resize(size, size).png().toFile(file);
+  console.log("gerado", file.split(/[\\/]public[\\/]/)[1]);
+}
+// Maskable: conteúdo dentro da zona segura (80%) sobre fundo cheio.
+async function maskable(svg, size, file, bg = OBSIDIAN) {
+  const inner = await sharp(svg, { density: 384 }).resize(Math.round(size * 0.62), Math.round(size * 0.62)).png().toBuffer();
+  await sharp({ create: { width: size, height: size, channels: 4, background: bg } }).composite([{ input: inner, gravity: "center" }]).png().toFile(file);
+  console.log("gerado", file.split(/[\\/]public[\\/]/)[1]);
+}
 
-const mono = (size) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><text x="50%" y="53%" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, serif" font-style="italic" font-weight="700" font-size="${size * 0.33}" fill="#fff">SW</text></svg>`;
+mkdirSync(p("public/icons"), { recursive: true });
+await render(icon, 192, p("public/icons/icon-192.png"));
+await render(icon, 512, p("public/icons/icon-512.png"));
+await maskable(emblem, 192, p("public/icons/maskable-192.png"));
+await maskable(emblem, 512, p("public/icons/maskable-512.png"));
+await maskable(emblem, 180, p("public/icons/apple-touch-icon.png"));
+// Monocromático: emblema em branco sobre transparente (silhueta do vetor original).
+await sharp(emblem, { density: 384 }).resize(512, 512).ensureAlpha().linear([0, 0, 0], [255, 255, 255]).png().toFile(p("public/icons/monochrome-512.png"));
+await render(readFileSync(p("public/brand/lexsion/lexsion-favicon.svg")), 32, p("public/icons/favicon-32.png"));
 
-const jobs = [
-  ["icon-192.png", mark(192, false)],
-  ["icon-512.png", mark(512, false)],
-  ["maskable-192.png", mark(192, true)],
-  ["maskable-512.png", mark(512, true)],
-  ["monochrome-512.png", mono(512)],
-  ["apple-touch-icon.png", mark(180, true)],
-];
-for (const [name, svg] of jobs) {
-  await sharp(Buffer.from(svg)).png().toFile(fileURLToPath(new URL(name, out)));
-  console.log("gerado", name);
+for (const slug of readdirSync(p("public/tenants"))) {
+  const logo = p(`public/tenants/${slug}/logo.svg`);
+  if (!existsSync(logo)) continue;
+  const svg = readFileSync(logo);
+  await render(svg, 192, p(`public/tenants/${slug}/icon-192.png`));
+  await render(svg, 512, p(`public/tenants/${slug}/icon-512.png`));
+  await render(svg, 180, p(`public/tenants/${slug}/apple-touch-icon.png`));
+  await maskable(svg, 512, p(`public/tenants/${slug}/maskable-512.png`), { r: 255, g: 255, b: 255, alpha: 0 });
 }

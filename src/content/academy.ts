@@ -20,7 +20,7 @@ export interface Track {
 
 export const TRACKS: Track[] = [
   {
-    id: "comecando", title: "Começando na SIWILTEC", level: "Iniciante", roles: ["admin", "advogado", "atendimento", "financeiro", "estagiario"],
+    id: "comecando", title: "Começando na LexSion", level: "Iniciante", roles: ["admin", "advogado", "atendimento", "financeiro", "estagiario"],
     lessons: [
       { key: "modo-demo", title: "O que é real e o que é simulado", minutes: 3, article: "entender-modo-demo" },
       { key: "primeiro-acesso", title: "Primeiro acesso e busca", minutes: 4, article: "primeiro-acesso", tour: "primeiro-acesso" },

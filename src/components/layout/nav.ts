@@ -71,7 +71,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/app/integracoes", label: "Integrações", icon: Plug, area: "integracoes" },
       { href: "/app/importacoes", label: "Importações", icon: Upload, area: "importacoes" },
       { href: "/app/configuracoes", label: "Configurações", icon: Settings, area: "configuracoes" },
-      { href: "/admin/organizacoes", label: "Organizações (SaaS)", icon: Building2, area: "admin" },
+      { href: "/admin", label: "Super Admin LexSion", icon: Building2, area: "admin" },
     ],
   },
   {

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Sem conexão" };
 export default function OfflinePage() {
   return (
     <main id="conteudo" className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-6 py-12">
-      <p className="text-sm font-medium tracking-[0.2em] text-accent">SIWILTEC</p>
+      <p className="text-sm font-medium tracking-[0.2em] text-accent">LexSion</p>
       <h1 className="text-2xl font-semibold">Você está sem conexão</h1>
       <p className="text-fg-muted">
         Esta página ainda não foi aberta neste dispositivo, por isso não está disponível offline.

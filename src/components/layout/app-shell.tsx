@@ -14,19 +14,21 @@ const CommandPalette = dynamic(() => import("./command-palette").then((m) => m.C
 import { NotificationBell } from "./notifications";
 import { ScreenHelp } from "./screen-help";
 import { Dialog } from "@/components/ui";
-
-const COLLAPSE_KEY = "siwiltec.sidebar.collapsed";
+import { TenantLogo } from "@/components/brand";
 
 function useActive() {
   const path = usePathname();
   return (href: string) => path === href || path.startsWith(href + "/");
 }
 
+// Marca do ESCRITÓRIO no ERP (white-label); LexSion só aparece no Super Admin e nas páginas da plataforma.
 function Wordmark({ compact }: { compact?: boolean }) {
+  const { tenant, org } = useSession();
+  const name = tenant?.settings.brandName ?? org?.name ?? "Escritório";
   return (
-    <Link href="/app/inicio" className="flex items-center gap-2 rounded px-1" aria-label="SIWILTEC — ir para Meu dia">
-      <span aria-hidden className="inline-flex size-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,#f1d397,#d6ae62_55%,#9c7230)] font-serif text-sm font-bold italic text-[#171108]">SW</span>
-      {!compact && <span className="text-[0.95rem] font-semibold tracking-[0.18em] text-fg">SIWILTEC</span>}
+    <Link href="/app/inicio" className="flex min-w-0 items-center gap-2 rounded px-1" aria-label={`${name} — ir para Meu dia`}>
+      <TenantLogo src={tenant?.settings.logoDark} name={name} className="size-8 shrink-0" />
+      {!compact && <span className="truncate text-[0.95rem] font-semibold text-fg">{name}</span>}
     </Link>
   );
 }
@@ -39,19 +41,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const collapseKey = `siwiltec.sidebar.${tenant?.id ?? "default"}.${user?.id ?? "anon"}`;
+  // Menu recolhido lembrado por escritório + usuário.
+  const collapseKey = `siwiltec.sidebar.${org?.id ?? "default"}.${user?.id ?? "anon"}`;
 
   useEffect(() => {
-    if (!tenant || !user) return;
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência local lida após montar
       setCollapsed(localStorage.getItem(collapseKey) === "1");
     } catch {}
-  }, [tenant?.id, user?.id, collapseKey]);
+  }, [collapseKey]);
   useEffect(() => {
     if (ready && !user) router.replace("/entrar");
     else if (ready && user?.role === "cliente") router.replace("/portal");
-    else if (ready && user?.role === "superadmin") router.replace("/admin/organizacoes");
+    else if (ready && user?.role === "superadmin") router.replace("/admin");
   }, [ready, user, router]);
 
   useEffect(() => {
@@ -69,7 +71,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => user && can(user.role, i.area as Area)) })).filter((g) => g.items.length),
     [user],
   );
-  const myOrgs = user?.role === "admin" ? organizations : organizations.filter((o) => o.id === user?.organizationId);
+  // Troca de escritório: só demonstração (perfil admin vê os escritórios demo de origem). Em produção, por vínculo (membership).
+  const myOrgs = user?.role === "admin" ? organizations.filter((o) => o.id !== "org-novo" || o.id === user.organizationId) : organizations.filter((o) => o.id === user?.organizationId);
 
   const toggle = () => {
     setCollapsed((c) => {
@@ -82,6 +85,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!ready || !user || !org) {
     return <div className="min-h-dvh bg-canvas" aria-busy="true" />;
+  }
+  // Escritório suspenso/cancelado: nenhuma tela com dados abre (F16). Sair continua disponível.
+  if (tenant && (tenant.status === "suspensa" || tenant.status === "cancelada" || tenant.status === "removida")) {
+    return (
+      <main id="conteudo" className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-5 text-center">
+        <h1 className="text-2xl font-semibold">{tenant.status === "suspensa" ? "Acesso suspenso" : "Assinatura encerrada"}</h1>
+        <p className="text-fg-muted">O acesso de {tenant.settings.brandName} está {tenant.status === "suspensa" ? "temporariamente suspenso" : "encerrado"}. Os dados foram preservados. Fale com o responsável pelo escritório ou com o suporte LexSion.</p>
+        <button className="btn btn-secondary" onClick={signOut}><LogOut aria-hidden className="size-4" /> Sair</button>
+      </main>
+    );
   }
 
   // mode "rail": rótulo oculto até lg (ou sempre, se recolhido); "full": rótulo sempre visível (menu Mais).
@@ -165,10 +178,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ScreenHelp />
             <NotificationBell />
             <details className="relative">
-              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-2 hover:bg-surface-muted" aria-label="Menu do usuário">
+              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-2 hover:bg-surface-muted">
                 <span aria-hidden className="inline-flex size-8 items-center justify-center rounded-full border border-brand/40 bg-selection text-xs font-semibold text-accent">
                   {user.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                 </span>
+                <span className="sr-only">Menu do usuário</span>
               </summary>
               <div className="absolute right-0 top-12 z-40 w-72 rounded-[var(--radius-panel)] border border-line bg-surface-raised p-2 shadow-xl">
                 <div className="border-b border-line px-3 py-2">

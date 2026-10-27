@@ -1,59 +1,21 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { resolveContext, demoSlugFromCookie, DEMO_COOKIE, TENANT_HEADER, CONTEXT_HEADER } from "@/lib/tenant-resolver";
 
-// Resolução de tenant: por host customizado ou por rota /demo/tenant/[slug].
-// ponytail: JWT criptografado com tenant_id quando houver auth real; agora é cookie/header para demo.
+// Resolve o contexto (plataforma, Super Admin, escritório, portal) ANTES de renderizar.
+// Repassa ao servidor por cabeçalho de REQUISIÇÃO; descarta qualquer x-lexsion-* vindo do navegador.
 export function proxy(request: NextRequest) {
-  const { pathname, host } = request.nextUrl;
-
-  // Super Admin sempre sem tenant
-  if (pathname.startsWith("/admin")) {
-    const response = NextResponse.next();
-    response.headers.set("x-tenant-context", "superadmin");
-    return response;
-  }
-
-  // Rotas públicas sem tenant
-  if (pathname === "/" || pathname.startsWith("/entrar") || pathname.startsWith("/recuperar-acesso") || pathname === "/manifest.json" || pathname.startsWith("/_next") || pathname.startsWith("/icons")) {
-    return NextResponse.next();
-  }
-
-  // Resolução por rota /demo/tenant/[slug]
-  const demoMatch = pathname.match(/^\/demo\/tenant\/([a-z0-9-]+)/);
-  if (demoMatch) {
-    const slug = demoMatch[1];
-    const response = NextResponse.next();
-    response.cookies.set("siwiltec-tenant-slug", slug, { path: "/", sameSite: "lax", httpOnly: false });
-    response.headers.set("x-tenant-slug", slug);
-    return response;
-  }
-
-  // Resolução por host customizado (não implementado na demo; sempre localhost)
-  // ponytail: aurora.adv.br → tenant aurora-advocacia quando DNS configurado.
-  if (host !== "localhost:3000" && host !== "127.0.0.1:3000" && !host.startsWith("192.168.")) {
-    // Exemplo: aurora.adv.br → slug=aurora-advocacia (lookup no backend)
-    // const slug = await resolveDomain(host);
-    const response = NextResponse.next();
-    response.headers.set("x-tenant-unknown-domain", host);
-    return response;
-  }
-
-  // Tenant por cookie (setado anteriormente)
-  const tenantSlug = request.cookies.get("siwiltec-tenant-slug")?.value;
-  if (tenantSlug) {
-    const response = NextResponse.next();
-    response.headers.set("x-tenant-slug", tenantSlug);
-    return response;
-  }
-
-  // Sem tenant: contexto local single-org (Aurora padrão na demo)
-  const response = NextResponse.next();
-  response.headers.set("x-tenant-slug", "aurora-advocacia");
-  return response;
+  const headers = new Headers(request.headers);
+  headers.delete(TENANT_HEADER);
+  headers.delete(CONTEXT_HEADER);
+  const r = resolveContext(request.nextUrl.hostname, request.nextUrl.pathname);
+  // Demo num único endereço: o cookie só escolhe QUAL manifesto público (nome/ícone) exibir em /app e /portal.
+  // Não dá acesso a dados; em produção o escritório vem do host verificado.
+  const slug = r.slug ?? ((r.context === "tenant" || r.context === "portal") ? demoSlugFromCookie(request.cookies.get(DEMO_COOKIE)?.value) : null);
+  headers.set(CONTEXT_HEADER, r.context);
+  if (slug) headers.set(TENANT_HEADER, slug);
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sw.js|icons/|.*\\.png$|.*\\.svg$|.*\\.jpg$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|sw.js|icons/|brand/|help/|favicon).*)"],
 };

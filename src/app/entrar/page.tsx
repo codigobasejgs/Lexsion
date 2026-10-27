@@ -7,6 +7,7 @@ import { ArrowRight, FlaskConical } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { organizations, users } from "@/mocks/fixtures";
 import { ROLE_LABEL } from "@/domain/permissions";
+import { LexSionLogo } from "@/components/brand";
 
 export default function EntrarPage() {
   const { signIn } = useSession();
@@ -16,32 +17,26 @@ export default function EntrarPage() {
 
   const enter = () => {
     signIn(userId);
-    router.push(selected.role === "cliente" ? "/portal" : selected.role === "superadmin" ? "/admin/organizacoes" : "/app/inicio");
+    router.push(selected.role === "cliente" ? "/portal" : selected.role === "superadmin" ? "/admin" : "/app/inicio");
   };
 
   return (
     <main id="conteudo" className="grid min-h-dvh grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       {/* Painel de marca: textura/gradiente só aqui, nunca sob dados. */}
-      <section className="relative hidden overflow-hidden bg-[radial-gradient(120%_80%_at_20%_10%,#2a2014_0%,#0d0b08_55%,#060504_100%)] lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div aria-hidden className="absolute inset-0 opacity-[0.07] [background-image:repeating-linear-gradient(45deg,#f1d397_0_1px,transparent_1px_7px)]" />
-        <div className="relative flex items-center gap-3">
-          <span aria-hidden className="inline-flex size-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#f1d397,#d6ae62_55%,#9c7230)] font-serif text-lg font-bold italic text-[#171108]">SW</span>
-          <span className="text-lg font-semibold tracking-[0.25em] text-[#f7f1e6]">SIWILTEC</span>
-        </div>
+      <section className="relative hidden overflow-hidden bg-[radial-gradient(120%_80%_at_20%_10%,#232934_0%,#0e1014_55%,#090a0d_100%)] lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <div aria-hidden className="absolute inset-0 opacity-[0.07] [background-image:repeating-linear-gradient(45deg,#c59a4a_0_1px,transparent_1px_7px)]" />
+        <div className="relative"><LexSionLogo className="h-12" variant="dark" /></div>
         <div className="relative max-w-lg">
-          <p className="text-sm font-medium tracking-[0.3em] text-[#d6ae62]">GESTÃO INTELIGENTE DE ESCRITÓRIOS</p>
-          <h1 className="mt-4 font-serif text-4xl leading-tight text-[#f7f1e6]">O escritório inteiro, do primeiro contato ao recebimento — na palma da mão.</h1>
-          <p className="mt-4 text-[#c4b8a5]">Atendimento, casos, documentos, prazos e financeiro conectados, com a assistente virtual sempre sob controle da equipe.</p>
+          <p className="text-sm font-medium tracking-[0.3em] text-[#f6d88c]">PLATAFORMA JURÍDICA INTELIGENTE</p>
+          <h1 className="mt-4 font-serif text-4xl leading-tight text-[#f7f2e8]">O escritório inteiro, do primeiro contato ao recebimento — na palma da mão.</h1>
+          <p className="mt-4 text-[#b9b4aa]">Atendimento, casos, documentos, prazos e financeiro conectados, com a assistente virtual sempre sob controle da equipe.</p>
         </div>
-        <p className="relative text-sm text-[#c4b8a5]">Simplificando o seu dia a dia.</p>
+        <p className="relative text-sm text-[#b9b4aa]">Toda a advocacia. Uma plataforma.</p>
       </section>
 
       <section className="flex flex-col justify-center px-5 py-10 sm:px-10">
         <div className="mx-auto w-full max-w-md">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span aria-hidden className="inline-flex size-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#f1d397,#d6ae62_55%,#9c7230)] font-serif font-bold italic text-[#171108]">SW</span>
-            <span className="font-semibold tracking-[0.22em]">SIWILTEC</span>
-          </div>
+          <div className="mb-8 lg:hidden"><LexSionLogo className="h-10" /></div>
           <h2 className="text-2xl font-semibold">Entrar na demonstração</h2>
           <p className="mt-1 text-fg-muted">Escolha um perfil fictício. Cada perfil vê apenas o que lhe é permitido.</p>
 

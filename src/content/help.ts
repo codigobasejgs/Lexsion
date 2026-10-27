@@ -58,7 +58,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
   {
     slug: "operar-no-celular", title: "Operar no celular e instalar o aplicativo", category: "Primeiros passos",
-    goal: "Usar a SIWILTEC pelo celular, como um aplicativo.", prerequisites: "Chrome, Edge ou Safari atualizados.", who: "Todos os perfis.",
+    goal: "Usar o sistema pelo celular, como um aplicativo.", prerequisites: "Chrome, Edge ou Safari atualizados.", who: "Todos os perfis.",
     steps: [
       "No celular, a barra inferior leva a Meu dia, Conversas, Agenda e “Mais”. O botão central “+” abre busca e atalhos.",
       "Android ou computador (Chrome/Edge): toque em “Instalar aplicativo” no Meu dia ou em Configurações → Dispositivo.",
@@ -66,7 +66,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Abra o aplicativo pelo novo ícone. Sem internet, telas já abertas continuam disponíveis e uma faixa avisa “Sem conexão”.",
     ],
     buttons: ["Mais", "Instalar aplicativo"],
-    expected: "A SIWILTEC abre em tela cheia, sem a barra do navegador.",
+    expected: "O sistema abre em tela cheia, sem a barra do navegador.",
     errors: [
       { problem: "Não aparece a opção de instalar.", fix: "Alguns navegadores não oferecem instalação. A plataforma continua funcionando no navegador." },
       { problem: "Apareceu “Nova versão disponível”.", fix: "Termine o que está digitando e toque em “Atualizar agora”. Nada é atualizado sozinho no meio de um formulário." },
