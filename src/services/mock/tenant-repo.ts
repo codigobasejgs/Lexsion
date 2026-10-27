@@ -1,70 +1,68 @@
-// Repositório mock de tenants (Onda 1 SaaS).
+// Repositório mock de escritórios (tenants), persistido no IndexedDB da demo (coleção "tenants").
+// Mesma interface que um SupabaseTenantRepository futuro; sem backend, nada aqui é autorização real.
 import type { Tenant, TenantUsage, PlanId, BillingCycle } from "@/domain/tenancy";
 import type { Result } from "../contracts";
-import { tenants } from "@/mocks/tenants";
+import { readAll, writeMany } from "./db";
+import { auditRow, fail, ok } from "./generic";
 
-const cid = () => crypto.randomUUID().slice(0, 8);
-const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: cid() });
-const fail = (code: string, message: string): Result<never> => ({ ok: false, error: { code, message, retryable: false }, correlationId: cid() });
+const RESERVED = new Set(["admin", "app", "api", "www", "portal", "demo", "lexsion", "suporte", "status", "entrar"]);
+export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 
-// Demo: tenants em memória; real usaria Supabase.
-let state = structuredClone(tenants);
+export function slugError(slug: string, taken: string[]): string | null {
+  if (!SLUG_RE.test(slug)) return "Use 3 a 40 letras minúsculas, números ou hífen (sem hífen no início/fim).";
+  if (RESERVED.has(slug)) return "Endereço reservado pela plataforma.";
+  if (taken.includes(slug)) return "Endereço já em uso por outro escritório.";
+  return null;
+}
+
+const PLATFORM = { organizationId: "platform", actorId: "u-super" };
+
+async function save(next: Tenant[], action: string, id: string, detail: string, actorId = PLATFORM.actorId) {
+  const audit = await readAll("audit");
+  await writeMany({ tenants: next, audit: [...audit, auditRow({ organizationId: "platform", actorId }, action, "Tenant", id, detail)] });
+}
 
 export const tenantRepo = {
-  list: async (): Promise<Tenant[]> => structuredClone(state),
+  list: async (): Promise<Tenant[]> => readAll("tenants"),
+  getById: async (id: string): Promise<Tenant | null> => (await readAll("tenants")).find((t) => t.id === id) ?? null,
+  getBySlug: async (slug: string): Promise<Tenant | null> => (await readAll("tenants")).find((t) => t.slug === slug) ?? null,
 
-  getById: async (id: string): Promise<Tenant | null> => {
-    const t = state.find(x => x.id === id);
-    return t ? structuredClone(t) : null;
-  },
-
-  getBySlug: async (slug: string): Promise<Tenant | null> => {
-    const t = state.find(x => x.slug === slug);
-    return t ? structuredClone(t) : null;
-  },
-
-  getByDomain: async (domain: string): Promise<Tenant | null> => {
-    const t = state.find(x => x.customDomain === domain);
-    return t ? structuredClone(t) : null;
-  },
-
-  create: async (input: Omit<Tenant, "id" | "createdAt">): Promise<Result<Tenant>> => {
-    if (state.some(t => t.slug === input.slug)) return fail("slug_taken", "Slug já em uso.");
-    const tenant: Tenant = { ...input, id: `org-${cid()}`, createdAt: new Date().toISOString() };
-    state = [...state, tenant];
+  create: async (input: Omit<Tenant, "id" | "createdAt">, actorId?: string): Promise<Result<Tenant>> => {
+    const all = await readAll("tenants");
+    const err = slugError(input.slug, all.map((t) => t.slug));
+    if (err) return fail("slug_invalido", err);
+    const tenant: Tenant = { ...input, id: `org-${input.slug}`, createdAt: new Date().toISOString() };
+    if (all.some((t) => t.id === tenant.id)) return fail("duplicado", "Escritório já existe.");
+    const orgs = await readAll("organizations");
+    await writeMany({ organizations: [...orgs, { id: tenant.id, name: tenant.name, city: "—", focus: "Geral" }] });
+    await save([...all, tenant], "tenant.created", tenant.id, `Escritório criado (${tenant.plan})`, actorId);
     return ok(tenant);
   },
 
-  update: async (id: string, patch: Partial<Omit<Tenant, "id" | "slug" | "createdAt">>): Promise<Result<Tenant>> => {
-    const idx = state.findIndex(t => t.id === id);
-    if (idx < 0) return fail("not_found", "Tenant não encontrado.");
-    const updated = { ...state[idx], ...patch };
-    state = [...state.slice(0, idx), updated, ...state.slice(idx + 1)];
-    return ok(updated);
+  update: async (id: string, patch: Partial<Omit<Tenant, "id" | "slug" | "createdAt">>, actorId?: string, detail = "Escritório atualizado"): Promise<Result<Tenant>> => {
+    const all = await readAll("tenants");
+    const cur = all.find((t) => t.id === id);
+    if (!cur) return fail("not_found", "Escritório não encontrado.");
+    const next = { ...cur, ...patch };
+    await save(all.map((t) => (t.id === id ? next : t)), "tenant.updated", id, detail, actorId);
+    return ok(next);
   },
 
-  suspend: async (id: string, reason: string): Promise<Result<Tenant>> => {
-    return tenantRepo.update(id, { status: "suspensa", suspendedAt: new Date().toISOString(), suspensionReason: reason });
-  },
+  suspend: (id: string, reason: string, actorId?: string) =>
+    reason.trim() ? tenantRepo.update(id, { status: "suspensa", suspendedAt: new Date().toISOString(), suspensionReason: reason.trim() }, actorId, `Suspenso: ${reason.trim()}`) : Promise.resolve(fail("motivo", "Informe o motivo da suspensão.")),
+  reactivate: (id: string, actorId?: string) => tenantRepo.update(id, { status: "ativa", suspendedAt: undefined, suspensionReason: undefined }, actorId, "Reativado"),
+  changePlan: (id: string, plan: PlanId, cycle: BillingCycle, actorId?: string) => tenantRepo.update(id, { plan, cycle }, actorId, `Plano: ${plan}/${cycle}`),
 
-  reactivate: async (id: string): Promise<Result<Tenant>> => {
-    return tenantRepo.update(id, { status: "ativa", suspendedAt: undefined, suspensionReason: undefined });
+  /** Consumo REAL contado nas coleções da demo (não números fixos). */
+  getUsage: async (id: string): Promise<TenantUsage> => {
+    const [users, clients, automations, files] = await Promise.all([readAll("users"), readAll("clients"), readAll("automations"), readAll("files")]);
+    const sizes = (files as { organizationId: string; size?: number }[]).filter((f) => f.organizationId === id).reduce((s, f) => s + (f.size ?? 0), 0);
+    return {
+      members: users.filter((u) => u.organizationId === id && u.role !== "cliente").length,
+      clients: clients.filter((c) => c.organizationId === id).length,
+      storage: Math.round(sizes / 1024 / 1024),
+      aiMessages: 0,
+      automations: automations.filter((a) => a.organizationId === id).length,
+    };
   },
-
-  changePlan: async (id: string, plan: PlanId, cycle: BillingCycle): Promise<Result<Tenant>> => {
-    return tenantRepo.update(id, { plan, cycle });
-  },
-
-  // Demo: usage mock derivado de fixtures; real consultaria agregações.
-  getUsage: async (id: string): Promise<TenantUsage | null> => {
-    const t = await tenantRepo.getById(id);
-    if (!t) return null;
-    // ponytail: valores hardcoded; integrar com contagens reais quando db.ts suportar tenant_id.
-    if (id === "org-aurora") return { members: 6, clients: 12, storage: 42, aiMessages: 87, automations: 2 };
-    if (id === "org-boreal") return { members: 1, clients: 3, storage: 8, aiMessages: 15, automations: 0 };
-    if (id === "org-novo") return { members: 1, clients: 0, storage: 0, aiMessages: 3, automations: 0 };
-    return { members: 0, clients: 0, storage: 0, aiMessages: 0, automations: 0 };
-  },
-
-  reset: () => { state = structuredClone(tenants); },
 };

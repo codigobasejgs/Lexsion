@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import type { Organization, User } from "@/domain/types";
 import type { Tenant } from "@/domain/tenancy";
 import { list } from "@/services/mock/repo";
-import { onExternalChange, resetDemo, type CollectionName, type Row } from "@/services/mock/db";
+import { onExternalChange, readAll, resetDemo, resetTenant, type CollectionName, type Row } from "@/services/mock/db";
 import { organizations, users } from "@/mocks/fixtures";
 import { tenants } from "@/mocks/tenants";
 import type { RequestContext } from "@/services/contracts";
+import { isShellCache } from "@/lib/shell-cache";
 
 // Sessão FICTÍCIA em localStorage (só ids — nunca credenciais).
 const SESSION_KEY = "siwiltec.session";
@@ -72,7 +73,11 @@ interface SessionCtx {
   ctx: RequestContext | null;
   signIn: (userId: string, organizationId?: string | null) => void;
   switchOrg: (organizationId: string) => void;
+  /** Encerra a sessão. NUNCA apaga dados da demo (DATA-02). */
   signOut: () => Promise<void>;
+  /** Reinicia só o escritório atual (ação administrativa separada, com confirmação na UI). */
+  restoreTenant: () => Promise<void>;
+  /** Reinicia a demo inteira — exclusivo do Super Admin. */
   restoreDemo: () => Promise<void>;
 }
 
@@ -90,8 +95,11 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
   const session = useSyncExternalStore(subscribe, getSnapshot, () => null);
   const ready = useSyncExternalStore(subscribe, () => true, () => false);
   const user = users.find((u) => u.id === session?.userId) ?? null;
-  const org = organizations.find((o) => o.id === session?.organizationId) ?? null;
-  const tenant = tenants.find((t) => t.id === org?.id) ?? null;
+  // Escritórios e marcas vêm do banco da demo (criados/editados no Super Admin persistem); fixture é só o ponto de partida.
+  const orgRows = useQuery({ queryKey: ["organizations", "catalog"], queryFn: () => readAll("organizations"), enabled: ready });
+  const tenantRows = useQuery({ queryKey: ["tenants"], queryFn: () => readAll("tenants"), enabled: ready });
+  const org = (orgRows.data ?? organizations).find((o) => o.id === session?.organizationId) ?? null;
+  const tenant = (tenantRows.data ?? tenants).find((t) => t.id === org?.id) ?? null;
 
   useEffect(() => onExternalChange(() => qc.invalidateQueries()), [qc]);
 
@@ -118,7 +126,14 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
       writeSession(null);
       router.replace("/entrar");
     },
+    restoreTenant: async () => {
+      if (!org) return;
+      await resetTenant(org.id);
+      qc.clear();
+      await qc.invalidateQueries();
+    },
     restoreDemo: async () => {
+      if (user?.role !== "superadmin") return;
       await resetDemo();
       await clearShellCache();
       qc.clear();
@@ -129,11 +144,14 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-/** Remove HTML de shell cacheado pelo SW (sair/restaurar não deixa telas de sessão anterior). Estáticos ficam. */
+/**
+ * Remove HTML de shell cacheado pelo SW ao sair/restaurar (BUG-02 corrigido: nomes por contexto não eram apagados).
+ * Apaga QUALQUER cache de shell da aplicação; estáticos versionados ficam. Não toca no IndexedDB (dados da demo).
+ */
 async function clearShellCache() {
   try {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k.startsWith("siwiltec-shell-")).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter(isShellCache).map((k) => caches.delete(k)));
   } catch {}
 }
 

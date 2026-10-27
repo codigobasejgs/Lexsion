@@ -148,7 +148,7 @@ function Notifications({ s }: { s: OrgSettings }) {
 }
 
 function DataLgpd({ s }: { s: OrgSettings }) {
-  const { org, restoreDemo } = useSession();
+  const { org, restoreTenant } = useSession();
   const act = useAction("settings");
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState(false);
@@ -175,15 +175,16 @@ function DataLgpd({ s }: { s: OrgSettings }) {
       </section>
       <section className="panel p-5">
         <h2 className="mb-1 font-semibold">Restaurar demonstração</h2>
-        <p className="mb-3 text-sm text-fg-muted">Apaga somente os dados demonstrativos deste navegador (inclui arquivos enviados) e recarrega os dados fictícios iniciais. Preferências de aparência são mantidas.</p>
+        <p className="mb-3 text-sm text-fg-muted">Recarrega os dados fictícios iniciais <strong>somente de {org?.name}</strong> neste navegador. Outros escritórios, a identidade visual e o progresso de treinamento não são alterados. Sair do sistema nunca apaga dados.</p>
         <button className="btn btn-danger" onClick={() => setConfirm(true)}><RotateCcw aria-hidden className="size-4" /> Restaurar demonstração</button>
         {done && <p role="status" className="mt-2 text-sm text-success">Demonstração restaurada.</p>}
       </section>
       <Dialog open={confirm} onClose={() => setConfirm(false)} title="Restaurar demonstração?">
-        <p>Todos os cadastros, pagamentos, mensagens, arquivos e alterações feitos nesta demonstração serão descartados neste navegador. Isso não pode ser desfeito.</p>
+        <p>Os cadastros, pagamentos, mensagens e arquivos criados em <strong>{org?.name}</strong> nesta demonstração serão descartados neste navegador. Isso não pode ser desfeito. Exporte antes, se quiser guardar.</p>
         <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button className="btn btn-ghost" autoFocus onClick={() => setConfirm(false)}>Cancelar</button>
-          <button className="btn btn-danger" onClick={async () => { await restoreDemo(); setConfirm(false); setDone(true); }}>Restaurar agora</button>
+          <button className="btn btn-secondary" onClick={exportAll}><Download aria-hidden className="size-4" /> Exportar antes</button>
+          <button className="btn btn-danger" onClick={async () => { await restoreTenant(); setConfirm(false); setDone(true); }}>Restaurar agora</button>
         </div>
       </Dialog>
     </>

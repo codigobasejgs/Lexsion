@@ -2,6 +2,7 @@
 // Uma object store "collections": chave = nome da coleção, valor = array de registros.
 import * as fx from "@/mocks/fixtures";
 import * as ops from "@/mocks/fixtures-ops";
+import { tenants } from "@/mocks/tenants";
 
 const DB_NAME = "siwiltec-demo";
 // ponytail: mudar o formato das fixtures (FIXTURE_VERSION) recria a demo do zero; migração por campo quando houver dado real.
@@ -54,6 +55,7 @@ export const COLLECTIONS = {
   settings: ops.settings,
   learning: ops.learning,
   files: ops.files,
+  tenants,
 } as const;
 
 export type CollectionName = keyof typeof COLLECTIONS;
@@ -92,6 +94,21 @@ function seedValue(name: CollectionName): unknown[] {
 }
 type fx_Installment = (typeof fx.installments)[number];
 
+// Catálogos da demo (escritórios, usuários, tenants): a fixture define nome/branding dos ids conhecidos.
+const CATALOG = new Set<CollectionName>(["organizations", "users", "tenants"]);
+
+/**
+ * Migração SEM PERDA (DATA-01): registros existentes ficam; só entram registros-semente cujo id ainda não existe.
+ * Em catálogos, o registro-semente atualiza o de mesmo id (ex.: renomeação de escritório), sem apagar os criados na demo.
+ */
+export function mergeSeed<T extends { id: string }>(existing: T[] | undefined, seed: T[], catalog: boolean): T[] {
+  if (!Array.isArray(existing)) return seed;
+  const seedById = new Map(seed.map((r) => [r.id, r]));
+  const kept = existing.map((r) => (catalog && seedById.has(r.id) ? { ...r, ...seedById.get(r.id) } : r));
+  const ids = new Set(existing.map((r) => r.id));
+  return [...kept, ...seed.filter((r) => !ids.has(r.id))];
+}
+
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
@@ -99,9 +116,11 @@ function openDb(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (db.objectStoreNames.contains(STORE)) db.deleteObjectStore(STORE);
-      const store = db.createObjectStore(STORE);
-      for (const name of Object.keys(COLLECTIONS) as CollectionName[]) store.put(seedValue(name), name);
+      const store = db.objectStoreNames.contains(STORE) ? req.transaction!.objectStore(STORE) : db.createObjectStore(STORE);
+      for (const name of Object.keys(COLLECTIONS) as CollectionName[]) {
+        const get = store.get(name);
+        get.onsuccess = () => store.put(mergeSeed(get.result as { id: string }[] | undefined, seedValue(name) as { id: string }[], CATALOG.has(name)), name);
+      }
       store.put(fx.FIXTURE_VERSION, "__fixtureVersion");
     };
     req.onsuccess = () => resolve(req.result);
@@ -164,7 +183,23 @@ export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[]
   broadcast();
 }
 
-/** Restaura a demo: apaga somente o banco demonstrativo e reaplica fixtures. */
+/**
+ * Reinicia SÓ um escritório (DATA-05): remove registros dele e reaplica a semente dele.
+ * Outros escritórios, catálogos da plataforma e progresso de treinamento não são tocados.
+ */
+export async function resetTenant(orgId: string): Promise<void> {
+  const patch: Partial<{ [C in CollectionName]: Row<C>[] }> = {};
+  for (const name of Object.keys(COLLECTIONS) as CollectionName[]) {
+    if (CATALOG.has(name)) continue;
+    const rows = (await readAll(name)) as { organizationId?: string }[];
+    if (!rows.some((r) => "organizationId" in r)) continue;
+    const seed = (seedValue(name) as { organizationId?: string }[]).filter((r) => r.organizationId === orgId);
+    (patch as Record<string, unknown[]>)[name] = [...rows.filter((r) => r.organizationId !== orgId), ...seed];
+  }
+  await writeMany(patch);
+}
+
+/** Restaura a demo inteira (somente Super Admin): apaga o banco demonstrativo e reaplica fixtures. */
 export async function resetDemo(): Promise<void> {
   memory.clear();
   if (dbPromise) (await dbPromise.catch(() => null))?.close();

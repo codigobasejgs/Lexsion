@@ -7,7 +7,8 @@ import type {
 import { at } from "./clock";
 import { CNJ_JOSE, CNJ_SONIA } from "./fixtures-ops";
 
-export const FIXTURE_VERSION = 4;
+// Mudar a versão dispara migração SEM PERDA em db.ts (mergeSeed): dados criados na demo são mantidos.
+export const FIXTURE_VERSION = 5;
 
 const A = "org-aurora";
 const B = "org-boreal";
