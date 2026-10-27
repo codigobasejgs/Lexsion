@@ -4,9 +4,11 @@ import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tan
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import type { Organization, User } from "@/domain/types";
+import type { Tenant } from "@/domain/tenancy";
 import { list } from "@/services/mock/repo";
 import { onExternalChange, resetDemo, type CollectionName, type Row } from "@/services/mock/db";
 import { organizations, users } from "@/mocks/fixtures";
+import { tenants } from "@/mocks/tenants";
 import type { RequestContext } from "@/services/contracts";
 
 // Sessão FICTÍCIA em localStorage (só ids — nunca credenciais).
@@ -66,6 +68,7 @@ interface SessionCtx {
   ready: boolean;
   user: User | null;
   org: Organization | null;
+  tenant: Tenant | null;
   ctx: RequestContext | null;
   signIn: (userId: string, organizationId?: string | null) => void;
   switchOrg: (organizationId: string) => void;
@@ -88,6 +91,7 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
   const ready = useSyncExternalStore(subscribe, () => true, () => false);
   const user = users.find((u) => u.id === session?.userId) ?? null;
   const org = organizations.find((o) => o.id === session?.organizationId) ?? null;
+  const tenant = tenants.find((t) => t.id === org?.id) ?? null;
 
   useEffect(() => onExternalChange(() => qc.invalidateQueries()), [qc]);
 
@@ -95,6 +99,7 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
     ready,
     user,
     org,
+    tenant,
     ctx: user && org ? { organizationId: org.id, actorId: user.id } : null,
     signIn: (userId, organizationId) => {
       const u = users.find((x) => x.id === userId);
@@ -119,7 +124,7 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
       qc.clear();
       await qc.invalidateQueries();
     },
-  }), [ready, user, org, session, qc, router]);
+  }), [ready, user, org, tenant, session, qc, router]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

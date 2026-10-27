@@ -32,19 +32,22 @@ function Wordmark({ compact }: { compact?: boolean }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, user, org, switchOrg, signOut } = useSession();
+  const { ready, user, org, tenant, switchOrg, signOut } = useSession();
   const router = useRouter();
   const isActive = useActive();
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
+  const collapseKey = `siwiltec.sidebar.${tenant?.id ?? "default"}.${user?.id ?? "anon"}`;
+
   useEffect(() => {
+    if (!tenant || !user) return;
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- preferência local lida após montar
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+      setCollapsed(localStorage.getItem(collapseKey) === "1");
     } catch {}
-  }, []);
+  }, [tenant?.id, user?.id, collapseKey]);
   useEffect(() => {
     if (ready && !user) router.replace("/entrar");
     else if (ready && user?.role === "cliente") router.replace("/portal");
@@ -71,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const toggle = () => {
     setCollapsed((c) => {
       try {
-        localStorage.setItem(COLLAPSE_KEY, c ? "0" : "1");
+        localStorage.setItem(collapseKey, c ? "0" : "1");
       } catch {}
       return !c;
     });

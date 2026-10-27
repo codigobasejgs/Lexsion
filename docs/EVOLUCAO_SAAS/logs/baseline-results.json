@@ -1,0 +1,26 @@
+[
+  {
+    "command": "pnpm install --frozen-lockfile --offline",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0
+  }
+]

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { PwaRegister } from "@/components/pwa";
 import { TourProvider } from "@/tours/runner";
+import { TenantTheme } from "@/components/tenant-theme";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin", "latin-ext"], display: "swap" });
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Pular para o conteúdo
         </a>
         <Providers>
+          <TenantTheme />
           <TourProvider>{children}</TourProvider>
           <PwaRegister />
         </Providers>

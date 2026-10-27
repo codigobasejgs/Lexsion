@@ -11,10 +11,12 @@ export const FIXTURE_VERSION = 4;
 
 const A = "org-aurora";
 const B = "org-boreal";
+const N = "org-novo";
 
 export const organizations: Organization[] = [
   { id: A, name: "Aurora Advocacia Previdenciária", city: "Salvador/BA", focus: "Previdenciário (TRF1)" },
-  { id: B, name: "Boreal & Associados", city: "Feira de Santana/BA", focus: "Trabalhista e Família" },
+  { id: B, name: "Atlas Jurídico Associados", city: "Feira de Santana/BA", focus: "Trabalhista e Família" },
+  { id: N, name: "Novo Escritório (trial)", city: "Salvador/BA", focus: "Geral" },
 ];
 
 export const users: User[] = [
@@ -25,6 +27,7 @@ export const users: User[] = [
   { id: "u-lia", name: "Lia Torres", role: "estagiario", organizationId: A },
   { id: "u-dora", name: "Dora Sampaio", role: "controladoria", organizationId: A },
   { id: "u-otavio", name: "Otávio Reis", role: "admin", organizationId: B },
+  { id: "u-trial", name: "Carlos Exemplo", role: "admin", organizationId: N },
   { id: "u-portal-maria", name: "Maria das Graças Exemplo", role: "cliente", organizationId: A, clientId: "c-maria" },
   { id: "u-super", name: "Suporte SIWILTEC", role: "superadmin", organizationId: null },
 ];
