@@ -1,10 +1,10 @@
-feat(saas): Onda 2 - Super Admin dashboard com métricas derivadas
+feat(saas): wizard criação tenant + suspend/reactivate
 
-- admin/organizacoes: MRR, ARR, ARPA, churn calculados dos planos ativos
-- Grid 4 cards: receita mensal/anual, média por tenant, taxa cancelamento
-- Lista tenants com usage (members, clients) via tenantRepo.getUsage()
-- Badge status: ativa/trial/suspensa
-- Métricas demo: churn 0 (sem histórico cancelamento)
+- admin/tenant-wizard.tsx: 2 steps (nome/slug, plano/ciclo)
+- admin/organizacoes: botão "Nova organização", ações suspend/reactivate
+- Wizard valida slug (lowercase, sanitize), cria tenant via tenantRepo
+- Botões Pause/Play por tenant status (ativa → suspend, suspensa → reactivate)
+- Trial 14 dias default, branding padrão Black & Gold
 
 Build OK, typecheck OK
 

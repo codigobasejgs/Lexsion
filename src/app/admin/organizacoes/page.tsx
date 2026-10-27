@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { Building2, DollarSign, FlaskConical, LogOut, ShieldCheck, TrendingDown, TrendingUp, Users } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2, DollarSign, FlaskConical, LogOut, Pause, Play, Plus, ShieldCheck, TrendingDown, TrendingUp, Users } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { Badge, PageHeader } from "@/components/ui";
 import { tenantRepo } from "@/services/mock/tenant-repo";
 import { PLAN_PRICES, PLAN_LABEL } from "@/domain/tenancy";
 import { formatBRL } from "@/lib/money";
+import { TenantWizard } from "../tenant-wizard";
 
 export default function OrganizacoesPage() {
   const { ready, user, signOut } = useSession();
   const router = useRouter();
+  const qc = useQueryClient();
+  const [wizardOpen, setWizardOpen] = useState(false);
+
   useEffect(() => {
     if (ready && user?.role !== "superadmin") router.replace("/entrar");
   }, [ready, user, router]);
@@ -68,9 +72,14 @@ export default function OrganizacoesPage() {
           title="Plataforma SaaS"
           description="Operação multi-tenant: métricas, planos, status e consumo agregado."
           actions={
-            <button className="btn btn-ghost" onClick={signOut}>
-              <LogOut aria-hidden className="size-4" /> Sair
-            </button>
+            <>
+              <button className="btn btn-primary" onClick={() => setWizardOpen(true)}>
+                <Plus aria-hidden className="size-4" /> Nova organização
+              </button>
+              <button className="btn btn-ghost" onClick={signOut}>
+                <LogOut aria-hidden className="size-4" /> Sair
+              </button>
+            </>
           }
         />
 
@@ -116,6 +125,15 @@ export default function OrganizacoesPage() {
         <ul className="space-y-3">
           {tenants.data?.map((t) => {
             const u = usage.data?.[t.id];
+            const handleSuspend = async () => {
+              await tenantRepo.suspend(t.id, "Suspensão administrativa");
+              qc.invalidateQueries({ queryKey: ["admin-tenants"] });
+            };
+            const handleReactivate = async () => {
+              await tenantRepo.reactivate(t.id);
+              qc.invalidateQueries({ queryKey: ["admin-tenants"] });
+            };
+
             return (
               <li key={t.id} className="panel flex flex-wrap items-center gap-4 p-4 text-sm">
                 <Building2 aria-hidden className="size-6 text-accent" />
@@ -128,6 +146,16 @@ export default function OrganizacoesPage() {
                 <span className="num">{u?.members ?? "—"} membros</span>
                 <span className="num">{u?.clients ?? "—"} clientes</span>
                 <Badge tone={t.status === "ativa" ? "success" : t.status === "trial" ? "info" : "warning"}>{t.status}</Badge>
+                {t.status === "ativa" && (
+                  <button className="btn btn-ghost" onClick={handleSuspend} title="Suspender">
+                    <Pause aria-hidden className="size-4" />
+                  </button>
+                )}
+                {t.status === "suspensa" && (
+                  <button className="btn btn-ghost" onClick={handleReactivate} title="Reativar">
+                    <Play aria-hidden className="size-4" />
+                  </button>
+                )}
               </li>
             );
           })}
@@ -135,6 +163,7 @@ export default function OrganizacoesPage() {
         <p className="mt-6 text-sm text-fg-muted">
           Cobrança da assinatura SaaS é separada dos honorários cobrados pelos escritórios (contas e conciliações diferentes).
         </p>
+        <TenantWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
       </main>
     </div>
   );
