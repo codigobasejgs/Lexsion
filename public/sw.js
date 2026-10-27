@@ -1,9 +1,16 @@
 /* SIWILTEC service worker — política explícita (docs/politica-offline.md).
    VERSION é reescrita a cada build por scripts/stamp-sw.mjs (muda os bytes ⇒ navegador detecta atualização). */
-const VERSION = "20261027134921";
+const VERSION = "20261027135140";
 const PREFIX = "siwiltec-";
+
+// Extrai tenant do cookie; fallback "default" se ausente.
+function getTenantSlug(cookieHeader) {
+  if (!cookieHeader) return "default";
+  const match = cookieHeader.match(/siwiltec-tenant-slug=([^;]+)/);
+  return match ? match[1] : "default";
+}
+
 const STATIC = `${PREFIX}static-${VERSION}`;
-const SHELL = `${PREFIX}shell-${VERSION}`;
 const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
 
 // Rotas cujo HTML é um shell sem dados pessoais NESTA DEMO (dados vêm do IndexedDB no cliente).
@@ -18,7 +25,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k.startsWith(PREFIX) && k !== STATIC && k !== SHELL).map((k) => caches.delete(k))),
+      Promise.all(keys.filter((k) => k.startsWith(PREFIX) && k !== STATIC && !k.includes(`-shell-${VERSION}`)).map((k) => caches.delete(k))),
     ),
   );
 });
@@ -54,6 +61,8 @@ self.addEventListener("fetch", (event) => {
   if (req.headers.get("RSC") === "1" || url.searchParams.has("_rsc")) return;
 
   if (req.mode === "navigate") {
+    const tenantSlug = getTenantSlug(req.headers.get("cookie"));
+    const SHELL = `${PREFIX}tenant-${tenantSlug}-shell-${VERSION}`;
     const cacheable = SHELL_ROUTES.test(url.pathname);
     event.respondWith(
       fetch(req)

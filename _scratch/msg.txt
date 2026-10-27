@@ -1,9 +1,10 @@
-feat(saas): manifest dinâmico por tenant
+feat(saas): SW cache namespace per tenant
 
-- manifest.ts: async, lê x-tenant-slug do proxy
-- id, name, short_name, description, start_url, colors por tenant
-- id estável por tenant (reinstala PWA se mudar)
+- sw.js: getTenantSlug() lê cookie
+- SHELL cache: siwiltec-tenant-${tenantSlug}-shell-${VERSION}
+- activate: limpa shells de versões antigas (todos tenants)
+- clearShellCache() já filtra pattern correto (preservado)
 
-Build OK, typecheck OK
+Build OK
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>
