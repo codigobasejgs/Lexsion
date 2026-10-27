@@ -248,3 +248,37 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
     expect(await seriousAxe(page)).toEqual([]);
   });
 });
+
+// Rotas de detalhe alcançadas pelo clique na lista (sem ID fixo): renderizam, sem "não encontrado", overflow ou axe sério.
+test("detalhes via lista: contratos, agentes, importações, requisitórios, planejamento e suporte", async ({ page }) => {
+  test.setTimeout(90_000);
+  await signIn(page, /Helena Prado/);
+  for (const [list, detail] of [["/app/contratos", /\/app\/contratos\/[\w-]+$/], ["/app/ia/agentes", /\/app\/ia\/agentes\/[\w-]+$/], ["/app/importacoes", /\/app\/importacoes\/[\w-]+$/], ["/app/requisitorios", /\/app\/requisitorios\/[\w-]+$/], ["/app/previdenciario", /\/app\/previdenciario\/analises\/[\w-]+$/]] as const) {
+    await page.goto(list);
+    await expect(page.locator("h1").first()).toBeVisible();
+    await noOverflow(page);
+    if (list === "/app/importacoes") { // a fixture não tem lote: importa o CSV fictício de exemplo
+      await page.getByRole("button", { name: "Continuar" }).click();
+      await page.getByRole("button", { name: "Usar exemplo fictício" }).click();
+      await page.getByRole("button", { name: "Validar" }).click();
+      await page.getByRole("button", { name: "Revisar conflitos e confirmar" }).click();
+      await page.getByRole("button", { name: "Confirmar importação" }).click(); // abre o lote criado
+    } else {
+      const prefix = list === "/app/previdenciario" ? "/app/previdenciario/planejamentos/" : `${list}/`;
+      await page.locator(`a[href^="${prefix}"]`).locator("visible=true").first().click();
+    }
+    await expect(page).toHaveURL(detail); // planejamento redireciona para a análise
+    await expect(page.locator("h1").first()).toBeVisible();
+    await expect(page.getByText(/não encontrad/i)).toHaveCount(0);
+    await noOverflow(page);
+    expect(await seriousAxe(page), page.url()).toEqual([]);
+  }
+  await page.goto("/demonstracao");
+  await page.getByRole("radio", { name: /Sérgio Atendimento LexSion/ }).check();
+  await page.getByRole("button", { name: /^Entrar como/ }).click();
+  await page.waitForURL(/\/admin/);
+  await page.goto("/admin/suporte");
+  await expect(page.locator("h1").first()).toBeVisible();
+  await noOverflow(page);
+  expect(await seriousAxe(page)).toEqual([]);
+});
