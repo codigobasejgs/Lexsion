@@ -55,9 +55,15 @@ test("ROB-03: duas abas — alteração numa aba aparece na outra", async ({ pag
   const other = await context.newPage();
   await other.goto("/app/tarefas?ver=lista");
   const first = page.getByRole("checkbox", { name: /^Concluir/, checked: false, disabled: false }).first();
-  const label = await first.getAttribute("aria-label");
+  const label = (await first.getAttribute("aria-label"))!;
+  const mirror = other.getByRole("checkbox", { name: label, exact: true });
+  await expect(mirror.first()).not.toBeChecked(); // outra aba já carregada antes da alteração
+  const before = await mirror.evaluateAll((els) => els.filter((e) => (e as HTMLInputElement).checked).length);
+  const mine = page.getByRole("checkbox", { name: label, exact: true });
+  const mineBefore = await mine.evaluateAll((els) => els.filter((e) => (e as HTMLInputElement).checked).length);
   await first.click();
-  await expect(other.getByRole("checkbox", { name: label! }).first()).toBeChecked();
+  await expect.poll(() => mine.evaluateAll((els) => els.filter((e) => (e as HTMLInputElement).checked).length)).toBe(mineBefore + 1);
+  await expect.poll(() => mirror.evaluateAll((els) => els.filter((e) => (e as HTMLInputElement).checked).length)).toBe(before + 1);
 });
 
 test("GEN-03/GEN-04: refresh em rota profunda e voltar/avançar preservam contexto", async ({ page }) => {
