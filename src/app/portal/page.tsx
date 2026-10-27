@@ -8,10 +8,12 @@ import { LoadingBlock } from "@/components/ui";
 import { usePortalData } from "@/modules/portal/data";
 import { civilFromInstant, formatCivil, formatCivilLong, formatTime } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
+import { simplify } from "@/domain/plain-language";
 
 export default function PortalPage() {
-  const { user } = useSession();
+  const { user, tenant } = useSession();
   const d = usePortalData();
+  const plain = tenant?.settings.simpleLanguage ? simplify : (s: string) => s;
   const [notice, setNotice] = useState<string | null>(null);
   const first = user?.name.split(" ")[0];
   const nextBill = d.bills[0];
@@ -24,8 +26,8 @@ export default function PortalPage() {
         <Link key={k.id} href={`/portal/casos/${k.id}`} className="panel block p-5 hover:border-line-strong">
           <h2 className="text-sm font-medium uppercase tracking-wider text-accent">Em que pé está meu caso?</h2>
           <p className="mt-2 font-serif text-xl">{k.title}</p>
-          <p className="mt-2">{k.portalStatus}</p>
-          <div className="mt-4 rounded-[var(--radius-control)] border border-brand/40 bg-selection p-3"><p className="text-sm text-fg-muted">Próximo passo</p><p className="font-medium">{k.portalNextStep}</p></div>
+          <p className="mt-2">{plain(k.portalStatus)}</p>
+          <div className="mt-4 rounded-[var(--radius-control)] border border-brand/40 bg-selection p-3"><p className="text-sm text-fg-muted">Próximo passo</p><p className="font-medium">{plain(k.portalNextStep)}</p></div>
           <p className="mt-3 flex items-center justify-between text-sm text-fg-muted">Status informativo. Não representa garantia de resultado. <ChevronRight aria-hidden className="size-4" /></p>
         </Link>
       ))}

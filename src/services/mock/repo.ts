@@ -4,6 +4,7 @@ import type { RequestContext, Result } from "../contracts";
 import type { Conversation, Installment, Message, Payment, PensionAnalysis, Task } from "@/domain/types";
 import { preparePayment, prepareReversal, recompute } from "@/domain/finance";
 import { DEMO_TODAY } from "@/mocks/clock";
+import { nextOccurrence } from "@/domain/recurrence";
 
 const cid = () => crypto.randomUUID().slice(0, 8);
 const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: cid() });
@@ -36,7 +37,29 @@ async function update<C extends "tasks" | "conversations" | "pensionAnalyses">(
 }
 
 export const tasksService = {
-  toggle: (id: string, ctx: RequestContext) => update("tasks", id, ctx, (t: Task) => ({ ...t, done: !t.done })),
+  toggle: (id: string, ctx: RequestContext) => tasksService.setStatus(id, "toggle", ctx),
+  /**
+   * Muda o estado da tarefa. Concluir uma ocorrência de série recorrente cria a próxima (uma só vez:
+   * reabrir e concluir de novo não duplica). Tudo numa única gravação.
+   */
+  setStatus: async (id: string, to: "a_fazer" | "andamento" | "concluida" | "toggle", ctx: RequestContext): Promise<Result<Task>> => {
+    const rows = await readAll("tasks");
+    const t = rows.find((r) => r.id === id && r.organizationId === ctx.organizationId);
+    if (!t) return fail("not_found", "Registro não encontrado neste escritório.");
+    const done = to === "toggle" ? !t.done : to === "concluida";
+    const next: Task = { ...t, done, inProgress: to === "andamento" };
+    let created: Task | null = null;
+    if (done && !t.done && t.recurrence) {
+      const due = nextOccurrence(t.due, t.recurrence, t.anchorDay);
+      const nextId = `${t.seriesId ?? t.id}-${due}`;
+      if (due && !rows.some((r) => r.id === nextId)) {
+        created = { ...t, id: nextId, due, done: false, inProgress: false, seriesId: t.seriesId ?? t.id, checklist: t.checklist?.map((c) => ({ ...c, done: false })), comments: [] };
+      }
+    }
+    await writeAll("tasks", [...rows.map((r) => (r.id === id ? next : r)), ...(created ? [created] : [])]);
+    if (created) await audit(ctx, "task.recurred", "Task", created.id, `Próxima ocorrência criada para ${created.due}`);
+    return ok(next);
+  },
 };
 
 export const inboxService = {

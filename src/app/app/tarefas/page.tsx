@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CalendarDays, Columns3, List, Plus } from "lucide-react";
+import { CalendarDays, Columns3, List, Plus, Repeat } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
@@ -12,6 +12,8 @@ import { addDays, diffDays, formatCivil, formatInstant } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { users } from "@/mocks/fixtures";
 import type { Task } from "@/domain/types";
+import { RECURRENCE_LABEL, type Recurrence } from "@/domain/recurrence";
+import { tasksService } from "@/services/mock/repo";
 
 type Col = "a_fazer" | "andamento" | "concluida";
 const colOf = (t: Task): Col => (t.done ? "concluida" : t.inProgress ? "andamento" : "a_fazer");
@@ -33,7 +35,7 @@ export default function TarefasPage() {
   const team = users.filter((u) => u.organizationId === org?.id && u.role !== "cliente");
   const open = tasks.data?.find((t) => t.id === openId);
 
-  const move = (t: Task, c: Col) => act.run((ctx) => updateRow("tasks", t.id, ctx, (x: Task) => ({ ...x, done: c === "concluida", inProgress: c === "andamento" }), `Tarefa → ${c}`));
+  const move = (t: Task, c: Col) => act.run((ctx) => tasksService.setStatus(t.id, c, ctx), t.recurrence && c === "concluida" && !t.done ? "Concluída. A próxima ocorrência foi criada." : undefined);
   const blocked = (t: Task) => (t.dependsOn ?? []).some((d) => !tasks.data?.find((x) => x.id === d)?.done);
 
   return (
@@ -81,6 +83,7 @@ export default function TarefasPage() {
               return (
                 <li key={t.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                   <input type="checkbox" aria-label={`Concluir ${t.title}`} checked={t.done} disabled={!t.done && blocked(t)} onChange={() => move(t, t.done ? "a_fazer" : "concluida")} className="size-5 accent-[var(--brand)]" />
+                  {t.recurrence && <Repeat aria-label={RECURRENCE_LABEL[t.recurrence.every]} className="size-4 shrink-0 text-accent" />}
                   <button onClick={() => url.set("id", t.id)} className={`min-w-0 flex-1 text-left ${t.done ? "text-fg-muted line-through" : "font-medium"} hover:underline`}>{t.title}</button>
                   {!t.done && blocked(t) && <Badge tone="warning">Aguarda dependência</Badge>}
                   {t.caseId && <Link href={`/app/casos/${t.caseId}`} className="hidden text-fg-muted underline underline-offset-2 lg:inline">{cases.data?.find((k) => k.id === t.caseId)?.title}</Link>}
@@ -121,6 +124,14 @@ function TaskDetail({ t, blocked, onClose }: { t: Task; blocked: boolean; onClos
     <Dialog open onClose={onClose} title={t.title} wide>
       <div className="space-y-4 text-sm">
         <p className="text-fg-muted">Prazo {formatCivil(t.due)} · {userName(t.assigneeId)} · prioridade {t.priority}</p>
+        {t.recurrence && (
+          <div className="flex flex-wrap items-center gap-2 rounded border border-line p-2" data-testid="recorrencia">
+            <Repeat aria-hidden className="size-4 text-accent" />
+            <span>{RECURRENCE_LABEL[t.recurrence.every]}{t.recurrence.until ? ` até ${formatCivil(t.recurrence.until)}` : ""}{t.recurrence.paused ? " · pausada" : ""}</span>
+            <button className="btn btn-ghost min-h-9" onClick={() => act.run((ctx) => updateRow("tasks", t.id, ctx, (x: Task) => ({ ...x, recurrence: x.recurrence && { ...x.recurrence, paused: !x.recurrence.paused } }), t.recurrence?.paused ? "Recorrência retomada" : "Recorrência pausada"))}>{t.recurrence.paused ? "Retomar repetição" : "Pausar repetição"}</button>
+            <button className="btn btn-ghost min-h-9" onClick={() => act.run((ctx) => updateRow("tasks", t.id, ctx, (x: Task) => ({ ...x, recurrence: undefined }), "Recorrência encerrada"))}>Parar de repetir</button>
+          </div>
+        )}
         {blocked && <p className="text-warning">Depende de outra tarefa ainda não concluída.</p>}
         <section>
           <h3 className="mb-2 font-medium">Checklist</h3>
@@ -147,7 +158,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
   const cases = useCollection("cases");
   const act = useAction("tasks");
   const team = users.filter((u) => u.organizationId === org?.id && u.role !== "cliente");
-  const [f, setF] = useState({ title: "", caseId: "", assigneeId: user?.id ?? "", due: DEMO_TODAY, priority: "normal" as Task["priority"] });
+  const [f, setF] = useState({ title: "", caseId: "", assigneeId: user?.id ?? "", due: DEMO_TODAY, priority: "normal" as Task["priority"], every: "" as "" | Recurrence["every"], until: "" });
   return (
     <Dialog open={open} onClose={onClose} title="Nova tarefa">
       <div className="space-y-3">
@@ -158,11 +169,17 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
           <label className="block"><span className="label">Prazo</span><input type="date" className="field" value={f.due} onChange={(e) => setF({ ...f, due: e.target.value })} /></label>
         </div>
         <label className="block"><span className="label">Prioridade</span><select className="field" value={f.priority} onChange={(e) => setF({ ...f, priority: e.target.value as Task["priority"] })}><option value="baixa">Baixa</option><option value="normal">Normal</option><option value="alta">Alta</option></select></label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block"><span className="label">Repetir</span><select className="field" value={f.every} onChange={(e) => setF({ ...f, every: e.target.value as typeof f.every })}><option value="">Não repetir</option>{(Object.keys(RECURRENCE_LABEL) as Recurrence["every"][]).map((k) => <option key={k} value={k}>{RECURRENCE_LABEL[k]}</option>)}</select></label>
+          {f.every && <label className="block"><span className="label">Até (opcional)</span><input type="date" className="field" value={f.until} min={f.due} onChange={(e) => setF({ ...f, until: e.target.value })} /></label>}
+        </div>
+        {f.every && <p className="text-xs text-fg-muted">Ao concluir, a próxima ocorrência é criada automaticamente. Dia 31 em mês curto vira o último dia do mês.</p>}
         <Feedback error={act.error} />
         <div className="flex justify-end gap-2"><button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" disabled={f.title.trim().length < 3 || act.pending} onClick={async () => {
+          <button className="btn btn-primary" disabled={f.title.trim().length < 3 || act.pending || (!!f.until && f.until < f.due)} onClick={async () => {
             const k = cases.data?.find((c) => c.id === f.caseId);
-            if (await act.run((ctx) => createRow("tasks", { title: f.title.trim(), caseId: f.caseId || undefined, clientId: k?.clientId, assigneeId: f.assigneeId, due: f.due, priority: f.priority, done: false }, ctx, "Tarefa criada"))) { onClose(); setF({ ...f, title: "" }); }
+            const recurrence = f.every ? { every: f.every, until: f.until || undefined } : undefined;
+            if (await act.run((ctx) => createRow("tasks", { title: f.title.trim(), caseId: f.caseId || undefined, clientId: k?.clientId, assigneeId: f.assigneeId, due: f.due, priority: f.priority, done: false, recurrence, anchorDay: recurrence ? Number(f.due.slice(8, 10)) : undefined }, ctx, recurrence ? `Tarefa recorrente criada (${RECURRENCE_LABEL[recurrence.every]})` : "Tarefa criada"))) { onClose(); setF({ ...f, title: "", every: "", until: "" }); }
           }}>Criar tarefa</button>
         </div>
       </div>

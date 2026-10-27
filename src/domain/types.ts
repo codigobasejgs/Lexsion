@@ -89,6 +89,10 @@ export interface Task extends OrgEntity {
   checklist?: { id: ID; text: string; done: boolean }[];
   comments?: { at: string; actorId: ID; text: string }[];
   dependsOn?: ID[];
+  /** Tarefa recorrente: ao concluir, cria a próxima ocorrência (série identificada por seriesId). */
+  recurrence?: { every: "semana" | "quinzena" | "mes" | "ano"; until?: CivilDate; paused?: boolean };
+  seriesId?: ID;
+  anchorDay?: number; // dia original (31) preservado ao passar por meses curtos
 }
 
 export interface Deadline extends OrgEntity {
