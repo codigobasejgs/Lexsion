@@ -59,6 +59,18 @@ export interface Case extends OrgEntity {
   confidential: boolean;
   portalStatus: string; // texto leigo liberado ao cliente
   portalNextStep: string;
+  /** Atualizações para o portal: só as publicadas aparecem ao cliente. */
+  portalUpdates?: PortalUpdate[];
+}
+
+export interface PortalUpdate {
+  id: ID;
+  text: string;
+  nextStep: string;
+  createdAt: string;
+  authorId: ID;
+  publishedAt?: string;
+  publishedBy?: ID;
 }
 
 export interface Task extends OrgEntity {

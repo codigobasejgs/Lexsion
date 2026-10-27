@@ -74,7 +74,7 @@ function Editor({ d }: { d: LegalDraft }) {
             <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Inserir seção">
               {SECTIONS.map((s) => <button key={s} className="btn btn-ghost min-h-8 border border-line text-xs" onClick={() => setBody((b) => `${b}\n\n${s.toUpperCase()}\n`)}>+ {s}</button>)}
             </div>
-            <label className="block"><span className="sr-only">Texto da minuta</span>
+            <label className="block" data-tour="editor-minuta"><span className="sr-only">Texto da minuta</span>
               <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={24} className="field min-h-[60dvh] py-3 font-serif text-[1.02rem] leading-relaxed" />
             </label>
             {missing.length > 0 && <p className="text-sm text-warning">Campos não preenchidos: {missing.join(", ")}</p>}

@@ -44,6 +44,11 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "conciliacao:2": { route: "/app/financeiro/conciliacao", selector: '[data-tour="extrato"]', profile: FIN },
   "importar-csv:3": { route: "/app/importacoes", selector: "text=Prévia" },
   "configurar-notificacoes:2": { route: "/app/configuracoes?aba=notificacoes", selector: "text=Salvar preferências" },
+  "usar-calculos:1": { route: "/app/calculos", selector: "text=Cálculos do escritório" },
+  "acompanhar-rpv:1": { route: "/app/requisitorios", selector: "h1" },
+  "usar-jornal-pesquisa:2": { route: "/app/jornal", selector: "h1" },
+  "ler-relatorios:2": { route: "/app/relatorios", selector: "figure" },
+  "gerir-equipe:2": { route: "/app/equipe", selector: "text=Matriz de acesso por perfil" },
   "conectar-whatsapp:2": { route: "/app/integracoes/evolution", selector: '[data-tour="conexao-whatsapp"]' },
 };
 

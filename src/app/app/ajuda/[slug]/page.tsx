@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { HELP_ARTICLES, shotPath } from "@/content/help";
 import { PageHeader } from "@/components/ui";
+import { ArticleActions } from "@/components/article-actions";
 
 export function generateStaticParams() {
   return HELP_ARTICLES.map((a) => ({ slug: a.slug }));
@@ -26,6 +27,7 @@ export default async function ArtigoPage({ params }: PageProps<"/app/ajuda/[slug
         <div><dt className="font-medium">Quem pode fazer</dt><dd className="text-fg-muted">{a.who}</dd></div>
         <div><dt className="font-medium">Antes de começar</dt><dd className="text-fg-muted">{a.prerequisites}</dd></div>
       </dl>
+      <ArticleActions slug={a.slug} />
       <h2 className="mb-2 text-lg font-semibold">Passo a passo</h2>
       <ol className="mb-6 list-decimal space-y-4 pl-5">
         {a.steps.map((s, i) => (

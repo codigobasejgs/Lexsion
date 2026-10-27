@@ -11,7 +11,7 @@ const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").to
 export default function AjudaPage() {
   const [q, setQ] = useState("");
   const n = norm(q.trim());
-  const results = HELP_ARTICLES.filter((a) => !n || norm(`${a.title} ${a.goal} ${a.steps.join(" ")} ${a.buttons.join(" ")}`).includes(n));
+  const results = HELP_ARTICLES.filter((a) => !n || norm(`${a.title} ${a.goal} ${a.steps.join(" ")} ${a.buttons.join(" ")} ${(a.keywords ?? []).join(" ")}`).includes(n));
   const terms = GLOSSARY.filter(([k, v]) => !n || norm(`${k} ${v}`).includes(n));
   const cats = [...new Set(results.map((a) => a.category))];
 
@@ -21,7 +21,7 @@ export default function AjudaPage() {
       <label className="relative mb-6 block">
         <span className="sr-only">Buscar na ajuda</span>
         <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-muted" />
-        <input type="search" className="field pl-9" placeholder="Ex.: pagamento parcial, instalar, assistente" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input type="search" className="field pl-9" placeholder="Ex.: boleto, prazo, CNIS, comprovante, contrato" value={q} onChange={(e) => setQ(e.target.value)} />
       </label>
       {results.length === 0 && terms.length === 0 && <p className="text-fg-muted">Nenhum artigo encontrado para “{q}”.</p>}
       {cats.map((c) => (

@@ -3,8 +3,8 @@ import { readAll, writeMany } from "./db";
 import { auditRow, cid, fail, nowIso, ok } from "./generic";
 import type { RequestContext, Result } from "../contracts";
 import type {
-  BankLine, CalendarEvent, Charge, ChargeStatus, Contract, Deadline, DocumentItem, ExtractedField, Installment, LegalDraft, Message,
-  Payment, Proposal, Publication, Receipt, StoredFile,
+  BankLine, CalendarEvent, Case, Charge, ChargeStatus, Contract, Deadline, DocumentItem, ExtractedField, Installment, LegalDraft, Message,
+  Payment, PortalUpdate, Proposal, Publication, Receipt, StoredFile,
 } from "@/domain/types";
 import { applyChargeEvent, applySignature, installmentsFromContract, isActiveCharge, scheduleTotal } from "@/domain/commercial";
 import { recompute } from "@/domain/finance";
@@ -475,5 +475,34 @@ export const messagingService = {
       integrationEvents: [...events, ...pend.map((o) => ({ id: `ie-${cid()}`, organizationId: ctx.organizationId, provider: "evolution", correlationId: o.idempotencyKey, type: "messages.send (retry)", attempt: o.attempts + 1, at, status: "reprocessado" as const, detail: "Mensagem pendente enviada após reconexão (simulação)" }))],
     });
     return ok(pend.length);
+  },
+};
+
+// ---------------- Atualizações do portal (FLUXO G, PORT-02) ----------------
+/** Rascunho interno → publicação explícita. Só o publicado vira status do portal. */
+export const portalService = {
+  draft: async (caseId: string, text: string, nextStep: string, ctx: RequestContext): Promise<Result<Case>> => {
+    if (text.trim().length < 10) return fail("text", "Escreva a atualização em linguagem simples (mínimo 10 caracteres).");
+    if (!nextStep.trim()) return fail("next", "Informe o próximo passo para o cliente.");
+    const [cases, audit] = await Promise.all([readAll("cases"), readAll("audit")]);
+    const k = cases.find((c) => c.id === caseId && c.organizationId === ctx.organizationId);
+    if (!k) return fail("not_found", "Caso não encontrado.");
+    const u: PortalUpdate = { id: `pu-${cid()}`, text: text.trim(), nextStep: nextStep.trim(), createdAt: nowIso(), authorId: ctx.actorId };
+    const next: Case = { ...k, portalUpdates: [...(k.portalUpdates ?? []), u] };
+    await writeMany({ cases: cases.map((c) => (c.id === caseId ? next : c)), audit: [...audit, auditRow(ctx, "portal.update_drafted", "Case", caseId, "Atualização do portal em rascunho")] });
+    return ok(next);
+  },
+  publish: async (caseId: string, updateId: string, ctx: RequestContext): Promise<Result<Case>> => {
+    const [cases, users, audit] = await Promise.all([readAll("cases"), readAll("users"), readAll("audit")]);
+    const role = users.find((u) => u.id === ctx.actorId)?.role;
+    if (role !== "admin" && role !== "advogado") return fail("forbidden", "Somente advogado(a) ou administrador publica no portal.");
+    const k = cases.find((c) => c.id === caseId && c.organizationId === ctx.organizationId);
+    const u = k?.portalUpdates?.find((x) => x.id === updateId);
+    if (!k || !u) return fail("not_found", "Atualização não encontrada.");
+    if (u.publishedAt) return ok(k); // idempotente
+    const at = nowIso();
+    const next: Case = { ...k, portalStatus: u.text, portalNextStep: u.nextStep, portalUpdates: k.portalUpdates!.map((x) => (x.id === updateId ? { ...x, publishedAt: at, publishedBy: ctx.actorId } : x)) };
+    await writeMany({ cases: cases.map((c) => (c.id === caseId ? next : c)), audit: [...audit, auditRow(ctx, "portal.update_published", "Case", caseId, "Atualização publicada no portal")] });
+    return ok(next);
   },
 };

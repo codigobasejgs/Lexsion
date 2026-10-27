@@ -23,6 +23,12 @@ export default function PortalCasoPage({ params }: PageProps<"/portal/casos/[id]
         {STEPS.map((s, i) => <li key={s} aria-current={i === step ? "step" : undefined} className={`flex items-center gap-3 rounded-[var(--radius-control)] border p-3 ${i === step ? "border-brand bg-selection font-medium" : i < step ? "border-line" : "border-line text-fg-muted"}`}><span className="num inline-flex size-7 items-center justify-center rounded-full border border-line text-sm">{i < step ? "✓" : i + 1}</span>{s}</li>)}
       </ol>
       <section className="panel p-5"><p>{k.portalStatus}</p><p className="mt-3 font-medium">Próximo passo: {k.portalNextStep}</p><p className="mt-3 text-sm text-fg-muted">As etapas são informativas e não garantem resultado nem prazo.</p></section>
+      {(k.portalUpdates ?? []).some((u) => u.publishedAt) && (
+        <section className="panel p-5" aria-labelledby="hist-t">
+          <h2 id="hist-t" className="mb-2 font-medium">Atualizações do escritório</h2>
+          <ol className="space-y-2">{(k.portalUpdates ?? []).filter((u) => u.publishedAt).reverse().map((u) => <li key={u.id}><p className="text-sm text-fg-muted">{formatCivilLong(civilFromInstant(u.publishedAt!))}</p><p>{u.text}</p></li>)}</ol>
+        </section>
+      )}
       {d.events.filter((e) => e.caseId === k.id).map((e) => <section key={e.id} className="panel p-5"><p className="font-medium">{e.title}</p><p className="text-fg-muted">{formatCivilLong(civilFromInstant(e.start))}, às {formatTime(e.start)} · {e.location}</p></section>)}
     </div>
   );

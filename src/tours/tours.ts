@@ -90,6 +90,20 @@ export const TOURS: Tour[] = [
     ],
   },
   {
+    id: "minutas", title: "Minutas e exportação Word", summary: "Revisar, aprovar e baixar .docx.", area: "minutas", version: TOUR_VERSION,
+    steps: [
+      { route: "/app/minutas/dr-lucia", target: "editor-minuta", title: "Texto da minuta", body: "Edite e salve. Campos “não preenchido” bloqueiam a aprovação." },
+      { route: "/app/minutas/dr-lucia", target: "exportar-docx", title: "Exportar em Word", body: "Depois de aprovada, baixe o .docx. Ele sai marcado como rascunho demonstrativo." },
+    ],
+  },
+  {
+    id: "financeiro-perfil", title: "Primeiro dia no financeiro", summary: "Receber, conciliar e emitir recibo.", area: "financeiro", version: TOUR_VERSION,
+    steps: [
+      { route: "/app/financeiro/receber", target: "registrar-pagamento", title: "Dar baixa", body: "Registre o valor recebido. Pagamento parcial mantém o saldo." },
+      { route: "/app/financeiro/conciliacao", target: "extrato", title: "Conferir o extrato", body: "Cada linha pendente precisa de uma decisão com justificativa." },
+    ],
+  },
+  {
     id: "cobranca", title: "Cobrança e baixa", summary: "Registrar pagamento parcial ou total.", area: "financeiro", version: TOUR_VERSION,
     steps: [{ route: "/app/financeiro/receber", target: "registrar-pagamento", title: "Registrar pagamento", body: "Informe valor, data e forma. Pagamento parcial mantém o saldo correto." }],
   },

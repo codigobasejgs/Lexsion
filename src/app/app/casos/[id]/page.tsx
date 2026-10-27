@@ -10,6 +10,9 @@ import { Field } from "@/components/form";
 import { Feedback, useAction, useUrlState, userName } from "@/modules/shared";
 import { DOC_STATUS, EVENT_TYPE, PHASE_LABEL } from "@/modules/cases/labels";
 import { createRow, updateRow } from "@/services/mock/generic";
+import { portalService } from "@/services/mock/ops-repo";
+import { useSession } from "@/components/providers";
+import { canApprove } from "@/domain/permissions";
 import { formatCnj, isValidCnj } from "@/domain/deadlines";
 import { civilFromInstant, formatCivil, formatInstant, formatTime } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
@@ -83,11 +86,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
         <div role="tabpanel">
           {tab === "geral" && (
             <div className="grid gap-4 lg:grid-cols-2">
-              <section className="panel p-4 text-sm">
-                <h2 className="mb-2 font-semibold">Status no portal do cliente</h2>
-                <p>{k.portalStatus}</p>
-                <p className="mt-2 text-fg-muted">Próximo passo informado: {k.portalNextStep}</p>
-              </section>
+              <PortalUpdates k={k} />
               <section className="panel p-4 text-sm">
                 <h2 className="mb-2 font-semibold">Resumo</h2>
                 <ul className="space-y-1">
@@ -221,5 +220,38 @@ function EventDialog({ processId, caseId, onClose }: { processId: string; caseId
         </div>
       </div>
     </Dialog>
+  );
+}
+
+/** FLUXO G: equipe escreve em linguagem simples; só o que for publicado aparece no portal. */
+function PortalUpdates({ k }: { k: Case }) {
+  const { user } = useSession();
+  const act = useAction("cases");
+  const [text, setText] = useState("");
+  const [next, setNext] = useState("");
+  const pending = (k.portalUpdates ?? []).filter((u) => !u.publishedAt);
+  const published = (k.portalUpdates ?? []).filter((u) => u.publishedAt).reverse();
+  return (
+    <section className="panel space-y-3 p-4 text-sm" data-tour="portal-atualizacao">
+      <h2 className="font-semibold">Portal do cliente</h2>
+      <div className="rounded-[var(--radius-control)] border border-line p-3"><p className="text-xs text-fg-muted">O cliente vê agora</p><p>{k.portalStatus}</p><p className="mt-1 text-fg-muted">Próximo passo: {k.portalNextStep}</p></div>
+      {pending.map((u) => (
+        <div key={u.id} className="rounded-[var(--radius-control)] border border-warning/40 bg-warning-bg/40 p-3">
+          <p className="text-xs text-warning">Rascunho interno — o cliente NÃO vê</p>
+          <p>{u.text}</p><p className="text-fg-muted">Próximo passo: {u.nextStep}</p>
+          {user && canApprove(user.role) ? <button className="btn btn-primary mt-2 min-h-9" onClick={() => act.run((ctx) => portalService.publish(k.id, u.id, ctx), "Publicado no portal do cliente.")}>Publicar no portal</button> : <p className="mt-1 text-xs text-fg-muted">Aguardando advogado(a) publicar.</p>}
+        </div>
+      ))}
+      <details>
+        <summary className="cursor-pointer font-medium">Escrever atualização para o cliente</summary>
+        <div className="mt-2 space-y-2">
+          <label className="block"><span className="label">O que aconteceu (linguagem simples, sem promessa de resultado)</span><textarea rows={2} className="field py-2" value={text} onChange={(e) => setText(e.target.value)} /></label>
+          <label className="block"><span className="label">Próximo passo para o cliente</span><input className="field" value={next} onChange={(e) => setNext(e.target.value)} /></label>
+          <button className="btn btn-secondary" disabled={act.pending} onClick={async () => { if (await act.run((ctx) => portalService.draft(k.id, text, next, ctx), "Rascunho salvo. Ainda não está visível ao cliente.")) { setText(""); setNext(""); } }}>Salvar rascunho</button>
+        </div>
+      </details>
+      <Feedback error={act.error} notice={act.notice} />
+      {published.length > 0 && <ol className="space-y-1 border-l border-line pl-3 text-fg-muted">{published.map((u) => <li key={u.id}>{formatInstant(u.publishedAt!)} · {userName(u.publishedBy)} publicou: {u.text}</li>)}</ol>}
+    </section>
   );
 }

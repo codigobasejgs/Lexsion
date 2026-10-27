@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-10-26T21:40:26.093Z",
+  "generatedAt": "2026-10-27T12:16:55.911Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -353,6 +353,72 @@
       "selector": "[data-tour=\"conexao-whatsapp\"]",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/conectar-whatsapp-2.png"
+    },
+    {
+      "article": "usar-calculos",
+      "step": 1,
+      "mobile": false,
+      "caption": "Catálogo de cálculos por área",
+      "route": "/app/calculos",
+      "profile": "Helena Prado",
+      "selector": "text=Cálculos do escritório",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/usar-calculos-1.png"
+    },
+    {
+      "article": "usar-calculos",
+      "step": 1,
+      "mobile": true,
+      "caption": "Cálculos no celular",
+      "route": "/app/calculos",
+      "profile": "Helena Prado",
+      "selector": "text=Cálculos do escritório",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/usar-calculos-1-mobile.png"
+    },
+    {
+      "article": "acompanhar-rpv",
+      "step": 1,
+      "mobile": false,
+      "caption": "Lista de requisitórios",
+      "route": "/app/requisitorios",
+      "profile": "Helena Prado",
+      "selector": "h1",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/acompanhar-rpv-1.png"
+    },
+    {
+      "article": "usar-jornal-pesquisa",
+      "step": 2,
+      "mobile": false,
+      "caption": "Jornal do Advogado",
+      "route": "/app/jornal",
+      "profile": "Helena Prado",
+      "selector": "h1",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/usar-jornal-pesquisa-2.png"
+    },
+    {
+      "article": "ler-relatorios",
+      "step": 2,
+      "mobile": false,
+      "caption": "Relatório com gráfico e dados",
+      "route": "/app/relatorios",
+      "profile": "Helena Prado",
+      "selector": "figure",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/ler-relatorios-2.png"
+    },
+    {
+      "article": "gerir-equipe",
+      "step": 2,
+      "mobile": false,
+      "caption": "Matriz de acesso por perfil",
+      "route": "/app/equipe",
+      "profile": "Helena Prado",
+      "selector": "text=Matriz de acesso por perfil",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/gerir-equipe-2.png"
     }
   ]
 }

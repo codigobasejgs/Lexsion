@@ -51,3 +51,23 @@ describe("central de ajuda e academia (M23)", () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe("cobertura rota → artigo → tour → print (HELP-01/02/04)", async () => {
+  const { ROUTE_HELP } = await import("@/content/route-help");
+  const routes = src("src/app/app").filter((f) => f.endsWith("page.tsx")).map((f) => f.split(path.sep).join("/").replace(/^src\/app/, "").replace(/\/page\.tsx$/, ""));
+  it("toda rota operacional do escritório tem artigo de ajuda", () => {
+    const missing = routes.filter((r) => !ROUTE_HELP.some((h) => r === h.prefix || r.startsWith(h.prefix + "/")));
+    expect(missing).toEqual([]);
+  });
+  it("artigos e tours referenciados por rota existem", () => {
+    const slugs = new Set(HELP_ARTICLES.map((a) => a.slug));
+    const tours = new Set(TOURS.map((t) => t.id));
+    expect(ROUTE_HELP.filter((h) => !slugs.has(h.article)).map((h) => h.article)).toEqual([]);
+    expect(ROUTE_HELP.filter((h) => h.tour && !tours.has(h.tour)).map((h) => h.tour)).toEqual([]);
+  });
+  it("sinônimos comuns encontram artigos", () => {
+    const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+    const find = (q: string) => HELP_ARTICLES.filter((a) => norm(`${a.title} ${a.goal} ${a.steps.join(" ")} ${a.buttons.join(" ")} ${(a.keywords ?? []).join(" ")}`).includes(norm(q)));
+    for (const q of ["prazo", "audiência", "CNIS", "boleto", "comprovante", "contrato", "receber"]) expect(find(q).length, q).toBeGreaterThan(0);
+  });
+});

@@ -41,7 +41,7 @@ export default function NoticiaPage({ params }: PageProps<"/app/jornal/[id]">) {
           <p className="mb-2 text-fg-muted">Sugestão precisa de conferência. Uma notícia nunca altera cálculo ou estratégia de um caso automaticamente.</p>
           <ul className="space-y-2">{related.map((k) => (
             <li key={k.id} className="flex flex-wrap items-center gap-2"><Link className="flex-1 underline underline-offset-2" href={`/app/casos/${k.id}`}>{k.title}</Link>
-              <button className="btn btn-ghost min-h-8 text-xs" onClick={() => act.run((ctx) => createRow("tasks", { title: `Revisar impacto de notícia: ${n.title.slice(0, 60)}`, caseId: k.id, clientId: k.clientId, assigneeId: k.ownerId ?? user!.id, due: "2026-10-30", priority: "baixa", done: false }, ctx, "Tarefa de revisão criada"), "Tarefa de revisão criada.")}>Criar tarefa de revisão</button>
+              <button className="btn btn-ghost min-h-8 text-xs" onClick={() => act.run((ctx) => createRow("tasks", { id: `t-news-${n.id}-${k.id}`, title: `Revisar impacto de notícia: ${n.title.slice(0, 60)}`, caseId: k.id, clientId: k.clientId, assigneeId: k.ownerId ?? user!.id, due: "2026-10-30", priority: "baixa", done: false }, ctx, "Tarefa de revisão criada"), "Tarefa de revisão criada.")}>Criar tarefa de revisão</button>
             </li>
           ))}</ul>
           <Feedback error={act.error} notice={act.notice} />

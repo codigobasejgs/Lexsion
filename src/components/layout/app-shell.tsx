@@ -10,6 +10,7 @@ import { organizations } from "@/mocks/fixtures";
 import { MOBILE_TABS, MORE_ICON, NAV_GROUPS } from "./nav";
 import { CommandPalette } from "./command-palette";
 import { NotificationBell } from "./notifications";
+import { ScreenHelp } from "./screen-help";
 import { Dialog } from "@/components/ui";
 
 const COLLAPSE_KEY = "siwiltec.sidebar.collapsed";
@@ -156,6 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ) : (
               <span className="hidden max-w-[220px] truncate text-sm text-fg-muted md:inline">{org.name}</span>
             )}
+            <ScreenHelp />
             <NotificationBell />
             <details className="relative">
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-2 hover:bg-surface-muted" aria-label="Menu do usuário">

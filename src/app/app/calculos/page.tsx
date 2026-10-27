@@ -37,7 +37,7 @@ export default function CalculosPage() {
               <ul className="space-y-2 text-sm">
                 {g.models.map((m) => (
                   <li key={m.name} className="flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{m.name}</span>
+                    <span className="min-w-0 flex-1 break-words">{m.name}</span>
                     {m.implemented ? <Badge tone="success">Aritmética implementada</Badge> : <Badge tone="neutral">Cadastro e revisão</Badge>}
                     <button className="btn btn-ghost min-h-8 px-2 text-xs" aria-label={`Novo cálculo: ${m.name}`} onClick={() => { setModel({ area: g.area, name: m.name }); setTitle(m.name); }}><Plus aria-hidden className="size-3.5" /></button>
                   </li>

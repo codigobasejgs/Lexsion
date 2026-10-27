@@ -17,6 +17,7 @@ export interface HelpArticle {
   expected: string;
   errors: { problem: string; fix: string }[];
   related: string[];
+  keywords?: string[]; // sinônimos usados pela busca (ex.: "boleto", "comprovante")
   shots: HelpShot[];
   version: string;
   reviewedOn: string;
@@ -100,7 +101,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Assumir atendimento", "Enviar", "Retomar assistente virtual"],
     expected: "Somente você responde enquanto a conversa estiver assumida.",
     errors: [{ problem: "O botão Enviar está desativado.", fix: "Toque primeiro em “Assumir atendimento”: a assistente virtual está ativa." }],
-    related: ["organizar-lead", "conectar-whatsapp"], shots: [{ step: 2, caption: "Faixa com a assistente ativa e o botão Assumir atendimento" }, { step: 2, caption: "Conversa no celular", mobile: true }], ...R,
+    related: ["organizar-lead", "conectar-whatsapp"], keywords: ["whatsapp", "mensagem", "robô", "atendimento"], shots: [{ step: 2, caption: "Faixa com a assistente ativa e o botão Assumir atendimento" }, { step: 2, caption: "Conversa no celular", mobile: true }], ...R,
   },
   {
     slug: "organizar-lead", title: "Organizar um lead no funil", category: "Atendimento e comercial",
@@ -142,7 +143,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Nova proposta", "Gerar", "Criar proposta", "Enviar para revisão", "Aprovar", "Enviar ao cliente (simulação)"],
     expected: "A proposta fica “Enviada” e aparece no Meu dia como aguardando retorno.",
     errors: [{ problem: "A soma aparece em vermelho.", fix: "Ajuste o valor de alguma parcela até a soma ser igual ao total." }],
-    related: ["assinatura", "entrada-e-parcelas"], shots: [{ step: 2, caption: "Formulário de nova proposta" }, { step: 4, caption: "Fluxo da proposta" }], ...R,
+    related: ["assinatura", "entrada-e-parcelas"], keywords: ["honorários", "orçamento", "proposta"], shots: [{ step: 2, caption: "Formulário de nova proposta" }, { step: 4, caption: "Fluxo da proposta" }], ...R,
   },
   {
     slug: "assinatura", title: "Contrato e assinatura (simulação)", category: "Atendimento e comercial",
@@ -156,7 +157,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Gerar contrato", "Enviar para assinatura (simulação)", "Simular assinatura", "Corrigir e gerar nova versão"],
     expected: "Contrato assinado gera as parcelas no financeiro uma única vez.",
     errors: [{ problem: "Dado errado no contrato.", fix: "Use “Corrigir e gerar nova versão”: a versão anterior fica no histórico." }],
-    related: ["enviar-proposta", "entrada-e-parcelas"], shots: [{ step: 2, caption: "Contrato com signatários" }], ...R,
+    related: ["enviar-proposta", "entrada-e-parcelas"], keywords: ["contrato", "assinar", "zapsign"], shots: [{ step: 2, caption: "Contrato com signatários" }], ...R,
   },
 
   // Clientes e jurídico
@@ -228,7 +229,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Novo prazo", "Registrar prazo proposto", "Conferir e confirmar", "Confirmar prazo"],
     expected: "O prazo confirmado entra na agenda e no Meu dia.",
     errors: [{ problem: "Não aparece “Conferir e confirmar”.", fix: "Somente advogado(a) ou administrador confirma prazos." }],
-    related: ["abrir-caso", "agendar-pericia"], shots: [{ step: 4, caption: "Prazo proposto aguardando confirmação" }], ...R,
+    related: ["abrir-caso", "agendar-pericia"], keywords: ["prazo", "intimação", "vencimento", "controladoria"], shots: [{ step: 4, caption: "Prazo proposto aguardando confirmação" }], ...R,
   },
   {
     slug: "agendar-pericia", title: "Agendar perícia ou audiência", category: "Clientes e jurídico",
@@ -242,7 +243,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Novo compromisso", "Salvar"],
     expected: "A perícia aparece na Agenda, em Perícias e no portal do cliente.",
     errors: [{ problem: "Pede motivo ao alterar a data.", fix: "Reagendamento exige “Motivo do reagendamento”; ele fica no histórico." }],
-    related: ["registrar-prazo"], shots: [{ step: 1, caption: "Agenda com o botão Novo compromisso" }], ...R,
+    related: ["registrar-prazo"], keywords: ["audiência", "perícia", "compromisso", "agenda"], shots: [{ step: 1, caption: "Agenda com o botão Novo compromisso" }], ...R,
   },
   {
     slug: "comparar-cenarios", title: "Revisar vínculos e comparar cenários previdenciários", category: "Clientes e jurídico",
@@ -256,7 +257,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Próxima etapa", "Etapa anterior", "Marcar exemplo como revisado"],
     expected: "Você vê cada cenário com suas premissas. Os valores são exemplos, não cálculo jurídico validado.",
     errors: [{ problem: "Aparece “Resultado desatualizado”.", fix: "Uma entrada mudou. Revise e toque em “Marcar exemplo como revisado”." }],
-    related: ["revisar-extracao"], shots: [{ step: 4, caption: "Cenários comparados" }], ...R,
+    related: ["revisar-extracao"], keywords: ["cnis", "aposentadoria", "inss", "benefício", "tempo de contribuição"], shots: [{ step: 4, caption: "Cenários comparados" }], ...R,
   },
   {
     slug: "revisar-minuta", title: "Revisar e aprovar minuta", category: "Clientes e jurídico",
@@ -270,7 +271,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Salvar", "Enviar para revisão", "Pedir ajustes", "Aprovar", "Texto (.txt)", "Imprimir / PDF"],
     expected: "A minuta aprovada fica registrada com histórico; nada é protocolado.",
     errors: [{ problem: "A aprovação sumiu.", fix: "O texto mudou depois da aprovação. Revise e aprove novamente." }],
-    related: [], shots: [{ step: 2, caption: "Editor de minuta" }], ...R,
+    related: [], keywords: ["petição", "peça", "word", "docx", "minuta"], shots: [{ step: 2, caption: "Editor de minuta" }], ...R,
   },
 
   // Financeiro
@@ -303,7 +304,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       { problem: "Mensagem dizendo que o valor é maior que o saldo.", fix: "Informe no máximo o saldo exibido." },
       { problem: "Lancei errado.", fix: "Use “Estornar” no pagamento. O estorno fica registrado; nada é apagado." },
     ],
-    related: ["emitir-recibo", "conciliacao"], shots: [{ step: 2, caption: "Parcelas a receber" }, { step: 2, caption: "A receber no celular", mobile: true }], ...R,
+    related: ["emitir-recibo", "conciliacao"], keywords: ["boleto", "pix", "receber", "pagamento", "quitar", "parcela"], shots: [{ step: 2, caption: "Parcelas a receber" }, { step: 2, caption: "A receber no celular", mobile: true }], ...R,
   },
   {
     slug: "emitir-recibo", title: "Emitir recibo", category: "Financeiro",
@@ -317,7 +318,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Recibo", "Imprimir / PDF", "Baixar", "Compartilhar"],
     expected: "O recibo traz valor em reais e por extenso, com a marca de ambiente demonstrativo.",
     errors: [{ problem: "Não aparece “Recibo”.", fix: "O pagamento foi estornado ou ainda não foi registrado." }],
-    related: ["baixa-parcial"], shots: [{ step: 3, caption: "Lista de recibos" }], ...R,
+    related: ["baixa-parcial"], keywords: ["comprovante", "recibo", "quitação"], shots: [{ step: 3, caption: "Lista de recibos" }], ...R,
   },
   {
     slug: "conciliacao", title: "Conciliar extrato", category: "Financeiro",
@@ -331,7 +332,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Decidir", "Concluir conciliação"],
     expected: "A linha fica “Conciliado” ou “Ignorado”, com a decisão registrada.",
     errors: [{ problem: "Não consigo concluir.", fix: "Justificativa e decisão são obrigatórias." }],
-    related: ["baixa-parcial"], shots: [{ step: 2, caption: "Extrato com linhas pendentes" }], ...R,
+    related: ["baixa-parcial"], keywords: ["extrato", "banco", "conferir"], shots: [{ step: 2, caption: "Extrato com linhas pendentes" }], ...R,
   },
 
   // Administração
@@ -347,7 +348,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     buttons: ["Usar exemplo fictício", "Escolher arquivo CSV", "Validar", "Revisar conflitos e confirmar", "Confirmar importação", "Reverter lote"],
     expected: "Clientes novos entram; duplicados são apontados; nada vira fórmula ao exportar.",
     errors: [{ problem: "Linha com data estranha (ex.: 21916).", fix: "É data no formato do Excel; o sistema converte e mostra na prévia." }],
-    related: [], shots: [{ step: 3, caption: "Prévia da importação" }], ...R,
+    related: [], keywords: ["planilha", "excel", "tícius", "migrar"], shots: [{ step: 3, caption: "Prévia da importação" }], ...R,
   },
   {
     slug: "configurar-notificacoes", title: "Configurar notificações", category: "Administração",
@@ -376,6 +377,78 @@ export const HELP_ARTICLES: HelpArticle[] = [
     expected: "Você entende que nenhuma mensagem é perdida nem duplicada.",
     errors: [{ problem: "Mensagens “na fila” na conversa.", fix: "A conexão caiu. Reconecte e reprocesse a fila." }],
     related: ["assumir-conversa"], shots: [{ step: 2, caption: "Conexão e fila de saída" }], ...R,
+  },
+
+  // Novos (cobertura rota → artigo)
+  {
+    slug: "usar-calculos", title: "Fazer um cálculo demonstrativo", category: "Clientes e jurídico",
+    goal: "Registrar entradas, ver a memória de cálculo e pedir revisão.", prerequisites: "Nenhum.", who: "Administrador, Advogado(a) e Estagiário(a).",
+    steps: [
+      "Abra Cálculos. No catálogo, toque no “+” do modelo desejado (“Novo cálculo”).",
+      "Informe o título e toque em “Criar”.",
+      "Em Entradas, preencha os campos e toque em “Calcular”. A memória mostra cada conta feita.",
+      "Um(a) advogado(a) confere e toca em “Marcar como revisado”. Use “Exportar CSV” ou “Imprimir / PDF” se precisar.",
+    ],
+    buttons: ["Novo cálculo", "Criar", "Calcular", "Marcar como revisado", "Exportar CSV"],
+    expected: "O resultado aparece com memória e o selo “Cálculo demonstrativo”. Mudar uma entrada invalida o resultado anterior.",
+    errors: [{ problem: "“Modelo sem motor implementado nesta fase.”", fix: "Esse tipo ainda não calcula sozinho: registre as entradas e anexe a memória feita pelo profissional." }],
+    related: ["comparar-cenarios"], keywords: ["cálculo", "conta", "atualização", "juros", "horas extras", "rescisão"], shots: [{ step: 1, caption: "Catálogo de cálculos por área" }, { step: 1, caption: "Cálculos no celular", mobile: true }], ...R,
+  },
+  {
+    slug: "acompanhar-rpv", title: "Acompanhar RPV e precatórios", category: "Clientes e jurídico",
+    goal: "Registrar a situação de um requisitório e manter a trilha.", prerequisites: "Requisitório cadastrado.", who: "Administrador, Advogado(a) e Financeiro.",
+    steps: [
+      "Abra RPV e precatórios e escolha o requisitório.",
+      "Em “Atualizar situação”, escolha a nova situação.",
+      "Escreva a observação e a fonte consultada.",
+      "Toque em “Registrar”. A mudança entra na trilha com data e responsável.",
+    ],
+    buttons: ["Atualizar situação", "Registrar"],
+    expected: "A situação muda e a trilha guarda o histórico. Nenhuma consulta automática a tribunal é feita nesta fase.",
+    errors: [{ problem: "Não sei de onde veio a informação.", fix: "Sempre preencha a fonte (ex.: consulta pública do TRF1) na observação." }],
+    related: ["abrir-caso"], keywords: ["precatório", "rpv", "requisição", "pagamento judicial"], shots: [{ step: 1, caption: "Lista de requisitórios" }], ...R,
+  },
+  {
+    slug: "usar-jornal-pesquisa", title: "Pesquisa jurídica e Jornal do Advogado", category: "Clientes e jurídico",
+    goal: "Encontrar referências, salvar notícias e criar tarefa de revisão no caso.", prerequisites: "Nenhum.", who: "Administrador, Advogado(a) e Estagiário(a).",
+    steps: [
+      "Em Pesquisa jurídica, use “Buscar nos exemplos” e os filtros. Itens marcados “Exemplos fictícios” não são fonte real; use “Fontes oficiais” para consultar.",
+      "No Jornal do Advogado, filtre por Área e Tipo e abra a notícia.",
+      "Toque em “Salvar” para guardar. Use “Fonte oficial” para ler o original.",
+      "Em casos relacionados, toque em “Criar tarefa de revisão” para o responsável conferir o impacto.",
+    ],
+    buttons: ["Salvar", "Fonte oficial", "Criar tarefa de revisão"],
+    expected: "A tarefa aparece em Tarefas e no caso. Uma notícia nunca altera um caso sozinha.",
+    errors: [{ problem: "A notícia parece antiga.", fix: "Nesta fase são amostras com link para a fonte oficial; não há coleta automática." }],
+    related: ["abrir-caso"], keywords: ["jurisprudência", "notícia", "lei", "legislação", "súmula", "novidade"], shots: [{ step: 2, caption: "Jornal do Advogado" }], ...R,
+  },
+  {
+    slug: "ler-relatorios", title: "Ler os relatórios do escritório", category: "Administração",
+    goal: "Entender funil, carga de trabalho, prazos e recebimentos.", prerequisites: "Nenhum.", who: "Administrador, Advogado(a) e Financeiro.",
+    steps: [
+      "Abra Relatórios e escolha o relatório no seletor.",
+      "Cada gráfico mostra o número ao lado da barra. Toque em “Ver dados” para ver a tabela.",
+      "Use “CSV” para baixar os dados do gráfico.",
+      "Indicadores sem base suficiente aparecem como “não calculável” — não como zero.",
+    ],
+    buttons: ["Ver dados", "Ver gráfico", "CSV"],
+    expected: "Os números batem com as listas das telas de origem.",
+    errors: [{ problem: "O CSV abre com números estranhos no Excel.", fix: "Valores em centavos e datas no formato dd/mm/aaaa; textos iniciados por “=” são protegidos." }],
+    related: ["baixa-parcial"], keywords: ["dashboard", "indicador", "gráfico", "kpi", "painel"], shots: [{ step: 2, caption: "Relatório com gráfico e dados" }], ...R,
+  },
+  {
+    slug: "gerir-equipe", title: "Equipe, perfis e convites", category: "Administração",
+    goal: "Ver quem faz o quê, a carga de cada pessoa e o que cada perfil acessa.", prerequisites: "Nenhum.", who: "Administrador.",
+    steps: [
+      "Abra Equipe: cada cartão mostra a pessoa, o perfil e as tarefas abertas.",
+      "Na “Matriz de acesso por perfil”, confira quais módulos cada perfil vê.",
+      "Para convidar, informe o e-mail e toque em “Enviar convite (simulado)”.",
+      "Lembre: nesta demonstração os perfis só escondem telas; a proteção real virá com o servidor.",
+    ],
+    buttons: ["Enviar convite (simulado)"],
+    expected: "O convite fica registrado na tela; nenhum e-mail é enviado.",
+    errors: [{ problem: "O botão de convite está desativado.", fix: "Digite um e-mail válido (ex.: nome@exemplo.test)." }],
+    related: ["primeiro-acesso"], keywords: ["usuário", "permissão", "acesso", "colaborador", "perfil"], shots: [{ step: 2, caption: "Matriz de acesso por perfil" }], ...R,
   },
 ];
 
