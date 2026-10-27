@@ -11,6 +11,7 @@ import { Feedback, useAction, userName } from "@/modules/shared";
 import { DRAFT_STATUS } from "@/modules/drafts/labels";
 import { draftService, missingFields } from "@/services/mock/ops-repo";
 import { buildDocx, docxFileName, DOCX_MIME } from "@/domain/docx";
+import { tenantTheme } from "@/lib/tenant-tokens";
 import { updateRow } from "@/services/mock/generic";
 import { downloadText } from "@/domain/csv";
 import { canApprove } from "@/domain/permissions";
@@ -29,7 +30,7 @@ export default function MinutaPage({ params }: PageProps<"/app/minutas/[id]">) {
 }
 
 function Editor({ d }: { d: LegalDraft }) {
-  const { user, org } = useSession();
+  const { user, org, tenant } = useSession();
   const act = useAction("drafts");
   const [body, setBody] = useState(d.body);
   // Sincroniza com o salvo (outra aba/restauração) sem remontar — remontar apagava o aviso de sucesso.
@@ -49,7 +50,9 @@ function Editor({ d }: { d: LegalDraft }) {
   };
   const exportDocx = async () => {
     if (!(await act.run((ctx) => draftService.setStatus(d.id, "exportado", ctx), "DOCX gerado (rascunho demonstrativo)."))) return;
-    const bytes = buildDocx({ title: d.title, body, header: org?.name, footer: "Ambiente demonstrativo — rascunho sem valor de protocolo. Revisão profissional obrigatória." });
+    // Marca do ESCRITÓRIO (não da LexSion) no cabeçalho; cor no tom legível sobre papel branco.
+    const brandColor = tenant ? tenantTheme(tenant.settings).light.brand : undefined;
+    const bytes = buildDocx({ title: d.title, body, header: tenant?.settings.brandName ?? org?.name, brandColor, footer: "Ambiente demonstrativo — rascunho sem valor de protocolo. Revisão profissional obrigatória." });
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: DOCX_MIME }));
     const a = Object.assign(document.createElement("a"), { href: url, download: docxFileName(d.title) });
     a.click();

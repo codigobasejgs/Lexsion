@@ -72,7 +72,10 @@ function Appearance() {
       <section className="panel space-y-3 p-5 text-sm">
         <h2 className="font-semibold">Identidade visual do escritório</h2>
         <p className="text-fg-muted">Logotipo, cores, densidade, tamanho do texto, linguagem simples e o aplicativo do escritório (com QR Code de instalação).</p>
-        <Link href="/app/configuracoes/branding" className="btn btn-secondary w-fit"><Palette aria-hidden className="size-4" /> Abrir Identidade visual e Meu aplicativo</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/app/configuracoes/branding" className="btn btn-secondary w-fit"><Palette aria-hidden className="size-4" /> Abrir Identidade visual e Meu aplicativo</Link>
+          <Link href="/app/configuracoes/emails" className="btn btn-ghost w-fit">Modelos de e-mail</Link>
+        </div>
       </section>
     </>
   );

@@ -31,9 +31,11 @@ export interface DocxInput {
   body: string;
   header?: string; // ex.: nome do escritório
   footer?: string; // ex.: aviso de ambiente demonstrativo
+  brandColor?: string; // #rrggbb do escritório (linha sob o cabeçalho); validado antes de entrar no XML
 }
 
-export function buildDocx({ title, body, header, footer }: DocxInput): Uint8Array {
+export function buildDocx({ title, body, header, footer, brandColor }: DocxInput): Uint8Array {
+  const color = /^#[0-9a-f]{6}$/i.test(brandColor ?? "") ? brandColor!.slice(1).toUpperCase() : null;
   const paragraphs = body
     .replace(/\r\n?/g, "\n")
     .split("\n")
@@ -56,7 +58,11 @@ export function buildDocx({ title, body, header, footer }: DocxInput): Uint8Arra
     "word/document.xml": document,
     "word/styles.xml": styles,
   };
-  if (header) files["word/header1.xml"] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${ns}>${para(header, "Small")}</w:hdr>`;
+  // Cabeçalho com o nome do escritório em negrito na cor da marca e uma linha inferior da mesma cor.
+  const headerPara = header
+    ? `<w:p><w:pPr><w:pStyle w:val="Small"/>${color ? `<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="4" w:color="${color}"/></w:pBdr>` : ""}</w:pPr><w:r><w:rPr><w:b/>${color ? `<w:color w:val="${color}"/>` : ""}</w:rPr><w:t xml:space="preserve">${xml(header)}</w:t></w:r></w:p>`
+    : "";
+  if (header) files["word/header1.xml"] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${ns}>${headerPara}</w:hdr>`;
   if (footer) files["word/footer1.xml"] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${ns}>${para(footer, "Small")}</w:ftr>`;
   return zip(files);
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Building2, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, ScrollText, X } from "lucide-react";
+import { BarChart3, Building2, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
 import { useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/organizacoes", label: "Contratantes", icon: Building2 },
   { href: "/admin/planos", label: "Planos e assinaturas", icon: Layers },
   { href: "/admin/faturamento", label: "Financeiro da plataforma", icon: CreditCard },
+  { href: "/admin/integracoes", label: "Integrações", icon: Plug },
   { href: "/admin/suporte", label: "Suporte", icon: LifeBuoy },
   { href: "/admin/auditoria", label: "Auditoria", icon: ScrollText },
 ];

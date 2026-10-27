@@ -7,6 +7,15 @@ const body = "SÍNTESE DOS FATOS\nA segurada, nascida em 29/02/1960, requereu o 
 describe("DOCX", () => {
   const files = unzip(buildDocx({ title: "Petição inicial — João", body, header: "Aurora (fictícia)", footer: "Ambiente demonstrativo" }));
 
+  it("WL-DOCX: cabeçalho com nome e cor do escritório; cor inválida é ignorada (sem injeção no XML)", () => {
+    const h = unzip(buildDocx({ title: "T", body: "x", header: "Atlas Jurídico", brandColor: "#1d4ed8" }))["word/header1.xml"];
+    expect(h).toContain("Atlas Jurídico");
+    expect(h).toContain('<w:color w:val="1D4ED8"/>');
+    expect(h).toContain('w:bottom w:val="single"');
+    const bad = unzip(buildDocx({ title: "T", body: "x", header: "A", brandColor: '"/><w:evil/>' }))["word/header1.xml"];
+    expect(bad).not.toMatch(/evil|w:color/);
+  });
+
   it("CRC32 confere com valor de referência", () => {
     expect(crc32(new TextEncoder().encode("123456789"))).toBe(0xcbf43926);
   });
