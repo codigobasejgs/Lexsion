@@ -1,6 +1,6 @@
 # 10 — Diffs e compatibilidade
 
-Faixa: `529d2f7..HEAD` (branch `paridade-5-plataformas`). 9 commits de código e mais os de documentação. Em `src`: 30 arquivos, +1.162/−26 linhas. Remoções só onde uma linha foi substituída.
+Faixa: `529d2f7..HEAD` (branch `paridade-5-plataformas`). 9 commits de código e mais os de documentação. Em `src`: 31 arquivos, +1.171/−35 linhas. Remoções só onde uma linha foi substituída.
 
 ## Correções em código existente (bug comprovado)
 1. **`/app/previdenciario/planejamentos/[id]`**: antes redirecionava no cliente e mostrava "Abrindo planejamento…" sem título. Isso causava a única falha da baseline (intermitente no celular). Agora renderiza a mesma `PensionAnalysisView` na própria URL. A página de análises passou a exportar esse componente, com o mesmo comportamento. Evidência: 10/10 sob 5 workers.
