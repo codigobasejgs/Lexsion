@@ -3,7 +3,7 @@ import path from "node:path";
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
 const pages = walk("src/app").filter((f) => /page\.tsx$/.test(f)).map((f) => "/" + path.relative("src/app", path.dirname(f)).split(path.sep).join("/")).map((r) => r === "/." ? "/" : r).sort();
 const tests = walk("tests").filter((f) => /\.ts$/.test(f)).map((f) => [path.basename(f), fs.readFileSync(f, "utf8")]);
-const resp = fs.readFileSync("tests/e2e/qa-responsivo.spec.ts", "utf8");
+
 const pub = (r) => r.startsWith("/admin") ? "Plataforma (superadmin, platform_admin, platform_support)" : r.startsWith("/portal") ? "Cliente (portal)" : r.startsWith("/app") ? "Equipe do escritório (por área)" : r.startsWith("/demo/tenant") ? "Público (demo do escritório)" : "Público";
 const rx = (r) => new RegExp(r.split("/").map((p) => (p.startsWith("[") ? "[\\w%-]+" : p)).join("/") + "(?![\\w/-])");
 const rows = pages.map((r) => {

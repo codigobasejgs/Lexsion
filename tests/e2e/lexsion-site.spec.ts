@@ -77,33 +77,37 @@ test("QA-LANDING-05: SEO — landing indexável com canonical; demo, login e sis
   expect(robots).toMatch(/Disallow: \/admin/);
 });
 
-test("QA-LOGIN-01: login profissional valida, alterna senha e informa que o acesso real não está ativo — sem criar sessão", async ({ page }) => {
+test("QA-LOGIN-01: login real recusa credencial errada (Supabase Auth), sem revelar se a conta existe e sem criar sessão", async ({ page }) => {
   await page.goto("/entrar");
   await expect(page.getByRole("radio", { name: /Helena Prado/ })).toHaveCount(0); // perfis fictícios saíram do login
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
   await expect(page.getByText(/Informe um e-mail válido/)).toBeVisible();
   await page.getByLabel("E-mail").fill("advogada@escritorio.exemplo");
+  await page.getByLabel("Senha", { exact: true }).fill("curta");
+  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(page.getByText("A senha tem pelo menos 10 caracteres.")).toBeVisible();
   await page.getByLabel("Senha", { exact: true }).fill("senha-de-teste-123");
   await page.getByRole("button", { name: "Mostrar senha" }).click();
   await expect(page.getByLabel("Senha", { exact: true })).toHaveAttribute("type", "text");
   await page.getByLabel("Senha", { exact: true }).press("Enter");
-  await expect(page.getByRole("alert").filter({ hasText: "ainda não está ativo" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "E-mail ou senha incorretos" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByLabel("Senha", { exact: true })).toHaveValue("");
   await expect(page).toHaveURL(/\/entrar$/);
   expect(await page.evaluate(() => localStorage.getItem("siwiltec.session"))).toBeNull();
+  expect((await page.context().cookies()).filter((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"))).toEqual([]);
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }))).not.toContain("senha-de-teste-123");
-  await page.getByRole("link", { name: "Explorar a demonstração" }).first().click();
+  await page.getByRole("link", { name: "Explore a demonstração" }).first().click();
   await expect(page).toHaveURL(/\/demonstracao$/);
   expect(await serious(page)).toEqual([]);
 });
 
-test("QA-LOGIN-02: recuperar acesso valida e não finge envio", async ({ page }) => {
+test("QA-LOGIN-02: recuperar acesso valida e responde igual exista ou não a conta (anti-enumeração)", async ({ page }) => {
   await page.goto("/recuperar-acesso");
   await page.getByRole("button", { name: "Enviar link" }).click();
   await expect(page.getByText("Informe um e-mail válido.")).toBeVisible();
-  await page.getByLabel("E-mail").fill("pessoa@exemplo.test");
+  await page.getByLabel("E-mail").fill("conta-inexistente@lexsion-teste.invalid"); // domínio .invalid: nunca recebe e-mail
   await page.getByRole("button", { name: "Enviar link" }).click();
-  await expect(page.getByRole("status")).toContainText("Nenhum e-mail foi enviado");
+  await expect(page.getByRole("status")).toContainText("Se houver uma conta com esse e-mail", { timeout: 15_000 });
 });
 
 test("QA-DEMO-01: demonstração agrupada por escritório, com busca e prévia da função", async ({ page }) => {

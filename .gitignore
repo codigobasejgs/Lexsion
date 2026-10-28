@@ -48,3 +48,7 @@ next-env.d.ts
 
 # rascunhos locais
 /_scratch/
+
+# Supabase CLI (estado local)
+supabase/.temp/
+supabase/.branches/

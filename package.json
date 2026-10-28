@@ -13,9 +13,15 @@
     "pwa:assets": "node scripts/pwa-assets.mjs",
     "capture:help": "node scripts/capture-help.mjs",
     "test:smoke": "playwright test -c playwright.smoke.config.ts",
-    "capture:landing": "node scripts/capture-landing.mjs"
+    "capture:landing": "node scripts/capture-landing.mjs",
+    "test:db": "vitest run -c vitest.db.config.mts",
+    "test:real": "vitest run -c vitest.real.config.mts",
+    "db:migrate": "node scripts/supabase-migrate.mjs",
+    "db:migrate:dry": "node scripts/supabase-migrate.mjs --dry-run"
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.3",
     "@tanstack/react-query": "^5.105.0",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
@@ -25,6 +31,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@electric-sql/pglite": "0.5.9",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",

@@ -6,8 +6,7 @@ import { ArrowLeft, Info, Loader2 } from "lucide-react";
 import { LexSionLogo } from "@/components/brand";
 import { authRepository } from "@/services/auth";
 
-// Recuperação de acesso: fluxo pronto para o backend; nesta fase o adaptador informa que o envio NÃO está ativo.
-// Mensagem nunca revela se a conta existe.
+// Recuperação de acesso real (Supabase Auth envia o link). Mensagem nunca revela se a conta existe.
 export default function RecuperarAcessoPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +26,7 @@ export default function RecuperarAcessoPage() {
     <main id="conteudo" className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-10">
       <Link href="/" aria-label="LexSion — voltar ao site" className="mb-8"><LexSionLogo className="h-10" /></Link>
       <h1 className="text-2xl font-semibold">Recuperar acesso</h1>
-      <p className="mt-1 text-fg-muted">Informe o e-mail cadastrado. Quando o acesso real estiver ativo, enviaremos um link para criar nova senha.</p>
+      <p className="mt-1 text-fg-muted">Informe o e-mail cadastrado. Enviaremos um link para criar uma nova senha.</p>
       <form className="mt-6 space-y-4" noValidate onSubmit={submit}>
         <div>
           <label htmlFor="rec-email" className="label">E-mail</label>

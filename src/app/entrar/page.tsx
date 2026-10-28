@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Info, Loader2 } from "lucide-react";
 import { LexSionLogo } from "@/components/brand";
 import { authRepository, type AuthAudience } from "@/services/auth";
 
-// Login profissional. Autenticação real ainda NÃO está conectada (fase backend): o formulário valida,
-// tenta o adaptador e mostra o estado honesto “indisponível”. Nada de senha é guardado no navegador.
+// Login real (Supabase Auth): validação no servidor, sessão em cookie httpOnly, destino pelo vínculo no banco.
+// Nada de senha é guardado no navegador. A demonstração com perfis fictícios continua separada em /demonstracao.
 export default function EntrarPage() {
+  const router = useRouter();
   const [audience, setAudience] = useState<AuthAudience>("escritorio");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,20 +18,23 @@ export default function EntrarPage() {
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [result, setResult] = useState<string | null>(null);
+  const [pwSet] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("senha") === "definida");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setResult(null);
     const next: typeof errors = {};
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) next.email = "Informe um e-mail válido, por exemplo nome@escritorio.com.br.";
-    if (password.length < 8) next.password = "A senha tem pelo menos 8 caracteres.";
+    if (password.length < 10) next.password = "A senha tem pelo menos 10 caracteres.";
     setErrors(next);
     if (Object.keys(next).length) return;
     setBusy(true);
     const r = await authRepository.signIn({ email: email.trim(), password, audience });
     setBusy(false);
     setPassword(""); // nunca mantém a senha em memória após a tentativa
-    if (!r.ok) setResult(r.error.message);
+    if (!r.ok) return setResult(r.error.message);
+    router.replace(r.data.redirectTo);
+    router.refresh();
   };
 
   return (
@@ -56,6 +61,7 @@ export default function EntrarPage() {
             ))}
           </div>
 
+          {pwSet && <p role="status" className="mt-4 rounded-[var(--radius-control)] border border-success/30 bg-success-bg p-3 text-sm text-success">Senha definida. Entre com seu e-mail e a nova senha.</p>}
           <form className="mt-6 space-y-4" noValidate onSubmit={submit}>
             <div>
               <label htmlFor="email" className="label">E-mail</label>
@@ -81,12 +87,11 @@ export default function EntrarPage() {
             {result && (
               <div role="alert" className="mt-4 rounded-[var(--radius-control)] border border-info/30 bg-info-bg p-3 text-sm text-info">
                 <p>{result}</p>
-                <Link href="/demonstracao" className="mt-2 inline-flex items-center gap-1 font-medium underline underline-offset-2">Explorar a demonstração <ArrowRight aria-hidden className="size-3.5" /></Link>
               </div>
             )}
           </div>
 
-          <p className="mt-6 flex items-start gap-2 text-sm text-fg-muted"><Info aria-hidden className="mt-0.5 size-4 shrink-0" /> Acesso real em preparação. Enquanto isso, <Link href="/demonstracao" className="text-accent underline underline-offset-2">explore a demonstração</Link> com perfis fictícios.</p>
+          <p className="mt-6 flex items-start gap-2 text-sm text-fg-muted"><Info aria-hidden className="mt-0.5 size-4 shrink-0" /> O acesso é por convite do escritório. Quer conhecer antes? <Link href="/demonstracao" className="text-accent underline underline-offset-2">Explore a demonstração</Link> (dados fictícios, separada do sistema).</p>
           <p className="mt-4 text-center text-sm"><Link href="/" className="text-fg-muted underline underline-offset-2 hover:text-fg">Voltar ao site</Link></p>
         </div>
       </section>

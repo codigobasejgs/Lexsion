@@ -1,5 +1,5 @@
-// Contrato de autenticação. Nesta fase o adaptador é "não configurado": nunca cria sessão, nunca guarda senha,
-// nunca afirma ter verificado credencial ou enviado e-mail. A fase backend troca por SupabaseAuthRepository.
+// Contrato de autenticação. Implementação real: Supabase Auth via Server Actions (src/app/entrar/actions.ts).
+// Sem Supabase configurado, as ações respondem "não configurado" — nunca criam sessão fictícia.
 import type { Result } from "./contracts";
 
 export type AuthAudience = "escritorio" | "cliente";
@@ -26,4 +26,12 @@ export const notConfiguredAuth: AuthRepository = {
   signOut: async () => ({ ok: true, data: true, correlationId: cid() }),
 };
 
-export const authRepository: AuthRepository = notConfiguredAuth;
+/** Supabase Auth real. As Server Actions validam no servidor; o navegador nunca vê senha guardada nem chave secreta. */
+export const supabaseAuth: AuthRepository = {
+  status: () => (process.env.NEXT_PUBLIC_SUPABASE_URL ? "available" : "not_configured"),
+  signIn: async (input) => (await import("@/app/entrar/actions")).signInAction(input),
+  requestPasswordReset: async (input) => (await import("@/app/entrar/actions")).requestPasswordResetAction(input),
+  signOut: async () => (await import("@/app/entrar/actions")).signOutAction(),
+};
+
+export const authRepository: AuthRepository = supabaseAuth;
