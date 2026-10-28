@@ -12,7 +12,7 @@ import { formatBRL } from "@/lib/money";
 import { civilFromInstant, formatCivil, formatInstant, formatTime } from "@/lib/dates";
 import { maskDoc } from "@/lib/formatting";
 import { can } from "@/domain/permissions";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 const TABS = [
   { key: "resumo", label: "Resumo", icon: Eye },

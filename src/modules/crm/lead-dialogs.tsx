@@ -8,7 +8,7 @@ import { crmService } from "@/services/mock/crm-repo";
 import { fieldErrors, leadSchema, UFS } from "@/domain/schemas";
 import { LOST_REASONS, STAGE_ERROR_MSG, STAGE_LABEL, STAGES } from "@/domain/crm";
 import type { Lead, StageKey } from "@/domain/types";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 export function NewLeadDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
   const { ctx, org } = useSession();

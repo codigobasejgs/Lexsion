@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { FileText, FlaskConical, HelpCircle, Home, LogOut, Wallet } from "lucide-react";
-import { useSession } from "@/components/providers";
+import { lastWasDemo, useSession } from "@/components/providers";
 import { TenantLogo } from "@/components/brand";
 
 const TABS = [
@@ -16,16 +16,16 @@ const TABS = [
 
 // Portal do cliente: navegação curta, linguagem leiga, sem dados internos.
 export default function PortalLayout({ children }: LayoutProps<"/portal">) {
-  const { ready, user, org, tenant, signOut } = useSession();
+  const { ready, mode, user, org, tenant, signOut } = useSession();
   const router = useRouter();
   const path = usePathname();
   useEffect(() => {
-    if (ready && (!user || user.role !== "cliente")) router.replace("/demonstracao");
-  }, [ready, user, router]);
+    if (ready && (!user || user.role !== "cliente")) router.replace(mode === "real" || (!user && !lastWasDemo()) ? "/entrar" : "/demonstracao");
+  }, [ready, mode, user, router]);
   if (!ready || !user || user.role !== "cliente") return <div className="min-h-dvh bg-canvas" />;
   return (
     <div className="min-h-dvh pb-[calc(env(safe-area-inset-bottom)+72px)] sm:pb-0">
-      <div className="flex items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo — dados fictícios</div>
+      {mode === "demo" && <div className="flex items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo — dados fictícios</div>}
       <header className="border-b border-line bg-surface px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <TenantLogo src={tenant?.settings.logoLight} name={tenant?.settings.brandName ?? org?.name ?? ""} className="size-9 shrink-0" />

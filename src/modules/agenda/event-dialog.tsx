@@ -7,7 +7,7 @@ import { useCollection, useSession } from "@/components/providers";
 import { Feedback, useAction } from "@/modules/shared";
 import { eventService, overlaps } from "@/services/mock/ops-repo";
 import { civilFromInstant, formatTime } from "@/lib/dates";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import type { CalendarEvent } from "@/domain/types";
 
 const toIso = (date: string, time: string) => `${date}T${time}:00-03:00`;

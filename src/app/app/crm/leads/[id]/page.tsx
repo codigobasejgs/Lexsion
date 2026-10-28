@@ -14,7 +14,7 @@ import { FollowUpPanel } from "@/modules/crm/followup-panel";
 import { crmService } from "@/services/mock/crm-repo";
 import { formatPhone, STAGE_LABEL, STAGES } from "@/domain/crm";
 import { formatInstant } from "@/lib/dates";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import type { AttributionTouch } from "@/domain/types";
 
 const EVIDENCE = { confirmada: { label: "Vínculo confirmado (UTM/clique)", tone: "success" }, declarada: { label: "Declarada pelo contato", tone: "info" }, nao_identificada: { label: "Sem evidência", tone: "neutral" } } as const;

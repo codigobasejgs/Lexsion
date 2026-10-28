@@ -16,7 +16,7 @@ import { TenantWizard } from "../tenant-wizard";
 const TONE: Record<TenantStatus, "success" | "info" | "warning" | "danger" | "neutral"> = { ativa: "success", trial: "info", suspensa: "warning", inadimplente: "danger", cancelada: "neutral", removida: "neutral" };
 
 export default function ContratantesPage() {
-  const { user } = useSession();
+  const { user, mode } = useSession();
   const qc = useQueryClient();
   const url = useUrlState();
   const status = url.get("status") ?? "";
@@ -61,14 +61,14 @@ export default function ContratantesPage() {
                 <button className="btn btn-ghost min-h-9" onClick={() => setPlanFor(t)}>Plano</button>
                 {(t.status === "ativa" || t.status === "trial" || t.status === "inadimplente") && <button className="btn btn-ghost min-h-9" onClick={() => setSuspend(t)}><Pause aria-hidden className="size-4" /> Suspender</button>}
                 {(t.status === "suspensa" || t.status === "cancelada") && <button className="btn btn-ghost min-h-9" onClick={async () => { await tenantRepo.reactivate(t.id, user?.id); await refresh(); setNotice(`${t.name} reativado. Os dados foram preservados.`); }}><Play aria-hidden className="size-4" /> Reativar</button>}
-                <Link className="btn btn-ghost min-h-9" href={`/demo/tenant/${t.slug}`} target="_blank">Abrir demonstração</Link>
+                {mode === "demo" && <Link className="btn btn-ghost min-h-9" href={`/demo/tenant/${t.slug}`} target="_blank">Abrir demonstração</Link>}
               </div>
             </li>
           );
         })}
       </ul>
       <p className="mt-6 text-sm text-fg-muted">A assinatura LexSion é cobrada do escritório; os honorários que o escritório cobra dos clientes dele ficam em contas, provedores e relatórios separados.</p>
-      <TenantWizard open={wizard} onClose={() => setWizard(false)} onCreated={(t) => setNotice(`${t.name} criado. Endereço demonstrativo: /demo/tenant/${t.slug}`)} />
+      <TenantWizard open={wizard} onClose={() => setWizard(false)} onCreated={(t) => setNotice(mode === "real" ? `${t.name} criado. Convite enviado ao responsável (${t.ownerEmail ?? "e-mail informado"}).` : `${t.name} criado. Endereço demonstrativo: /demo/tenant/${t.slug}`)} />
       <SuspendDialog tenant={suspend} onClose={() => setSuspend(null)} onDone={async (msg) => { await refresh(); setNotice(msg); }} />
       <PlanDialog tenant={planFor} onClose={() => setPlanFor(null)} onDone={async (msg) => { await refresh(); setNotice(msg); }} />
     </>
@@ -93,7 +93,7 @@ function SuspendDialog({ tenant, onClose, onDone }: { tenant: Tenant | null; onC
 }
 
 function PlanDialog({ tenant, onClose, onDone }: { tenant: Tenant | null; onClose: () => void; onDone: (m: string) => void }) {
-  const { user } = useSession();
+  const { user, mode } = useSession();
   const [plan, setPlan] = useState<PlanId | "">("");
   const [cycle, setCycle] = useState<BillingCycle | "">("");
   const p = (plan || tenant?.plan) as PlanId;
@@ -104,7 +104,7 @@ function PlanDialog({ tenant, onClose, onDone }: { tenant: Tenant | null; onClos
         <label className="block"><span className="label">Plano</span><select className="field" value={p} onChange={(e) => setPlan(e.target.value as PlanId)}>{(Object.keys(PLAN_LABEL) as PlanId[]).map((x) => <option key={x} value={x}>{PLAN_LABEL[x]}</option>)}</select></label>
         <label className="block"><span className="label">Ciclo</span><select className="field" value={c} onChange={(e) => setCycle(e.target.value as BillingCycle)}><option value="mensal">Mensal</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></label>
       </div>
-      <p className="mt-3 text-xs text-fg-muted">Simulação: a cobrança proporcional aparece em Financeiro da plataforma. Nada é cobrado de verdade.</p>
+      <p className="mt-3 text-xs text-fg-muted">{mode === "real" ? "Muda o plano e as cotas. Nenhuma cobrança é emitida: o faturamento automático da assinatura ainda não está ativo." : "Simulação: a cobrança proporcional aparece em Financeiro da plataforma. Nada é cobrado de verdade."}</p>
       <div className="mt-4 flex justify-end gap-2">
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
         <button className="btn btn-primary" onClick={async () => { await tenantRepo.changePlan(tenant!.id, p, c, user?.id); onClose(); onDone(`Plano de ${tenant!.name}: ${PLAN_LABEL[p]} (${c}).`); }}>Salvar plano</button>

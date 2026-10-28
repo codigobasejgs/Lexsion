@@ -6,7 +6,11 @@ export default defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined,
   reporter: [["list"]],
-  use: { baseURL: "http://localhost:3100", locale: "pt-BR", timezoneId: "America/Sao_Paulo", colorScheme: "dark" },
+  use: {
+    baseURL: "http://localhost:3100", locale: "pt-BR", timezoneId: "America/Sao_Paulo", colorScheme: "dark",
+    // Rede do operador sem acesso direto ao Supabase: E2E_PROXY=http://127.0.0.1:1081 (localhost fica fora do proxy).
+    ...(process.env.E2E_PROXY ? { proxy: { server: process.env.E2E_PROXY, bypass: "localhost,127.0.0.1" }, ignoreHTTPSErrors: true } : {}),
+  },
   webServer: { command: "pnpm start -p 3100", url: "http://localhost:3100/offline", reuseExistingServer: true, timeout: 120_000 },
   projects: [
     // shots.spec = capturas de revisão visual, só com SHOTS=1.

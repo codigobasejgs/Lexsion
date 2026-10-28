@@ -21,13 +21,11 @@ export async function signInAction(input: { email: string; password: string; aud
   const sb = await supabaseServer();
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error || !data.user) return fail(error?.status && error.status >= 500 ? "network" : "invalid", error?.status && error.status >= 500 ? "Serviço de login indisponível. Tente de novo em instantes." : GENERIC);
-  // Destino pelo vínculo REAL no banco (RLS: o usuário só lê os próprios vínculos).
-  const [{ data: plat }, { data: memb }, { data: portal }] = await Promise.all([
-    sb.from("platform_members").select("role").eq("user_id", data.user.id).maybeSingle(),
-    sb.from("organization_memberships").select("organization_id").eq("user_id", data.user.id).limit(1),
-    sb.from("client_portal_access").select("client_id").eq("user_id", data.user.id).limit(1),
-  ]);
-  const redirectTo = input.audience === "cliente" ? (portal?.length ? "/portal" : null) : plat ? "/admin" : memb?.length ? "/app/inicio" : portal?.length ? "/portal" : null;
+  // Destino pelo vínculo REAL no banco (my_access só devolve os vínculos do próprio usuário).
+  const { data: acc } = await sb.rpc("my_access");
+  const a = (acc ?? {}) as { platform?: string | null; memberships?: unknown[]; portal?: unknown[] };
+  const memb = !!a.memberships?.length, portal = !!a.portal?.length;
+  const redirectTo = input.audience === "cliente" ? (portal ? "/portal" : null) : a.platform ? "/admin" : memb ? "/app/inicio" : portal ? "/portal" : null;
   if (!redirectTo) {
     await sb.auth.signOut();
     return fail("no_access", "Sua conta ainda não está vinculada a um escritório. Peça ao responsável para concluir o convite.");

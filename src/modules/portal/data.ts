@@ -5,7 +5,7 @@ import { useCollection, useSession } from "@/components/providers";
 import { civilFromInstant } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
 
-/** Só dados liberados ao cliente logado (filtro demonstrativo; produção exige RLS). */
+/** Só dados liberados ao cliente logado. Operação real: o banco já entrega só o permitido (portal_snapshot); o filtro aqui repete a regra. */
 export function usePortalData() {
   const { user } = useSession();
   const cases = useCollection("cases");

@@ -8,7 +8,7 @@ import { Search } from "lucide-react";
 import { useInvalidate, useSession } from "@/components/providers";
 import type { CollectionName } from "@/services/mock/db";
 import type { RequestContext, Result } from "@/services/contracts";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 /** Parâmetro da URL como estado (filtros preservados na URL). */
 export function useUrlState() {
@@ -42,7 +42,7 @@ export function useAction(...collections: CollectionName[]) {
       busy.current = true;
       setPending(true);
       setError(null);
-      const r = await fn(ctx);
+      const r = await fn(ctx).catch((e: Error): Result<never> => ({ ok: false, error: { code: "save", message: e.message || "Não foi possível concluir agora. Tente de novo.", retryable: true }, correlationId: "" }));
       busy.current = false;
       setPending(false);
       if (!r.ok) {

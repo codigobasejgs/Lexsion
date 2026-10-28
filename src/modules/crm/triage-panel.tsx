@@ -7,7 +7,7 @@ import { Feedback, useAction, userName } from "@/modules/shared";
 import { crmService } from "@/services/mock/crm-repo";
 import { TRIAGE_AREAS, triageChecklist, triageScript } from "@/domain/triage";
 import { formatInstant } from "@/lib/dates";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import type { Lead } from "@/domain/types";
 
 /** Triagem por área: perguntas vêm de dados; resultado é checklist + encaminhamento, nunca parecer jurídico. */

@@ -15,7 +15,9 @@ import { DEMO_TODAY } from "@/mocks/clock";
 import { allowed } from "@/domain/permissions";
 
 // ---------------- Documentos (M09, A06) ----------------
+// HEIC: só na demonstração (o Storage real aceita PDF/JPG/PNG/WEBP; iPhone converte para JPG ao enviar pelo navegador).
 export const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"];
+export const REAL_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 export const MAX_BYTES = 15 * 1024 * 1024;
 
 export const docService = {

@@ -12,7 +12,7 @@ import { crmService } from "@/services/mock/crm-repo";
 import { formatPhone, STAGE_LABEL, STAGES } from "@/domain/crm";
 import { diffDays } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import type { Lead, StageKey } from "@/domain/types";
 
 const EVIDENCE = { confirmada: { label: "Origem confirmada", tone: "success" }, declarada: { label: "Origem declarada", tone: "info" }, nao_identificada: { label: "Origem não identificada", tone: "neutral" } } as const;

@@ -4,18 +4,19 @@ import { useState } from "react";
 import { useCollection, useSession } from "@/components/providers";
 import { Feedback, useAction } from "@/modules/shared";
 import { createRow } from "@/services/mock/generic";
+import { portalAsk } from "@/services/real/backend";
 import { useTour } from "@/tours/runner";
 
 const FAQ = [
   ["Como envio um documento?", "Abra “Documentos”, toque em “Enviar foto ou arquivo” no pedido e escolha a foto ou o PDF."],
   ["O status do meu caso é uma garantia?", "Não. O status mostra em que etapa estamos. O resultado depende da análise do INSS ou da Justiça."],
-  ["Posso pagar por aqui?", "Nesta demonstração, não. O pagamento online será habilitado em uma próxima fase."],
+  ["Posso pagar por aqui?", "Ainda não. Em “Pagamentos” você vê as parcelas; o pagamento online será habilitado quando o escritório ativar a cobrança."],
   ["Quem pode ver meus documentos?", "Somente a equipe do escritório responsável pelo seu caso."],
   ["Como instalo o aplicativo no celular?", "No iPhone: Safari → Compartilhar → Adicionar à Tela de Início. No Android: menu do Chrome → Instalar aplicativo."],
 ];
 
 export default function PortalAjudaPage() {
-  const { user } = useSession();
+  const { user, mode } = useSession();
   const cases = useCollection("cases");
   const act = useAction("tasks");
   const [q, setQ] = useState("");
@@ -33,6 +34,14 @@ export default function PortalAjudaPage() {
         <Feedback error={act.error} notice={act.notice} />
         <button className="btn btn-primary min-h-12 w-full" disabled={q.trim().length < 5 || act.pending} onClick={async () => {
           const k = cases.data?.find((x) => x.clientId === user?.clientId);
+          if (mode === "real") {
+            const sent = await act.run(async () => {
+              try { await portalAsk(q.trim()); return { ok: true as const, data: true, correlationId: "" }; }
+              catch (e) { return { ok: false as const, error: { code: "ask", message: (e as Error).message, retryable: true }, correlationId: "" }; }
+            }, "Dúvida enviada. A equipe responde pelo canal combinado com o escritório.");
+            if (sent) setQ("");
+            return;
+          }
           if (await act.run((ctx) => createRow("tasks", { title: `Dúvida do cliente (portal): ${q.trim().slice(0, 80)}`, clientId: user?.clientId, caseId: k?.id, assigneeId: k?.ownerId ?? "u-bia", due: "2026-10-27", priority: "normal", done: false, comments: [{ at: new Date().toISOString(), actorId: ctx.actorId, text: q.trim() }] }, ctx, "Dúvida enviada pelo portal"), "Dúvida enviada. A equipe responde pelo WhatsApp (simulação).")) setQ("");
         }}>Enviar dúvida</button>
       </section>

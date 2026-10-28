@@ -2,7 +2,8 @@
 // Mesma interface que um SupabaseTenantRepository futuro; sem backend, nada aqui é autorização real.
 import type { Tenant, TenantUsage, PlanId, BillingCycle } from "@/domain/tenancy";
 import type { Result } from "../contracts";
-import { readAll, writeMany } from "./db";
+import { isRealMode, readAll, writeMany } from "./db";
+import { platformUsage } from "../real/backend";
 import { auditRow, fail, ok } from "./generic";
 
 const RESERVED = new Set(["admin", "app", "api", "www", "portal", "demo", "lexsion", "suporte", "status", "entrar"]);
@@ -44,7 +45,11 @@ export const tenantRepo = {
     const cur = all.find((t) => t.id === id);
     if (!cur) return fail("not_found", "Escritório não encontrado.");
     const next = { ...cur, ...patch };
-    await save(all.map((t) => (t.id === id ? next : t)), "tenant.updated", id, detail, actorId);
+    try {
+      await save(all.map((t) => (t.id === id ? next : t)), "tenant.updated", id, detail, actorId);
+    } catch (e) {
+      return fail("save", (e as Error).message);
+    }
     return ok(next);
   },
 
@@ -55,6 +60,7 @@ export const tenantRepo = {
 
   /** Consumo REAL contado nas coleções da demo (não números fixos). */
   getUsage: async (id: string): Promise<TenantUsage> => {
+    if (isRealMode()) return platformUsage(id); // operação: contagem agregada no banco (sem conteúdo dos escritórios)
     const [users, clients, automations, files] = await Promise.all([readAll("users"), readAll("clients"), readAll("automations"), readAll("files")]);
     const sizes = (files as { organizationId: string; size?: number }[]).filter((f) => f.organizationId === id).reduce((s, f) => s + (f.size ?? 0), 0);
     return {

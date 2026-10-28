@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signedUrl } from "@/services/real/backend";
 import { use, useEffect, useState } from "react";
 import { CheckCircle2, Download, Lock, Trash2, Upload } from "lucide-react";
 import { Guard } from "@/components/guard";
@@ -41,10 +42,12 @@ export default function DocumentoPage({ params }: PageProps<"/app/documentos/[id
       const f = fs.find((x) => x.id === lastFileId) ?? null;
       setFile(f);
       // Só PDF/imagem são exibidos; HTML nunca é renderizado.
-      if (f && (f.mime === "application/pdf" || f.mime.startsWith("image/"))) {
+      if (!f || !(f.mime === "application/pdf" || f.mime.startsWith("image/"))) return;
+      const path = (f as StoredFile & { path?: string }).path;
+      if (f.blob instanceof Blob) {
         revoke = URL.createObjectURL(f.blob);
         setUrl(revoke);
-      }
+      } else if (path) signedUrl(path).then(setUrl); // operação: link temporário do Storage privado (5 min)
     });
     return () => {
       if (revoke) URL.revokeObjectURL(revoke);

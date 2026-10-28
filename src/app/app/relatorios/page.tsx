@@ -12,7 +12,7 @@ import { downloadText, toCsv } from "@/domain/csv";
 import { formatBRL } from "@/lib/money";
 import { diffDays } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import { isPlatformRole } from "@/domain/permissions";
 
 type Report = "funil" | "origem" | "carga" | "prazos" | "documentos" | "financeiro" | "ia";

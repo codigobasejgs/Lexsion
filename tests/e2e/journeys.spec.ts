@@ -242,9 +242,10 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
   });
   test("/recuperar-acesso (público)", async ({ page }) => {
     await page.goto("/recuperar-acesso");
-    await page.getByLabel("E-mail").fill("pessoa@exemplo.test");
+    // Fluxo real (Supabase): domínio .invalid nunca recebe e-mail; resposta igual exista ou não a conta.
+    await page.getByLabel("E-mail").fill("qa-recuperacao@lexsion-qa.invalid");
     await page.getByRole("button", { name: "Enviar link" }).click();
-    await expect(page.getByText(/Nenhum e-mail foi enviado/)).toBeVisible();
+    await expect(page.getByText(/Se houver uma conta com esse e-mail/)).toBeVisible();
     await noOverflow(page);
     expect(await seriousAxe(page)).toEqual([]);
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { clearDemoSession } from "@/components/providers";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Info, Loader2 } from "lucide-react";
@@ -33,7 +34,8 @@ export default function EntrarPage() {
     setBusy(false);
     setPassword(""); // nunca mantém a senha em memória após a tentativa
     if (!r.ok) return setResult(r.error.message);
-    router.replace(r.data.redirectTo);
+    clearDemoSession(); // login real substitui qualquer sessão demonstrativa desta aba
+    location.assign(r.data.redirectTo); // carrega a sessão real do zero (sem cache da demo)
     router.refresh();
   };
 

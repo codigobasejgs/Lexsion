@@ -180,3 +180,44 @@ describe("Plataforma", () => {
     expect(await as(U.adminA, "select user_id from public.platform_members")).toEqual([]);
   });
 });
+
+describe("Onda 2 — ERP operacional", () => {
+  it("tarefa e documento não apontam para caso ou cliente de outro escritório", async () => {
+    const caseB = (await as<{ id: string }>(U.adminB, "insert into public.cases (organization_id, client_id, title, area) select $1, id, 'Caso B', 'Cível' from public.clients where organization_id = $1 limit 1 returning id", [orgB]))[0].id;
+    expect(await denied(U.advA, "insert into public.tasks (organization_id, case_id, title, due) values ($1,$2,'Mistura','2026-11-01')", [orgA, caseB])).toMatch(/outro escritório/);
+    const clientB = (await as<{ id: string }>(U.adminB, "select id from public.clients where organization_id = $1 limit 1", [orgB]))[0].id;
+    expect(await denied(U.advA, "insert into public.documents (organization_id, client_id, name, doc_type) values ($1,$2,'x','RG')", [orgA, clientB])).toMatch(/outro escritório/);
+  });
+  it("recorrência não duplica a mesma ocorrência", async () => {
+    const s = "00000000-0000-0000-0000-00000000e001";
+    await as(U.advA, "insert into public.tasks (organization_id, title, due, series_id) values ($1,'Rec','2026-12-01',$2)", [orgA, s]);
+    expect(await denied(U.advA, "insert into public.tasks (organization_id, title, due, series_id) values ($1,'Rec','2026-12-01',$2)", [orgA, s])).toMatch(/duplicate|unique/);
+  });
+  it("cliente vê o pedido, envia só para a pasta do pedido e o envio vira 'recebido' uma única vez", async () => {
+    const doc = (await as<{ id: string }>(U.advA, "insert into public.documents (organization_id, client_id, name, doc_type, status, requested_at) values ($1,$2,'RG','RG','solicitado', now()) returning id", [orgA, clientA]))[0].id;
+    expect((await as<{ id: string }>(U.clienteA, "select id from public.documents where id = $1", [doc])).length).toBe(1);
+    expect(await as(U.outroCliente, "select id from public.documents where id = $1", [doc])).toEqual([]);
+    expect(await denied(U.clienteA, "insert into storage.objects (bucket_id, name) values ('documentos', $1)", [`${orgA}/outro/rg.pdf`])).toMatch(/row-level security/);
+    expect(await denied(U.outroCliente, "insert into storage.objects (bucket_id, name) values ('documentos', $1)", [`${orgA}/${doc}/rg.pdf`])).toMatch(/row-level security/);
+    await as(U.clienteA, "insert into storage.objects (bucket_id, name) values ('documentos', $1)", [`${orgA}/${doc}/rg.pdf`]);
+    expect(await denied(U.clienteA, "select public.portal_submit_document($1, $2, 'application/pdf', 1000)", [doc, `${orgB}/${doc}/rg.pdf`])).toMatch(/caminho/);
+    const r = await as<{ status: string; origin: string }>(U.clienteA, "select (d).status, (d).origin from (select public.portal_submit_document($1, $2, 'application/pdf', 1000) d) s", [doc, `${orgA}/${doc}/rg.pdf`]);
+    expect(r[0]).toEqual({ status: "recebido", origin: "portal" });
+    expect(await denied(U.clienteA, "select public.portal_submit_document($1, $2, 'application/pdf', 1000)", [doc, `${orgA}/${doc}/rg.pdf`])).toMatch(/já foi atendido/);
+  });
+  it("cliente lê o nome do próprio escritório e não o de outro", async () => {
+    expect((await as<{ id: string }>(U.clienteA, "select id from public.organizations")).map((o) => o.id)).toEqual([orgA]);
+  });
+  it("publicar no portal atualiza o texto leigo do caso", async () => {
+    const u = (await as<{ id: string }>(U.estagA, "insert into public.portal_updates (organization_id, case_id, text, next_step) values ($1,$2,'Pedido protocolado no INSS.','Aguardar perícia') returning id", [orgA, caseA]))[0].id;
+    await as(U.advA, "select public.publish_portal_update($1)", [u]);
+    expect((await as<{ portal_status: string }>(U.clienteA, "select portal_status from public.cases where id = $1", [caseA]))[0].portal_status).toBe("Pedido protocolado no INSS.");
+  });
+  it("plano e consumo agregado: só a plataforma", async () => {
+    expect(await denied(U.adminA, "select public.set_organization_plan($1, 'enterprise')", [orgA])).toMatch(/somente a plataforma/);
+    expect(await denied(U.adminA, "select * from public.platform_org_usage()")).toMatch(/somente a plataforma/);
+    await as(U.superadmin, "select public.set_organization_plan($1, 'profissional')", [orgA]);
+    const usage = await as<{ organization_id: string; clients: number }>(U.superadmin, "select organization_id, clients from public.platform_org_usage()");
+    expect(usage.find((x) => x.organization_id === orgA)?.clients).toBeGreaterThan(0);
+  });
+});

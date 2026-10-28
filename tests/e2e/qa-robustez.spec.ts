@@ -42,7 +42,7 @@ test("ROB-02: sessão corrompida e banco de versão antiga não quebram a interf
     });
   });
   await page.goto("/app/inicio");
-  await expect(page).toHaveURL(/\/demonstracao/); // sessão inválida ⇒ volta para entrar, sem tela branca
+  await expect(page).toHaveURL(/\/entrar/); // sessão inválida ⇒ volta para entrar, sem tela branca
   await signIn(page, /Helena Prado/);
   await expect(page.getByRole("heading", { name: /Olá, Helena/ })).toBeVisible();
   await page.goto("/app/clientes");

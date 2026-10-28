@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Organization, User } from "@/domain/types";
 import type { Tenant } from "@/domain/tenancy";
 import { list } from "@/services/mock/repo";
@@ -12,6 +12,10 @@ import { tenants } from "@/mocks/tenants";
 import type { RequestContext } from "@/services/contracts";
 import { isShellCache } from "@/lib/shell-cache";
 import { DEMO_COOKIE } from "@/lib/tenant-resolver";
+import { activateReal, leaveRealMode, loadRealSession, preferOrg, realSignOut, type RealSession } from "./real-session";
+
+// Rotas que só existem na demonstração: nelas nunca se usa a sessão real.
+const DEMO_ONLY = /^\/(demonstracao|demo)(\/|$)/;
 
 // Sessão FICTÍCIA em localStorage (só ids — nunca credenciais).
 const SESSION_KEY = "siwiltec.session";
@@ -68,6 +72,10 @@ function writeSession(s: Session | null) {
 
 interface SessionCtx {
   ready: boolean;
+  /** "real": Supabase + RLS, sem dado fictício. "demo": dados fictícios locais (IndexedDB), nunca enviados ao servidor. */
+  mode: "real" | "demo";
+  /** Escritórios do usuário (troca de escritório). */
+  orgs: Organization[];
   user: User | null;
   org: Organization | null;
   tenant: Tenant | null;
@@ -93,19 +101,57 @@ export function useSession(): SessionCtx {
 function SessionProvider({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
   const session = useSyncExternalStore(subscribe, getSnapshot, () => null);
-  const ready = useSyncExternalStore(subscribe, () => true, () => false);
-  const user = users.find((u) => u.id === session?.userId) ?? null;
+  const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
+  // undefined = carregando; null = sem sessão real (vale a demonstração, se escolhida em /demonstracao).
+  const [real, setReal] = useState<RealSession | null | undefined>(undefined);
+  const [offline, setOffline] = useState(false);
+  // Sessão demonstrativa escolhida em /demonstracao tem prioridade nesta aba até "Sair"; o login real a apaga (clearDemoSession).
+  const demoOnly = DEMO_ONLY.test(pathname ?? "") || !!session;
+  if (demoOnly) leaveRealMode(); // antes de qualquer leitura: a demo nunca toca o banco real
+  useEffect(() => {
+    if (demoOnly || real !== undefined) return;
+    let alive = true;
+    loadRealSession().then((r) => alive && setReal(r), () => { if (alive) { setOffline(true); setReal(null); } });
+    return () => { alive = false; };
+  }, [demoOnly, real]);
+  const ready = hydrated && (demoOnly || real !== undefined);
+  const demoUser = users.find((u) => u.id === session?.userId) ?? null;
   // Escritórios e marcas vêm do banco da demo (criados/editados no Super Admin persistem); fixture é só o ponto de partida.
-  const orgRows = useQuery({ queryKey: ["organizations", "catalog"], queryFn: () => readAll("organizations"), enabled: ready });
-  const tenantRows = useQuery({ queryKey: ["tenants"], queryFn: () => readAll("tenants"), enabled: ready });
-  const org = (orgRows.data ?? organizations).find((o) => o.id === session?.organizationId) ?? null;
-  const tenant = (tenantRows.data ?? tenants).find((t) => t.id === org?.id) ?? null;
+  const isReal = !demoOnly && !!real;
+  if (isReal) activateReal(real!); // ao voltar da demonstração na mesma aba, religa o banco real antes de ler
+  const orgRows = useQuery({ queryKey: ["organizations", "catalog"], queryFn: () => readAll("organizations"), enabled: ready && !isReal });
+  const tenantRows = useQuery({ queryKey: ["tenants"], queryFn: () => readAll("tenants"), enabled: ready && !isReal });
+  const user = isReal ? real!.user : demoUser;
+  const org = isReal ? real!.org : (orgRows.data ?? organizations).find((o) => o.id === session?.organizationId) ?? null;
+  const tenant = isReal ? real!.tenant : (tenantRows.data ?? tenants).find((t) => t.id === org?.id) ?? null;
 
   useEffect(() => onExternalChange(() => qc.invalidateQueries()), [qc]);
 
-  const value = useMemo<SessionCtx>(() => ({
+  const value = useMemo<SessionCtx>(() => isReal ? {
+    ready, mode: "real", orgs: real!.orgs, user, org, tenant,
+    ctx: user && org ? { organizationId: org.id, actorId: user.id } : null,
+    signIn: () => {},
+    switchOrg: (organizationId) => {
+      if (!real!.orgs.some((o) => o.id === organizationId)) return;
+      preferOrg(organizationId);
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa: nada do escritório anterior fica em memória
+      location.assign("/app/inicio"); // recarrega: nenhum dado de um escritório sobrevive na troca
+    },
+    signOut: async () => {
+      qc.clear();
+      await clearShellCache();
+      await realSignOut();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- recarga completa limpa a sessão em memória
+      location.assign("/entrar");
+    },
+    restoreTenant: async () => {}, // nunca em dados reais
+    restoreDemo: async () => {},
+  } : {
     ready,
+    mode: "demo",
+    orgs: organizations,
     user,
     org,
     tenant,
@@ -113,6 +159,8 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
     signIn: (userId, organizationId) => {
       const u = users.find((x) => x.id === userId);
       if (!u) return;
+      leaveRealMode();
+      markMode("demo");
       qc.clear();
       const orgId = organizationId ?? u.organizationId;
       setDemoCookie(tenants.find((t) => t.id === orgId)?.slug);
@@ -127,9 +175,9 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
     signOut: async () => {
       qc.clear();
       await clearShellCache();
-      setDemoCookie(undefined); // entrada volta a mostrar a marca LexSion
+      router.replace("/demonstracao"); // sair da demonstração volta à escolha de perfis
       writeSession(null);
-      router.replace("/demonstracao"); // toda sessão nesta fase é demonstrativa
+      setDemoCookie(undefined); // entrada volta a mostrar a marca LexSion
     },
     restoreTenant: async () => {
       if (!org) return;
@@ -144,8 +192,17 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
       qc.clear();
       await qc.invalidateQueries();
     },
-  }), [ready, user, org, tenant, session, qc, router]);
+  }, [isReal, real, ready, user, org, tenant, session, qc, router]);
 
+  // Sessão real não carregou por rede/serviço: avisa e oferece tentar de novo (nunca mostra a demonstração no lugar).
+  if (offline && !demoOnly && /^\/(app|portal|admin)(\/|$)/.test(pathname ?? ""))
+    return (
+      <main id="conteudo" className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-5 text-center">
+        <h1 className="text-2xl font-semibold">Sem conexão com o servidor</h1>
+        <p className="text-fg-muted">Não foi possível confirmar sua sessão agora. Nenhum dado foi alterado. Verifique a internet e tente de novo.</p>
+        <button className="btn btn-primary" onClick={() => { setOffline(false); setReal(undefined); }}>Tentar de novo</button>
+      </main>
+    );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -166,6 +223,21 @@ async function clearShellCache() {
  */
 export function setDemoCookie(slug: string | undefined) {
   document.cookie = slug ? `${DEMO_COOKIE}=${encodeURIComponent(slug)}; path=/; max-age=31536000; samesite=lax` : `${DEMO_COOKIE}=; path=/; max-age=0; samesite=lax`;
+}
+
+/** Esta aba usou a demonstração por último? (sair da demo volta à escolha de perfis, não ao login real). */
+export function lastWasDemo() {
+  try { return sessionStorage.getItem("lexsion.lastMode") === "demo"; } catch { return false; }
+}
+function markMode(m: "demo" | "real") {
+  try { sessionStorage.setItem("lexsion.lastMode", m); } catch {}
+}
+
+/** Apaga a sessão demonstrativa (chamado no login real): a partir daí a aba usa só a sessão real. */
+export function clearDemoSession() {
+  markMode("real");
+  setDemoCookie(undefined);
+  writeSession(null);
 }
 
 /** Leitura de coleção escopada pela organização atual. */

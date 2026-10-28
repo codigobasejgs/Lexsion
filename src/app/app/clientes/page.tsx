@@ -9,7 +9,7 @@ import { DEMO_TODAY } from "@/mocks/clock";
 import { Guard } from "@/components/guard";
 import { useCollection } from "@/components/providers";
 import { Avatar, Badge, EmptyState, ErrorBlock, LoadingBlock, PageHeader } from "@/components/ui";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import { maskDoc } from "@/lib/formatting";
 
 export default function ClientesPage() {

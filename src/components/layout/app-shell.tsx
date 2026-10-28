@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Building2, ChevronsLeft, ChevronsRight, FlaskConical, LogOut, Plus, Search } from "lucide-react";
-import { useSession } from "@/components/providers";
+import { Building2, ChevronsLeft, ChevronsRight, FlaskConical, LogOut, Plus, PlugZap, Search } from "lucide-react";
+import { blockedFor, type Blocked } from "@/domain/operational-gate";
+import { lastWasDemo, useSession } from "@/components/providers";
 import { can, isPlatformRole, ROLE_LABEL, type Area } from "@/domain/permissions";
 import { organizations } from "@/mocks/fixtures";
 import { MOBILE_TABS, MORE_ICON, NAV_GROUPS } from "./nav";
@@ -33,10 +34,26 @@ function Wordmark({ compact }: { compact?: boolean }) {
   );
 }
 
+/** Módulo que depende de provedor não credenciado: na operação real não abre (nada é simulado). */
+function BlockedModule({ b }: { b: Blocked }) {
+  return (
+    <section role="status" className="mx-auto mt-8 max-w-xl space-y-3 panel p-6">
+      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-warning"><PlugZap aria-hidden className="size-4" /> Integração pendente</p>
+      <h1 className="font-serif text-2xl">{b.title}</h1>
+      <p>{b.reason}</p>
+      <p className="text-sm text-fg-muted"><strong>Para ativar:</strong> {b.needs}</p>
+      <p className="text-sm text-fg-muted">Nenhuma ação é simulada nesta área. Para conhecer o fluxo, use a <Link className="text-accent underline" href="/demonstracao">demonstração</Link>.</p>
+      <Link href="/app/inicio" className="btn btn-secondary">Voltar ao Meu dia</Link>
+    </section>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready, user, org, tenant, switchOrg, signOut } = useSession();
+  const { ready, mode, user, org, tenant, switchOrg, signOut, orgs } = useSession();
   const router = useRouter();
   const isActive = useActive();
+  const path = usePathname();
+  const blocked = mode === "real" ? blockedFor(path) : null;
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -51,10 +68,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapseKey]);
   useEffect(() => {
-    if (ready && !user) router.replace("/demonstracao");
+    // Sem sessão: login. Exceção: saindo da demonstração (cookie da demo ainda presente) volta à escolha de perfis.
+    if (ready && !user) router.replace(lastWasDemo() ? "/demonstracao" : "/entrar");
     else if (ready && user?.role === "cliente") router.replace("/portal");
     else if (ready && isPlatformRole(user?.role)) router.replace("/admin");
-  }, [ready, user, router]);
+  }, [ready, mode, user, router]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -72,7 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [user],
   );
   // Troca de escritório: só demonstração (perfil admin vê os escritórios demo de origem). Em produção, por vínculo (membership).
-  const myOrgs = user?.role === "admin" ? organizations.filter((o) => o.id !== "org-novo" || o.id === user.organizationId) : organizations.filter((o) => o.id === user?.organizationId);
+  const myOrgs = mode === "real" ? orgs : user?.role === "admin" ? organizations.filter((o) => o.id !== "org-novo" || o.id === user.organizationId) : organizations.filter((o) => o.id === user?.organizationId);
 
   const toggle = () => {
     setCollapsed((c) => {
@@ -145,10 +163,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="no-print flex items-center justify-center gap-2 border-b border-accent/20 bg-ai-bg px-4 py-1 text-center text-xs text-ai">
-          <FlaskConical aria-hidden className="size-3.5" />
-          Ambiente demonstrativo — dados fictícios
-        </div>
+        {mode === "demo" && (
+          <div className="no-print flex items-center justify-center gap-2 border-b border-accent/20 bg-ai-bg px-4 py-1 text-center text-xs text-ai">
+            <FlaskConical aria-hidden className="size-3.5" />
+            Ambiente demonstrativo — dados fictícios
+          </div>
+        )}
         <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-canvas/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur sm:h-16 sm:px-6">
           <span className="sm:hidden"><Wordmark compact /></span>
           <button
@@ -208,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+88px)] pt-5 outline-none sm:px-6 sm:pb-10 lg:px-8">
-          {children}
+          {blocked ? <BlockedModule b={blocked} /> : children}
         </main>
       </div>
 

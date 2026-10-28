@@ -12,7 +12,7 @@ import { civilFromInstant, diffDays, formatCivil, formatCivilLong, formatTime } 
 import { formatBRL } from "@/lib/money";
 import { can } from "@/domain/permissions";
 import { tasksService } from "@/services/mock/repo";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 type Kind = "juridico" | "tarefa" | "atendimento" | "comercial" | "financeiro";
 interface Action {
@@ -43,7 +43,7 @@ function relDay(d: string) {
 }
 
 export default function MeuDiaPage() {
-  const { user, org, ctx } = useSession();
+  const { user, org, ctx, mode } = useSession();
   const params = useSearchParams();
   const router = useRouter();
   const invalidate = useInvalidate();
@@ -163,7 +163,7 @@ export default function MeuDiaPage() {
     <div className="mx-auto max-w-[1400px]">
       <PageHeader
         title={`Olá, ${first}`}
-        description={<>Hoje é {formatCivilLong(DEMO_TODAY)} <span className="text-xs">(data de referência da demo)</span> · {org?.name}</>}
+        description={<>Hoje é {formatCivilLong(DEMO_TODAY)} {mode === "demo" && <span className="text-xs">(data de referência da demo)</span>} · {org?.name}</>}
       />
 
       {error && <ErrorBlock message="Não foi possível carregar seus dados locais. Seus registros continuam neste dispositivo." retry={() => error.refetch()} />}

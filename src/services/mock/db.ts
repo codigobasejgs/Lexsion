@@ -68,6 +68,14 @@ export const COLLECTIONS = {
 export type CollectionName = keyof typeof COLLECTIONS;
 export type Row<C extends CollectionName> = (typeof COLLECTIONS)[C][number];
 
+/** Operação real: leituras e gravações vão ao Supabase (RLS); fixtures e IndexedDB ficam só para a demonstração. */
+type Backend = { read: (name: string) => Promise<unknown[]>; write: (patch: Record<string, unknown[]>) => Promise<void> };
+let real: Backend | null = null;
+export function setRealBackend(b: Backend | null) {
+  real = b;
+}
+export const isRealMode = () => real !== null;
+
 export type StorageMode = "indexeddb" | "memory";
 let mode: StorageMode = "indexeddb";
 const memory = new Map<string, unknown[]>();
@@ -150,6 +158,7 @@ function tx<T>(db: IDBDatabase, kind: IDBTransactionMode, fn: (s: IDBObjectStore
 }
 
 export async function readAll<C extends CollectionName>(name: C): Promise<Row<C>[]> {
+  if (real) return (await real.read(name)) as Row<C>[];
   try {
     const db = await openDb();
     const v = await tx(db, "readonly", (s) => s.get(name));
@@ -162,6 +171,10 @@ export async function readAll<C extends CollectionName>(name: C): Promise<Row<C>
 }
 
 export async function writeAll<C extends CollectionName>(name: C, rows: Row<C>[]): Promise<void> {
+  if (real) {
+    await real.write({ [name]: rows });
+    return broadcast();
+  }
   try {
     const db = await openDb();
     await tx(db, "readwrite", (s) => s.put(rows, name));
@@ -174,6 +187,10 @@ export async function writeAll<C extends CollectionName>(name: C, rows: Row<C>[]
 
 /** Escreve várias coleções numa única transação (tudo ou nada) — usado em operações encadeadas. */
 export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[] }>): Promise<void> {
+  if (real) {
+    await real.write(patch as Record<string, unknown[]>);
+    return broadcast();
+  }
   const entries = Object.entries(patch) as [CollectionName, unknown[]][];
   try {
     const db = await openDb();
@@ -197,6 +214,7 @@ export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[]
  * Outros escritórios, catálogos da plataforma e progresso de treinamento não são tocados.
  */
 export async function resetTenant(orgId: string): Promise<void> {
+  if (real) return; // nunca em dados reais
   const patch: Partial<{ [C in CollectionName]: Row<C>[] }> = {};
   for (const name of Object.keys(COLLECTIONS) as CollectionName[]) {
     if (CATALOG.has(name) || PLATFORM_OWNED.has(name)) continue;
@@ -210,6 +228,7 @@ export async function resetTenant(orgId: string): Promise<void> {
 
 /** Restaura a demo inteira (somente Super Admin): apaga o banco demonstrativo e reaplica fixtures. */
 export async function resetDemo(): Promise<void> {
+  if (real) return; // nunca em dados reais
   memory.clear();
   if (dbPromise) (await dbPromise.catch(() => null))?.close();
   dbPromise = null;

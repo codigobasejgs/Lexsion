@@ -12,7 +12,7 @@ import { canSeeFees } from "@/domain/permissions";
 import { formatBRL } from "@/lib/money";
 import { formatInstant, formatTime } from "@/lib/dates";
 import type { Conversation, Message } from "@/domain/types";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 const FILTERS = [
   { key: "todas", label: "Todas" },

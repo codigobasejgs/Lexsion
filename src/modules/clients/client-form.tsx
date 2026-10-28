@@ -8,7 +8,7 @@ import { useDirtyGuard } from "@/components/pwa";
 import { clientSchema, fieldErrors, UFS, type ClientInput } from "@/domain/schemas";
 import { findClientMatches } from "@/domain/crm";
 import { parseCivilBR, formatCivil } from "@/lib/dates";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 export interface ClientFormDefaults {
   name?: string;

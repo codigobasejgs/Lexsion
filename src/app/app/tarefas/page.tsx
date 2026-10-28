@@ -10,7 +10,7 @@ import { Feedback, SearchBox, useAction, useUrlState, userName } from "@/modules
 import { createRow, updateRow } from "@/services/mock/generic";
 import { addDays, diffDays, formatCivil, formatInstant } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 import type { Task } from "@/domain/types";
 import { RECURRENCE_LABEL, type Recurrence } from "@/domain/recurrence";
 import { tasksService } from "@/services/mock/repo";

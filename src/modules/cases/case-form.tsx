@@ -6,7 +6,7 @@ import { useInvalidate, useSession } from "@/components/providers";
 import { caseService } from "@/services/mock/crm-repo";
 import { caseSchema, fieldErrors } from "@/domain/schemas";
 import type { Case } from "@/domain/types";
-import { users } from "@/mocks/fixtures";
+import { people as users } from "@/components/people";
 
 /** Abrir caso para um cliente. Caso ≠ processo: processos entram depois, no caso. */
 export function CaseForm({ clientId, defaults, onDone, onCancel }: { clientId: string; defaults?: { area?: string; service?: string; title?: string }; onDone: (k: Case) => void; onCancel: () => void }) {

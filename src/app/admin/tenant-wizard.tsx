@@ -11,9 +11,10 @@ import { DEMO_TODAY } from "@/mocks/clock";
 const STEPS = ["Escritório", "Responsável", "Plano", "Identidade", "Resumo"];
 const slugify = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 
-// Assistente de novo escritório. Tudo demonstrativo: nenhum convite ou cobrança é enviado.
+// Assistente de novo escritório. Demonstração: local, sem convite. Operação: escritório real + convite do titular; nenhuma cobrança é emitida.
 export function TenantWizard({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (t: Tenant) => void }) {
-  const { user } = useSession();
+  const { user, mode } = useSession();
+  const live = mode === "real";
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [f, setF] = useState({ name: "", slug: "", document: "", ownerName: "", ownerEmail: "", plan: "trial" as PlanId, cycle: "mensal" as BillingCycle, trialDays: 15, primary: "#1f4e79" });
@@ -35,11 +36,27 @@ export function TenantWizard({ open, onClose, onCreated }: { open: boolean; onCl
     setBusy(true);
     const trialEnd = new Date(`${DEMO_TODAY}T23:59:59-03:00`);
     trialEnd.setDate(trialEnd.getDate() + f.trialDays);
+    const settings = { ...DEFAULT_BRANDING, brandName: f.name.trim(), pwaShortName: f.name.trim().split(/\s+/)[0].slice(0, 12), primary: f.primary };
+    if (live) {
+      // Operação: escritório real no banco + convite por e-mail ao titular (o servidor confere a plataforma). Nenhuma cobrança é emitida.
+      const res = await fetch("/api/admin/escritorios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        slug: f.slug, name: f.name.trim(), ownerName: f.ownerName.trim(), ownerEmail: f.ownerEmail.trim(), plan: f.plan, cycle: f.cycle,
+        trialEndsAt: f.plan === "trial" ? trialEnd.toISOString() : null, document: f.document.replace(/\D/g, ""), status: f.plan === "trial" ? "trial" : "ativa", branding: settings,
+      }) }).catch(() => null);
+      const j = (await res?.json().catch(() => null)) as { ok: boolean; data?: { id: string }; error?: { message: string } } | null;
+      setBusy(false);
+      if (!j?.ok || !j.data) return setError(j?.error?.message ?? "Sem conexão. Nada foi criado; tente de novo.");
+      await qc.invalidateQueries({ queryKey: ["tenants"] });
+      const t = await tenantRepo.getById(j.data.id);
+      if (t) onCreated(t);
+      reset();
+      return onClose();
+    }
     const r = await tenantRepo.create({
       slug: f.slug, name: f.name.trim(), status: f.plan === "trial" ? "trial" : "ativa", plan: f.plan, cycle: f.cycle,
       trialEndsAt: f.plan === "trial" ? trialEnd.toISOString() : undefined, ownerName: f.ownerName.trim(), ownerEmail: f.ownerEmail.trim(), document: f.document.trim() || undefined,
       hostname: `${f.slug}.lexsion.com.br`,
-      settings: { ...DEFAULT_BRANDING, brandName: f.name.trim(), pwaShortName: f.name.trim().split(/\s+/)[0].slice(0, 12), primary: f.primary },
+      settings,
     }, user?.id);
     setBusy(false);
     if (!r.ok) return setError(r.error.message);
@@ -59,12 +76,12 @@ export function TenantWizard({ open, onClose, onCreated }: { open: boolean; onCl
         {step === 0 && (<>
           <label className="block"><span className="label">Nome do escritório</span><input className="field" value={f.name} onChange={(e) => set({ name: e.target.value, slug: f.slug && f.slug !== slugify(f.name) ? f.slug : slugify(e.target.value) })} /></label>
           <label className="block"><span className="label">Endereço (slug)</span><input className="field font-mono" value={f.slug} onChange={(e) => set({ slug: e.target.value.toLowerCase() })} aria-describedby="slug-h" /><span id="slug-h" className="text-xs text-fg-muted">Demonstração: /demo/tenant/{f.slug || "…"} · Futuro: {f.slug || "…"}.lexsion.com.br</span></label>
-          <label className="block"><span className="label">CNPJ (opcional, fictício na demo)</span><input className="field" value={f.document} onChange={(e) => set({ document: e.target.value })} /></label>
+          <label className="block"><span className="label">{live ? "CNPJ (opcional)" : "CNPJ (opcional, fictício na demo)"}</span><input className="field" value={f.document} onChange={(e) => set({ document: e.target.value })} /></label>
         </>)}
         {step === 1 && (<>
           <label className="block"><span className="label">Nome do responsável</span><input className="field" value={f.ownerName} onChange={(e) => set({ ownerName: e.target.value })} /></label>
           <label className="block"><span className="label">E-mail do responsável</span><input type="email" className="field" value={f.ownerEmail} onChange={(e) => set({ ownerEmail: e.target.value })} /></label>
-          <p className="text-xs text-fg-muted">Nenhum convite é enviado nesta demonstração.</p>
+          <p className="text-xs text-fg-muted">{live ? "Ao criar, o(a) responsável recebe por e-mail o convite para definir a senha." : "Nenhum convite é enviado nesta demonstração."}</p>
         </>)}
         {step === 2 && (<>
           <label className="block"><span className="label">Plano</span><select className="field" value={f.plan} onChange={(e) => set({ plan: e.target.value as PlanId })}>{(Object.keys(PLAN_LABEL) as PlanId[]).map((p) => <option key={p} value={p}>{PLAN_LABEL[p]}</option>)}</select></label>
@@ -80,7 +97,7 @@ export function TenantWizard({ open, onClose, onCreated }: { open: boolean; onCl
         {step === 4 && (
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
             <dt className="text-fg-muted">Escritório</dt><dd>{f.name}</dd>
-            <dt className="text-fg-muted">Endereço</dt><dd className="font-mono">/demo/tenant/{f.slug}</dd>
+            <dt className="text-fg-muted">Endereço</dt><dd className="font-mono">{live ? `${f.slug} · acesso por lexsion.com.br/entrar` : `/demo/tenant/${f.slug}`}</dd>
             <dt className="text-fg-muted">Responsável</dt><dd>{f.ownerName} · {f.ownerEmail}</dd>
             <dt className="text-fg-muted">Plano</dt><dd>{PLAN_LABEL[f.plan]}{f.plan === "trial" ? ` · ${f.trialDays} dias` : ` · ${f.cycle}`}</dd>
           </dl>

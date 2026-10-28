@@ -4,19 +4,32 @@ import { useState } from "react";
 import { CheckCircle2, FileUp } from "lucide-react";
 import { usePortalData } from "@/modules/portal/data";
 import { Feedback, useAction } from "@/modules/shared";
-import { ALLOWED_MIME, docService, MAX_BYTES } from "@/services/mock/ops-repo";
+import { ALLOWED_MIME, docService, MAX_BYTES, REAL_MIME } from "@/services/mock/ops-repo";
+import { useSession } from "@/components/providers";
+import { portalSendDocument } from "@/services/real/backend";
 import { formatInstant } from "@/lib/dates";
 
 export default function PortalDocumentosPage() {
   const d = usePortalData();
   const act = useAction("documents", "files");
+  const { mode } = useSession();
   const [sentName, setSentName] = useState<string | null>(null);
   const send = async (docId: string, f?: File) => {
     if (!f) return;
-    if (!ALLOWED_MIME.includes(f.type)) return act.setError("Envie uma foto ou um PDF.");
+    if (!(mode === "real" ? REAL_MIME : ALLOWED_MIME).includes(f.type)) return act.setError("Envie uma foto (JPG, PNG ou WEBP) ou um PDF.");
     if (f.size > MAX_BYTES) return act.setError("O arquivo é maior que 15 MB.");
     const doc = d.docsNeeded.find((x) => x.id === docId);
-    if (doc && (await act.run((ctx) => docService.upload({ docId, clientId: doc.clientId, caseId: doc.caseId, type: doc.type, file: f, origin: "portal" }, ctx)))) setSentName(f.name);
+    if (!doc) return;
+    if (mode === "real") {
+      // Arquivo vai ao Storage privado na pasta do pedido; o banco confere vínculo e pedido aberto.
+      const sent = await act.run(async () => {
+        try { await portalSendDocument(docId, f); return { ok: true as const, data: true, correlationId: "" }; }
+        catch (e) { return { ok: false as const, error: { code: "send", message: (e as Error).message, retryable: true }, correlationId: "" }; }
+      });
+      if (sent) setSentName(f.name);
+      return;
+    }
+    if (await act.run((ctx) => docService.upload({ docId, clientId: doc.clientId, caseId: doc.caseId, type: doc.type, file: f, origin: "portal" }, ctx))) setSentName(f.name);
   };
   return (
     <div className="space-y-5">

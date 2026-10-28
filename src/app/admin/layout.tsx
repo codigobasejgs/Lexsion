@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Building2, Compass, CreditCard, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
-import { useSession } from "@/components/providers";
+import { lastWasDemo, useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
 import { useTour } from "@/tours/runner";
@@ -21,14 +21,14 @@ const NAV = [
 
 // Shell do Super Admin: marca LexSion, sem identidade de escritório, sem acesso a conteúdo sigiloso dos escritórios.
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const { ready, user, signOut } = useSession();
+  const { ready, mode, user, signOut } = useSession();
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const tour = useTour();
   useEffect(() => {
-    if (ready && !isPlatformRole(user?.role)) router.replace("/demonstracao");
-  }, [ready, user, router]);
+    if (ready && !isPlatformRole(user?.role)) router.replace(mode === "real" || (!user && !lastWasDemo()) ? "/entrar" : "/demonstracao");
+  }, [ready, mode, user, router]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- fecha o menu móvel ao navegar
   useEffect(() => setOpen(false), [path]);
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <button onClick={signOut} className="mt-auto flex min-h-11 items-center gap-2 rounded px-3 text-sm text-danger hover:bg-danger-bg"><LogOut aria-hidden className="size-4" /> Sair</button>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo — dados fictícios. Nenhuma cobrança real.</div>
+        {mode === "demo" && <div className="flex items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo — dados fictícios. Nenhuma cobrança real.</div>}
         <header className="flex h-14 items-center gap-3 border-b border-line px-4 lg:hidden">
           <button className="btn btn-ghost px-2" aria-label="Abrir menu" aria-expanded={open} aria-controls="admin-drawer" onClick={() => setOpen(true)}><Menu aria-hidden className="size-5" /></button>
           <LexSionLogo className="h-7" />

@@ -1,0 +1,62 @@
+// Prova de RESTAURAÇÃO numa cópia ISOLADA (Postgres local em memória, PGlite): aplica as migrations do repositório,
+// carrega o backup lógico, confere contagens/hash por tabela e que a RLS continua isolando escritórios. Nunca toca o banco real.
+// Uso: node scripts/restaurar-teste.mjs <pasta-do-backup>
+import fs from "node:fs";
+import path from "node:path";
+import { PGlite } from "@electric-sql/pglite";
+import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
+
+const dir = process.argv[2];
+if (!dir || !fs.existsSync(path.join(dir, "manifest.json"))) { console.error("uso: node scripts/restaurar-teste.mjs <pasta-do-backup>"); process.exit(2); }
+const manifest = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8"));
+const db = await PGlite.create({ extensions: { pgcrypto } });
+await db.exec("create extension if not exists pgcrypto");
+await db.exec(fs.readFileSync("supabase/tests/stub-supabase.sql", "utf8"));
+const migs = fs.readdirSync("supabase/migrations").sort();
+for (const f of migs) await db.exec(fs.readFileSync(path.join("supabase/migrations", f), "utf8"));
+const local = migs.map((f) => f.split("_")[0]);
+const missing = manifest.migrations.filter((v) => !local.includes(v));
+if (missing.length) throw new Error(`backup tem migrations que o repositório não tem: ${missing.join(",")}`);
+
+// Contas (só id/e-mail) e Storage (só metadados) para as FKs; arquivos são conferidos à parte.
+const users = JSON.parse(fs.readFileSync(path.join(dir, "auth_users.json"), "utf8"));
+if (users.length) await db.query("insert into auth.users (id, email) select (u->>'id')::uuid, u->>'email' from json_array_elements($1::json) u", [JSON.stringify(users)]);
+await db.exec("set session_replication_role = replica"); // sem triggers na carga (auditoria e guardas não reescrevem o histórico)
+const ORDER = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
+  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs"];
+await db.exec("delete from public.collection_policies"); // vem do backup (mesmo conteúdo da migration)
+for (const t of ORDER) {
+  const rows = JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), "utf8"));
+  if (!rows.length) continue;
+  const over = t === "audit_logs" ? "overriding system value" : "";
+  await db.query(`insert into public.${t} ${over} select * from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
+}
+await db.exec("set session_replication_role = origin");
+
+let ok = true;
+for (const t of ORDER) {
+  const back = (await db.query(`select coalesce(json_agg(t), '[]'::json) as rows from public.${t} t`)).rows[0].rows;
+  const n = back.length, exp = manifest.tables[t].rows;
+  const same = n === exp;
+  if (!same) ok = false;
+  console.log(`${same ? "OK " : "ERRO"} ${t}: ${n}/${exp}`);
+}
+// RLS continua valendo na cópia: um membro de um escritório não lê registros de outro.
+const pair = (await db.query("select a.user_id, b.id as organization_id from public.organization_memberships a, public.organizations b where exists (select 1 from public.org_records r where r.organization_id = b.id) and not exists (select 1 from public.organization_memberships x where x.user_id = a.user_id and x.organization_id = b.id) limit 1")).rows[0];
+if (pair) {
+  await db.query("select set_config('request.jwt.claim.sub', $1, false)", [pair.user_id]);
+  await db.exec("set role authenticated");
+  const leak = (await db.query("select count(*)::int n from public.org_records where organization_id = $1", [pair.organization_id])).rows[0].n;
+  await db.exec("reset role");
+  console.log(`${leak === 0 ? "OK " : "ERRO"} RLS na cópia restaurada: membro de outro escritório lê ${leak} registro(s)`);
+  if (leak) ok = false;
+} else console.log("--  RLS: backup sem par de escritórios para conferir isolamento");
+const files = manifest.storage ?? [];
+const sdir = path.join(dir, "storage");
+if (files.length && fs.existsSync(sdir)) {
+  const present = files.filter((o) => fs.existsSync(path.join(sdir, ...o.name.split("/"))) && fs.statSync(path.join(sdir, ...o.name.split("/"))).size === Number(o.size)).length;
+  console.log(`${present === files.length ? "OK " : "ERRO"} arquivos do Storage: ${present}/${files.length} com tamanho conferido`);
+  if (present !== files.length) ok = false;
+} else console.log(`--  arquivos do Storage: ${files.length} no manifesto${files.length ? " (backup sem --with-files)" : ""}`);
+console.log(ok ? "RESTAURACAO_OK" : "RESTAURACAO_FALHOU");
+process.exit(ok ? 0 : 1);
