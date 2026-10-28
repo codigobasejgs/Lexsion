@@ -264,6 +264,22 @@ export async function realWrite(patch: Record<string, unknown[]>): Promise<void>
   }
 }
 
+/** Ícone/logotipo do escritório: data: URL (PNG reencodado) vira arquivo público no bucket "marcas" (só marca, nunca dado de cliente). */
+async function publishBrandImages(t: Tenant): Promise<Tenant["settings"]> {
+  const s = { ...t.settings };
+  const img = [s.pwaIcon512, s.pwaIcon192, s.logoLight].find((x) => typeof x === "string" && x.startsWith("data:image/png;base64,"));
+  if (!img) return s;
+  const sb = supabaseBrowser();
+  const blob = await (await fetch(img)).blob();
+  const base = `slug-${t.slug}`;
+  for (const name of ["icon-512.png", "icon-192.png", "logo.png"]) {
+    const { error } = await sb.storage.from("marcas").upload(`${base}/${name}`, blob, { contentType: "image/png", upsert: true, cacheControl: "300" });
+    if (error) throw new SaveError("Não foi possível publicar o logotipo agora. Nada foi alterado; tente de novo.", "brand_upload");
+  }
+  const url = (n: string) => `${sb.storage.from("marcas").getPublicUrl(`${base}/${n}`).data.publicUrl}?v=${s.brandingVersion}`;
+  return { ...s, logoLight: url("logo.png"), logoDark: url("logo.png"), favicon: url("icon-192.png"), pwaIcon192: url("icon-192.png"), pwaIcon512: url("icon-512.png"), pwaMaskableIcon: url("icon-512.png"), hasPublicIcon: true };
+}
+
 async function writeTenants(next: Tenant[]) {
   const sb = supabaseBrowser();
   const before = snaps.get("tenants") ?? new Map();
@@ -274,8 +290,13 @@ async function writeTenants(next: Tenant[]) {
     if (raw === JSON.stringify(t)) continue;
     const call = async (fn: string, args: Record<string, unknown>) => { const { error } = await sb.rpc(fn, args); if (error) throw friendly(error); };
     if (JSON.stringify(old.settings) !== JSON.stringify(t.settings)) {
-      if (platformSession) await call("platform_set_org_branding", { p_org: t.id, p_branding: t.settings });
-      else { const { error } = await sb.from("organizations").update({ branding: t.settings, updated_at: new Date().toISOString() }).eq("id", t.id); if (error) throw friendly(error); }
+      const branding = await publishBrandImages(t);
+      if (platformSession) await call("platform_set_org_branding", { p_org: t.id, p_branding: branding });
+      else {
+        const { data, error } = await sb.from("organizations").update({ branding, updated_at: new Date().toISOString() }).eq("id", t.id).select("id");
+        if (error) throw friendly(error);
+        if (!data?.length) throw new SaveError("Somente o titular do escritório altera a identidade visual. Nada foi gravado.", "42501");
+      }
     }
     if (old.status !== t.status) await call("set_organization_status", { p_org: t.id, p_status: t.status, p_reason: t.suspensionReason ?? null });
     if (old.plan !== t.plan) await call("set_organization_plan", { p_org: t.id, p_plan: t.plan });

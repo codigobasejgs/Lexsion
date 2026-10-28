@@ -47,3 +47,33 @@ export function buildManifest(key: string, tenants: Tenant[]): MetadataRoute.Man
     icons: tenantIcons(t.slug),
   };
 }
+
+/** Marca pública de escritório REAL (função public_brand do banco). Ícone no bucket público "marcas". */
+export interface PublicBrand { slug: string; name: string; brandName: string; pwaShortName: string; primary?: string; backgroundDark?: string; iconVersion: number; hasIcon: boolean }
+
+/** Manifesto do escritório real: mesmo formato do demo, start_url no login/portal reais, ícone próprio ou LexSion. */
+export function buildRealManifest(kind: "erp" | "portal", b: PublicBrand, iconBase: string): MetadataRoute.Manifest {
+  const portal = kind === "portal";
+  const v = `?v=${b.iconVersion}`;
+  const icons: MetadataRoute.Manifest["icons"] = b.hasIcon
+    ? [
+        { src: `${iconBase}/icon-192.png${v}`, sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: `${iconBase}/icon-512.png${v}`, sizes: "512x512", type: "image/png", purpose: "any" },
+        { src: `${iconBase}/icon-512.png${v}`, sizes: "512x512", type: "image/png", purpose: "maskable" },
+      ]
+    : LEXSION_ICONS;
+  const bg = /^#[0-9a-f]{6}$/i.test(b.backgroundDark ?? "") ? b.backgroundDark! : OBSIDIAN;
+  return {
+    ...base,
+    // id estável por escritório (trocar marca não duplica o app instalado)
+    id: portal ? `/portal/?app=portal-${b.slug}` : `/app/?app=erp-${b.slug}`,
+    name: portal ? `${b.brandName} — Área do cliente` : b.brandName,
+    short_name: (portal ? `${b.pwaShortName} Cliente` : b.pwaShortName).slice(0, 20),
+    description: portal ? `Acompanhe seus casos com ${b.brandName}.` : `Sistema do escritório ${b.brandName}.`,
+    start_url: portal ? `/entrar?perfil=cliente&escritorio=${b.slug}&origem=pwa` : `/entrar?escritorio=${b.slug}&origem=pwa`,
+    scope: "/",
+    background_color: bg,
+    theme_color: bg,
+    icons,
+  };
+}

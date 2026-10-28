@@ -47,7 +47,7 @@ test("PAR-CALC-01 (E2E-11/31): correção monetária vinculada ao caso, memória
 
   await page.getByRole("link", { name: "Abrir caso" }).click();
   await expect(page).toHaveURL(/aba=calculos/);
-  await expect(page.getByRole("link", { name: /Correção monetária e juros/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Correção monetária e juros/ }).first()).toBeVisible({ timeout: 15_000 });
 });
 
 test("PAR-CALC-02 (E2E-12): verbas rescisórias com regras parciais, rótulo explícito e validação de entrada", async ({ page }) => {

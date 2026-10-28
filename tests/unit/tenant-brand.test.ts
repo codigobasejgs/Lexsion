@@ -3,7 +3,7 @@ import { sniff, validateLogoBytes, validateLogoSize, MAX_LOGO_BYTES } from "@/li
 import { tenantTheme, SURFACES } from "@/lib/tenant-tokens";
 import { contrast } from "@/lib/contrast";
 import { DEFAULT_BRANDING, normalizeHex, monthlyValue } from "@/domain/tenancy";
-import { buildManifest } from "@/lib/pwa-manifest";
+import { buildManifest, buildRealManifest } from "@/lib/pwa-manifest";
 import { resolveContext } from "@/lib/tenant-resolver";
 import { tenants } from "@/mocks/tenants";
 import { slugError } from "@/services/mock/tenant-repo";
@@ -105,5 +105,25 @@ describe("QA-161..164 — receita SaaS", () => {
     expect(monthlyValue({ plan: "profissional", cycle: "anual", status: "ativa" })).toBe(33250);
     expect(monthlyValue({ plan: "profissional", cycle: "mensal", status: "trial" })).toBe(0);
     expect(monthlyValue({ plan: "essencial", cycle: "mensal", status: "suspensa" })).toBe(0);
+  });
+});
+
+describe("PWA de escritório REAL (marca pública do banco)", () => {
+  const b = { slug: "silva-adv", name: "Silva Advogados", brandName: "Silva Advogados", pwaShortName: "Silva", primary: "#123456", backgroundDark: "#0a0b0c", iconVersion: 4, hasIcon: true };
+  it("ERP e portal têm ids distintos e estáveis, abrem o login real e usam o ícone próprio versionado", () => {
+    const erp = buildRealManifest("erp", b, "https://x.supabase.co/storage/v1/object/public/marcas/slug-silva-adv");
+    const portal = buildRealManifest("portal", b, "https://x.supabase.co/storage/v1/object/public/marcas/slug-silva-adv");
+    expect(erp.id).not.toBe(portal.id);
+    expect(buildRealManifest("erp", { ...b, brandName: "Outro nome", iconVersion: 9 }, "u").id).toBe(erp.id);
+    expect(erp.start_url).toMatch(/^\/entrar\?escritorio=silva-adv/);
+    expect(portal.start_url).toMatch(/perfil=cliente/);
+    expect(erp.icons!.every((i) => i.src.includes("slug-silva-adv") && i.src.endsWith("?v=4"))).toBe(true);
+    expect(erp.theme_color).toBe("#0a0b0c");
+    expect(JSON.stringify(erp)).not.toMatch(/demonstrativo|demo\//);
+  });
+  it("sem ícone próprio usa o da LexSion; cor inválida cai no padrão", () => {
+    const m = buildRealManifest("erp", { ...b, hasIcon: false, backgroundDark: "red;}" }, "u");
+    expect(m.icons!.every((i) => i.src.startsWith("/icons/"))).toBe(true);
+    expect(m.theme_color).toBe("#090A0D");
   });
 });

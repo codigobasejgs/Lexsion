@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { clearDemoSession } from "@/components/providers";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Info, Loader2 } from "lucide-react";
 import { LexSionLogo } from "@/components/brand";
@@ -12,7 +12,12 @@ import { authRepository, type AuthAudience } from "@/services/auth";
 // Nada de senha é guardado no navegador. A demonstração com perfis fictícios continua separada em /demonstracao.
 export default function EntrarPage() {
   const router = useRouter();
+  // App do portal instalado abre /entrar?perfil=cliente (manifesto PWA do escritório).
   const [audience, setAudience] = useState<AuthAudience>("escritorio");
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- parâmetro da URL lido após montar (sem divergir do HTML do servidor)
+    if (new URLSearchParams(location.search).get("perfil") === "cliente") setAudience("cliente");
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);

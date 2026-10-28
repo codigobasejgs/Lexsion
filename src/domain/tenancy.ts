@@ -30,6 +30,8 @@ export interface TenantBranding {
   reducedMotion?: boolean;
   simpleLanguage?: boolean;
   showPoweredBy: boolean; // "Tecnologia LexSion" discreto
+  /** Operação: ícone publicado no bucket público "marcas" (manifesto PWA do escritório usa o ícone próprio). */
+  hasPublicIcon?: boolean;
   brandingVersion: number;
 }
 

@@ -25,7 +25,7 @@ const TEMPLATES: [TenantBranding["template"], string, Partial<TenantBranding>][]
 const COLORS: [keyof TenantBranding, string][] = [["primary", "Cor principal (botões)"], ["secondary", "Cor secundária"], ["accent", "Cor de destaque (links e rótulos)"], ["backgroundDark", "Fundo do aplicativo (tela inicial)"]];
 
 export default function IdentidadePage() {
-  const { tenant, user } = useSession();
+  const { tenant, user, mode } = useSession();
   const qc = useQueryClient();
   const [draft, setDraft] = useState<TenantBranding | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -59,7 +59,8 @@ export default function IdentidadePage() {
   };
   const seed = seedTenants.find((t) => t.id === tenant.id)?.settings ?? DEFAULT_BRANDING;
   const logo = draft.logoLight;
-  const appUrl = typeof location === "undefined" ? "" : `${location.origin}/demo/tenant/${tenant.slug}?origem=qr`;
+  // Operação: QR abre o login do escritório (instalação do app). Demonstração: entrada pública do escritório demo.
+  const appUrl = typeof location === "undefined" ? "" : mode === "real" ? `${location.origin}/entrar?escritorio=${tenant.slug}&origem=qr` : `${location.origin}/demo/tenant/${tenant.slug}?origem=qr`;
   const local = /localhost|127\.0\.0\.1|^http:\/\/(192\.168|10\.)/.test(appUrl);
 
   return (

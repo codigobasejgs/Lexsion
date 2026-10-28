@@ -167,3 +167,21 @@ describe("Equipe e plataforma", () => {
     expect(await as(U.adminA, "select id from public.platform_records")).toEqual([]);
   });
 });
+
+describe("PWA white-label (marca pública)", () => {
+  it("anônimo lê só a marca de escritório ativo; nada além de nome, cores e ícone; suspenso some", async () => {
+    await as(U.adminA, "update public.organizations set branding = $2::jsonb where id = $1", [orgA, JSON.stringify({ brandName: "Marca A", pwaShortName: "MarcaA", primary: "#112233", backgroundDark: "#000000", brandingVersion: 3, hasPublicIcon: true })]);
+    const b = (await as<{ b: Record<string, unknown> }>(null, "select public.public_brand('escritorio-a') b"))[0].b;
+    expect(b).toMatchObject({ brandName: "Marca A", primary: "#112233", hasIcon: true, iconVersion: 3 });
+    expect(Object.keys(b).sort()).toEqual(["backgroundDark", "backgroundLight", "brandName", "hasIcon", "iconVersion", "name", "primary", "pwaShortName", "slug", "themeMode"]);
+    await as(U.superadmin, "select public.set_organization_status($1, 'suspensa', 'Teste de suspensão')", [orgA]);
+    expect((await as<{ b: unknown }>(null, "select public.public_brand('escritorio-a') b"))[0].b).toBeNull();
+    await as(U.superadmin, "select public.set_organization_status($1, 'ativa', null)", [orgA]);
+  });
+  it("ícone: titular grava na pasta do próprio escritório; advogado(a) e outro escritório não", async () => {
+    await as(U.adminA, "insert into storage.objects (bucket_id, name) values ('marcas', 'slug-escritorio-a/icon-512.png')");
+    expect(await denied(U.advA, "insert into storage.objects (bucket_id, name) values ('marcas', 'slug-escritorio-a/icon-192.png')")).toMatch(/row-level/);
+    expect(await denied(U.adminB, "insert into storage.objects (bucket_id, name) values ('marcas', 'slug-escritorio-a/x.png')")).toMatch(/row-level/);
+    expect(await denied(U.adminA, "insert into storage.objects (bucket_id, name) values ('marcas', 'slug-escritorio-b/x.png')")).toMatch(/row-level/);
+  });
+});
