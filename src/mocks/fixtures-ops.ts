@@ -6,6 +6,7 @@ import type {
   Objection, OrgSettings, OutboxMessage, Proposal, Publication, Receipt, Requisition, StoredFile, Template,
 } from "@/domain/types";
 import { at } from "./clock";
+import type { LegalSource } from "@/domain/citations";
 
 const A = "org-aurora";
 const B = "org-boreal";
@@ -237,4 +238,12 @@ export const assessments: Assessment[] = [
     },
     inputsVersion: 1, reviewedVersion: null, history: [],
   },
+];
+
+// Fontes jurídicas: só atos normativos com endereço oficial. Começam NÃO VERIFICADAS: quem cita confere o trecho.
+// Nenhum precedente/acórdão é semeado (evita número com aparência real).
+export const legalSources: LegalSource[] = [
+  { id: "src-l8213", organizationId: A, kind: "lei", label: "Lei 8.213/1991", organ: "Presidência da República — Planalto", url: "https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm", status: "NAO_VERIFICADO", note: "Planos de Benefícios da Previdência Social" },
+  { id: "src-l8742", organizationId: A, kind: "lei", label: "Lei 8.742/1993", organ: "Presidência da República — Planalto", url: "https://www.planalto.gov.br/ccivil_03/leis/l8742.htm", status: "NAO_VERIFICADO", note: "Lei Orgânica da Assistência Social (BPC)" },
+  { id: "src-l12506", organizationId: B, kind: "lei", label: "Lei 12.506/2011", organ: "Presidência da República — Planalto", url: "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12506.htm", status: "NAO_VERIFICADO", note: "Aviso prévio proporcional" },
 ];

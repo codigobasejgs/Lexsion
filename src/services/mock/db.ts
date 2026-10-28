@@ -57,6 +57,7 @@ export const COLLECTIONS = {
   learning: ops.learning,
   files: ops.files,
   assessments: ops.assessments,
+  legalSources: ops.legalSources,
   tenants,
   plans: platform.plans,
   saasInvoices: platform.saasInvoices,

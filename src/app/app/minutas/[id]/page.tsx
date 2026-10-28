@@ -17,6 +17,8 @@ import { downloadText } from "@/domain/csv";
 import { canApprove } from "@/domain/permissions";
 import { formatInstant } from "@/lib/dates";
 import type { LegalDraft } from "@/domain/types";
+import { checkCitations } from "@/domain/citations";
+import { SourcesPanel } from "@/modules/drafts/sources-panel";
 
 const SECTIONS = ["Fatos (informados)", "Documentos (extraídos)", "Pontos controvertidos", "Fundamentos", "Hipóteses (a confirmar)", "Pedidos", "Referências"];
 
@@ -44,6 +46,8 @@ function Editor({ d }: { d: LegalDraft }) {
   const dirty = body !== d.body;
   useDirtyGuard(`draft-${d.id}`, dirty);
   const missing = missingFields(body);
+  const sources = useCollection("legalSources");
+  const unverified = checkCitations(body, sources.data ?? []).blocking;
 
   const exportTxt = async () => {
     if (await act.run((ctx) => draftService.setStatus(d.id, "exportado", ctx))) downloadText(`${d.title}.txt`, `${body}\n\n— Documento gerado em ambiente demonstrativo —\n`, "text/plain;charset=utf-8");
@@ -93,10 +97,11 @@ function Editor({ d }: { d: LegalDraft }) {
               <div className="flex flex-wrap gap-2">
                 {d.status === "rascunho" && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => draftService.setStatus(d.id, "revisao", ctx))}>Enviar para revisão</button>}
                 {(d.status === "revisao" || d.status === "ajustes") && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => draftService.setStatus(d.id, "ajustes", ctx))}>Pedir ajustes</button>}
-                {(d.status === "revisao" || d.status === "ajustes") && user && canApprove(user.role) && <button className="btn btn-primary min-h-9" disabled={dirty || missing.length > 0} onClick={() => act.run((ctx) => draftService.setStatus(d.id, "aprovado", ctx), "Aprovada.")}>Aprovar</button>}
+                {(d.status === "revisao" || d.status === "ajustes") && user && canApprove(user.role) && <button className="btn btn-primary min-h-9" disabled={dirty || missing.length > 0 || unverified.length > 0} onClick={() => act.run((ctx) => draftService.setStatus(d.id, "aprovado", ctx), "Aprovada.")}>Aprovar</button>}
               </div>
               {dirty && <p className="text-xs text-fg-muted">Salve antes de aprovar.</p>}
               {!dirty && missing.length > 0 && <p className="text-xs text-warning">Preencha os campos pendentes antes de aprovar.</p>}
+              {!dirty && unverified.length > 0 && <p className="text-xs text-warning">Citação sem fonte verificada: {unverified.map((u) => u.citation).join(", ")}. Confira em “Fontes citadas”.</p>}
               <h3 className="pt-2 font-medium">Exportar</h3>
               <div className="flex flex-wrap gap-2">
                 <button className="btn btn-primary min-h-9" data-tour="exportar-docx" disabled={dirty || (d.status !== "aprovado" && d.status !== "exportado")} onClick={exportDocx}><FileText aria-hidden className="size-4" /> Word (.docx)</button>
@@ -105,6 +110,7 @@ function Editor({ d }: { d: LegalDraft }) {
               </div>
               <p className="text-xs text-fg-muted">Exportação só após aprovação. O arquivo sai marcado como rascunho demonstrativo; nada é protocolado.</p>
             </section>
+            <SourcesPanel body={d.body} caseId={d.caseId} />
             <section className="panel space-y-2 p-4 text-sm">
               <div className="flex items-center gap-2"><h2 className="flex flex-1 items-center gap-1.5 font-semibold text-ai"><Sparkles aria-hidden className="size-4" /> Assistente</h2><SimulatedBadge /></div>
               <p className="text-fg-muted">Sugestões separam fatos, dados extraídos e hipóteses. Nunca inserem texto sozinhas.</p>

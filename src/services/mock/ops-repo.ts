@@ -1,5 +1,6 @@
 // Serviços com regras encadeadas (E3–E7). Cada operação grava as coleções afetadas numa só transação.
 import { readAll, writeMany } from "./db";
+import { checkCitations } from "@/domain/citations";
 import { auditRow, cid, fail, nowIso, ok } from "./generic";
 import type { RequestContext, Result } from "../contracts";
 import type {
@@ -444,6 +445,10 @@ export const draftService = {
     const role = users.find((u) => u.id === ctx.actorId)?.role;
     if (status === "aprovado" && !allowed(role, "aprovar_peca")) return fail("forbidden", "Somente advogado(a) ou administrador aprova peças.");
     if (status === "aprovado" && missingFields(d.body).length) return fail("missing", `Preencha antes de aprovar: ${missingFields(d.body).join(", ")}.`);
+    if (status === "aprovado") {
+      const blocking = checkCitations(d.body, (await readAll("legalSources")).filter((s) => s.organizationId === ctx.organizationId)).blocking;
+      if (blocking.length) return fail("unverified_citation", `Citação sem fonte verificada: ${blocking.map((b) => b.citation).join(", ")}.`);
+    }
     if (status === "exportado" && d.status !== "aprovado" && d.status !== "exportado") return fail("not_approved", "Aprove a minuta antes de exportar.");
     const next: LegalDraft = { ...d, status, approvedHash: status === "aprovado" ? textHash(d.body) : d.approvedHash, history: [...d.history, { at: nowIso(), actorId: ctx.actorId, text: `Status: ${status}` }] };
     await writeMany({ drafts: drafts.map((x) => (x.id === id ? next : x)) });
