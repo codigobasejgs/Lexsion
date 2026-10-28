@@ -1,72 +1,72 @@
-﻿id,capacidade,plataforma_referencia,rota,estado_operacional,persistencia,motivo_ou_dependencia
-CJ-01,Calculadoras previdenciárias RGPS e RPPS,CJ,/app/previdenciario,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-02,"Liquidação, revisão, restabelecimento, contribuições em atraso",CJ,/app/previdenciario,REAL,Supabase org_records (RLS),
-CJ-03,Requisito de miserabilidade do BPC (renda familiar),CJ,/app/previdenciario/especializadas/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-04,Liquidação trabalhista com relatório padrão PJe-Calc,CJ,/app/calculos,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-05,Rescisão trabalhista e apuração de ponto,CJ,/app/calculos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-06,"Cíveis: atualização de débito, aluguel, pensão",CJ,/app/calculos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-07,Tributários com importação de SPED,CJ,/app/calculos,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-08,Bancários: revisão de empréstimos,CJ,/app/calculos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-09,"Penais: dosimetria, progressão, prescrição",CJ,/app/calculos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-10,"Importa CNIS, HISCRE, microfichas PASEP",CJ,/app/documentos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-12,Petições geradas a partir dos cálculos,CJ,/app/minutas,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-13,"Assistentes de IA (extração, áudio para texto)",CJ,/app/ia/simulador,BLOQUEADO_PROVEDOR,—,"AI: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-CJ-14,Banco de modelos de petição,CJ,/app/modelos,REAL,Supabase org_records (RLS),
-CJ-15,"CRM, autocadastro, tarefas, finanças",CJ,/app/crm,REAL,Supabase org_records (RLS),
-CJ-16,Monitoramento de processos e intimações,CJ,/app/publicacoes,REAL,Supabase org_records (RLS),
-CJ-17,"Fluxos por fase: prospecção, consultivo, judicial",CJ,/app/workflows,REAL,Supabase org_records (RLS),
-CJ-18,Extratores de cartão de ponto e extratos,CJ,/app/importacoes,REAL,Supabase org_records (RLS),
-CJ-19,API de índices de correção (produto separado),CJ,/admin/integracoes,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-CJ-20,Fórmula validada × modo ilustrativo,CJ,/app/calculos,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-01,"Clientes, processos, publicações, documentos, assinaturas",TI,/app,REAL,Supabase org_records (RLS),
-TI-02,"Workflow por tipo de caso, tarefas encadeadas",TI,/app/workflows,REAL,Supabase org_records (RLS),
-TI-03,Prazos do workflow em dias úteis com feriados,TI,/app/workflows,REAL,Supabase org_records (RLS),
-TI-04,"Modelos prontos: BPC, perícia, trabalhista, divórcio",TI,/app/workflows,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-05,Análise guiada BPC/LOAS PcD por documentos,TI,/app/previdenciario/especializadas/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-06,Notas CIF refeitas e comparadas com o INSS,TI,—,REAL,sem dados (estático),
-TI-07,Cada nota ligada ao documento que a sustenta,TI,/app/previdenciario/analises/[id],REAL,Supabase org_records (RLS),
-TI-08,"Renda per capita, reafirmação da DER, valor da causa",TI,/app/previdenciario/especializadas/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-09,Plano de ação com prazos e resumo ao cliente,TI,/app/casos/[id],REAL,Supabase org_records (RLS),
-TI-10,Assistente que opera os módulos com permissões,TI,/app/ia,BLOQUEADO_PROVEDOR,—,"AI: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-TI-11,Lê intimação e cria tarefa com prazo,TI,/app/publicacoes,REAL,Supabase org_records (RLS),
-TI-12,Busca sentença no tribunal e resume,TI,/app/pesquisa,BLOQUEADO_PROVEDOR,—,"RESEARCH: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-TI-13,Redige inicial a partir do CNIS e indeferimento,TI,/app/minutas,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-14,Jurisprudência que lê o inteiro teor antes de citar,TI,/app/minutas/[id],REAL,Supabase org_records (RLS),
-TI-15,Editor com edição localizada e desfazer,TI,/app/minutas/[id],REAL,Supabase org_records (RLS),
-TI-16,Conector MCP para Claude e ChatGPT,TI,—,REAL,sem dados (estático),
-TI-17a,Indicadores CNIS (menu),TI,/app/previdenciario/analises/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-17b,Atividade especial (menu),TI,/app/previdenciario/especializadas/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-17c,Impugnador de laudos / quesitos médicos (menu),TI,/app/previdenciario/especializadas/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-TI-17d,Assinatura eletrônica (menu),TI,/app/contratos/[id],REAL,Supabase org_records (RLS),
-TI-17e,Pix/boleto e webhooks (menu),TI,/app/pagamentos,BLOQUEADO_PROVEDOR,—,"PAY: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-PREV-01,Cálculos previdenciários a partir do CNIS,PREV,/app/previdenciario/analises/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-PREV-02,Comparação lado a lado dos benefícios,PREV,/app/previdenciario/analises/[id],REAL,Supabase org_records (RLS),
-PREV-03,Planejamento de aposentadoria,PREV,/app/previdenciario/planejamentos/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-PREV-04,Liquidação de sentença previdenciária,PREV,—,REAL,sem dados (estático),
-PREV-05,Extensão de navegador para o Meu INSS,PREV,—,REAL,sem dados (estático),
-PREV-06,Petições preenchidas com dados do cliente,PREV,/app/minutas,REAL,Supabase org_records (RLS),
-PREV-07,Registro de quem fez o quê,PREV,/admin/auditoria,REAL,Supabase org_records (RLS),
-PREV-09,Chat de IA previdenciário,PREV,/app/ia/simulador,BLOQUEADO_PROVEDOR,—,"AI: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-PREV-10,"Aponta lacunas, especiais, carência, inconsistências no CNIS",PREV,/app/previdenciario/analises/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-PREV-11,Minuta lendo o processo administrativo,PREV,/app/minutas,REAL,Supabase org_records (RLS),
-JUS-01,Área de trabalho por caso/cliente,JUS,/app/casos/[id],REAL,Supabase org_records (RLS),
-JUS-06,Citações com fonte e status verificável,JUS,/app/minutas/[id],REAL,Supabase org_records (RLS),
-JUS-07,Bloqueio de citação sem origem,JUS,/app/minutas/[id],REAL,Supabase org_records (RLS),
-JUS-09,Comparação de versões e revisão,JUS,/app/minutas/[id],REAL,Supabase org_records (RLS),
-JUS-10,Exportação DOCX/PDF e anexação ao caso,JUS,/app/minutas/[id],REAL,Supabase org_records (RLS),
-JUS-12,Adaptadores de pesquisa e IA futuros,JUS,/admin/integracoes,REAL,Supabase org_records (RLS),
-JUS-14,Distinção API Jusbrasil Soluções × Jus IA,JUS,/admin/integracoes,REAL,Supabase org_records (RLS),
-INT-01,Upload/validação de CNIS em PDF,INT,/app/documentos,REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-INT-02,Score de saúde do CNIS,INT,/app/previdenciario/analises/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-INT-04,"Lacunas, abaixo do mínimo, concomitâncias",INT,/app/previdenciario/analises/[id],REAL,Supabase org_records (RLS),
-INT-05,Linha do tempo de vínculos,INT,/app/previdenciario/analises/[id],REAL,Supabase org_records (RLS),
-INT-06,RMI estimada e comparação de cenários,INT,/app/previdenciario/analises/[id],REAL_VALIDACAO_JURIDICA_PENDENTE,Supabase org_records (RLS),"Grava e calcula sobre dados reais; resultado é demonstrativo até validação por profissional"
-INT-07,Relatório Word para cliente e advogado,INT,/app/minutas/[id],REAL,Supabase org_records (RLS),
-INT-08,Documentação faltante e ações prioritárias,INT,/app/previdenciario/analises/[id],REAL,Supabase org_records (RLS),
-DJ-01,Metadados públicos de processos (capa e movimentos),DataJud,/admin/integracoes,REAL,Supabase org_records (RLS),
-CRM-01,Follow-up ético com opt-out e horário,Cliente,/app/crm/leads/[id],REAL,Supabase org_records (RLS),
-CRM-02,Campanha → lead UTM → triagem → proposta → contrato → caso,Cliente,/app/crm,REAL,Supabase org_records (RLS),
-CRM-03,Takeover humano pausa a IA,Cliente,/app/atendimento/[id],BLOQUEADO_PROVEDOR,—,"WHATSAPP: tela bloqueada na operação; sem simulação (ver 08-BLOQUEIOS)"
-CRM-04,Conexão Meta/Google Ads,Cliente,/admin/integracoes,REAL,Supabase org_records (RLS),
-FIN-01,SaaS × honorários separados,Cliente,/admin/faturamento,REAL,Supabase org_records (RLS),
-SEG-01,Estagiário não aprova/revisa,Cliente,—,REAL,sem dados (estático),
+﻿id,capacidade,plataforma_referencia,rota,estado_operacional,evidencia,pendencia
+CJ-01,Calculadoras previdenciárias RGPS e RPPS,CJ,/app/previdenciario,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-02,"Liquidação, revisão, restabelecimento, contribuições em atraso",CJ,/app/previdenciario,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-03,Requisito de miserabilidade do BPC (renda familiar),CJ,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-04,Liquidação trabalhista com relatório padrão PJe-Calc,CJ,/app/calculos,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-05,Rescisão trabalhista e apuração de ponto,CJ,/app/calculos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-06,"Cíveis: atualização de débito, aluguel, pensão",CJ,/app/calculos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-07,Tributários com importação de SPED,CJ,/app/calculos,PARCIAL,parte manual coberta pelos E2E reais,"Importação de SPED não existe; cálculo com entrada manual"
+CJ-08,Bancários: revisão de empréstimos,CJ,/app/calculos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-09,"Penais: dosimetria, progressão, prescrição",CJ,/app/calculos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+CJ-10,"Importa CNIS, HISCRE, microfichas PASEP",CJ,/app/documentos/[id],PARCIAL,parte manual coberta pelos E2E reais,"Leitura automática de CNIS/HISCRE/PASEP depende de extração (IA/OCR) não contratada; entrada manual funciona"
+CJ-12,Petições geradas a partir dos cálculos,CJ,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Minuta gerada a partir do cálculo; exige revisão e aprovação de advogado(a)"
+CJ-13,"Assistentes de IA (extração, áudio para texto)",CJ,/app/ia/simulador,BLOQUEADO,—,IA não contratada
+CJ-14,Banco de modelos de petição,CJ,/app/modelos,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+CJ-15,"CRM, autocadastro, tarefas, finanças",CJ,/app/crm,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+CJ-16,Monitoramento de processos e intimações,CJ,/app/publicacoes,PARCIAL,parte manual coberta pelos E2E reais,"Publicações e intimações cadastradas manualmente; captura automática depende de DataJud/diário (licença/parecer)"
+CJ-17,"Fluxos por fase: prospecção, consultivo, judicial",CJ,/app/workflows,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+CJ-18,Extratores de cartão de ponto e extratos,CJ,/app/importacoes,PARCIAL,parte manual coberta pelos E2E reais,"Importação de planilha funciona; extração de cartão de ponto/extrato depende de OCR/IA"
+CJ-19,API de índices de correção (produto separado),CJ,/admin/integracoes,BLOQUEADO,—,API de índices oficiais (licença CJ) não contratada
+CJ-20,Fórmula validada × modo ilustrativo,CJ,/app/calculos,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-01,"Clientes, processos, publicações, documentos, assinaturas",TI,/app,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+TI-02,"Workflow por tipo de caso, tarefas encadeadas",TI,/app/workflows,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+TI-03,Prazos do workflow em dias úteis com feriados,TI,/app/workflows,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+TI-04,"Modelos prontos: BPC, perícia, trabalhista, divórcio",TI,/app/workflows,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-05,Análise guiada BPC/LOAS PcD por documentos,TI,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-06,Notas CIF refeitas e comparadas com o INSS,TI,—,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Notas CIF são calculadas; exigem revisão profissional"
+TI-07,Cada nota ligada ao documento que a sustenta,TI,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Vínculo nota↔documento funciona; conclusão exige revisão"
+TI-08,"Renda per capita, reafirmação da DER, valor da causa",TI,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-09,Plano de ação com prazos e resumo ao cliente,TI,/app/casos/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+TI-10,Assistente que opera os módulos com permissões,TI,/app/ia,BLOQUEADO,—,IA não contratada
+TI-11,Lê intimação e cria tarefa com prazo,TI,/app/publicacoes,PARCIAL,parte manual coberta pelos E2E reais,"Tarefa com prazo é criada a partir de intimação registrada; leitura automática da intimação depende de IA"
+TI-12,Busca sentença no tribunal e resume,TI,/app/pesquisa,BLOQUEADO,—,Base de jurisprudência não licenciada
+TI-13,Redige inicial a partir do CNIS e indeferimento,TI,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Rascunho gerado por modelo de texto, sem IA; exige revisão"
+TI-14,Jurisprudência que lê o inteiro teor antes de citar,TI,/app/minutas/[id],BLOQUEADO,—,"Leitura de inteiro teor depende de base licenciada; hoje só citação manual com fonte"
+TI-15,Editor com edição localizada e desfazer,TI,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+TI-16,Conector MCP para Claude e ChatGPT,TI,—,NAO_IMPLEMENTADO,—,Conector MCP não existe
+TI-17a,Indicadores CNIS (menu),TI,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-17b,Atividade especial (menu),TI,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-17c,Impugnador de laudos / quesitos médicos (menu),TI,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+TI-17d,Assinatura eletrônica (menu),TI,/app/contratos/[id],PARCIAL,parte manual coberta pelos E2E reais,"Contrato aceita registro manual de assinatura; assinatura eletrônica (ZapSign) não credenciada"
+TI-17e,Pix/boleto e webhooks (menu),TI,/app/pagamentos,BLOQUEADO,—,Provedor de pagamento não credenciado
+PREV-01,Cálculos previdenciários a partir do CNIS,PREV,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+PREV-02,Comparação lado a lado dos benefícios,PREV,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+PREV-03,Planejamento de aposentadoria,PREV,/app/previdenciario/planejamentos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+PREV-04,Liquidação de sentença previdenciária,PREV,—,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+PREV-05,Extensão de navegador para o Meu INSS,PREV,—,NAO_IMPLEMENTADO,—,Extensão de navegador para Meu INSS não existe
+PREV-06,Petições preenchidas com dados do cliente,PREV,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",Petição preenchida exige revisão e aprovação
+PREV-07,Registro de quem fez o quê,PREV,/admin/auditoria,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+PREV-09,Chat de IA previdenciário,PREV,/app/ia/simulador,BLOQUEADO,—,IA não contratada
+PREV-10,"Aponta lacunas, especiais, carência, inconsistências no CNIS",PREV,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+PREV-11,Minuta lendo o processo administrativo,PREV,/app/minutas,PARCIAL,parte manual coberta pelos E2E reais,"Minuta a partir do processo administrativo depende de leitura do PDF (IA/OCR); hoje com dados informados"
+JUS-01,Área de trabalho por caso/cliente,JUS,/app/casos/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+JUS-06,Citações com fonte e status verificável,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+JUS-07,Bloqueio de citação sem origem,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+JUS-09,Comparação de versões e revisão,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+JUS-10,Exportação DOCX/PDF e anexação ao caso,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
+JUS-12,Adaptadores de pesquisa e IA futuros,JUS,/admin/integracoes,BLOQUEADO,—,"Adaptadores existem como contrato; nenhum provedor de pesquisa/IA conectado"
+JUS-14,Distinção API Jusbrasil Soluções × Jus IA,JUS,/admin/integracoes,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Distinção documentada; sem conector"
+INT-01,Upload/validação de CNIS em PDF,INT,/app/documentos,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+INT-02,Score de saúde do CNIS,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+INT-04,"Lacunas, abaixo do mínimo, concomitâncias",INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+INT-05,Linha do tempo de vínculos,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Linha do tempo calculada; validação profissional pendente"
+INT-06,RMI estimada e comparação de cenários,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+INT-07,Relatório Word para cliente e advogado,INT,/app/minutas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Relatório Word gerado; revisão obrigatória"
+INT-08,Documentação faltante e ações prioritárias,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
+DJ-01,Metadados públicos de processos (capa e movimentos),DataJud,/admin/integracoes,BLOQUEADO,—,"DataJud: termos restringem uso comercial; parecer jurídico pendente"
+CRM-01,Follow-up ético com opt-out e horário,Cliente,/app/crm/leads/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Regras e opt-out gravados; contato é registrado manualmente (nada enviado)"
+CRM-02,Campanha → lead UTM → triagem → proposta → contrato → caso,Cliente,/app/crm,PARCIAL,parte manual coberta pelos E2E reais,"Funil lead→cliente→proposta→contrato→caso operacional; captura por campanha/UTM depende de anúncios conectados"
+CRM-03,Takeover humano pausa a IA,Cliente,/app/atendimento/[id],BLOQUEADO,—,WhatsApp (Evolution) não credenciado
+CRM-04,Conexão Meta/Google Ads,Cliente,/admin/integracoes,BLOQUEADO,—,OAuth das contas Meta/Google não configurado
+FIN-01,SaaS × honorários separados,Cliente,/admin/faturamento,PARCIAL,parte manual coberta pelos E2E reais,"Separação contábil SaaS × honorários no banco; faturamento automático da assinatura não ativo"
+SEG-01,Estagiário não aprova/revisa,Cliente,—,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",

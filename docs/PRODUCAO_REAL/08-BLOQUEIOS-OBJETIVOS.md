@@ -12,7 +12,7 @@
 | B8 | Jornal do Advogado | licença/coleta | bloqueado | rotina de coleta de fontes oficiais |
 | B9 | Pesquisa de jurisprudência | licença | bloqueado | Jusbrasil ou parecer DataJud |
 | B10 | Cálculos e regras previdenciárias | validação jurídica | funcionam, marcados como demonstrativos | revisão por advogado(a) habilitado(a) |
-| B11 | Entrega de e-mail do Resend | verificação | convites aceitos pelo provedor; entrega não confirmada | conferir painel Resend / caixa do dono |
+| B11 | Entrega de e-mail do Resend | verificação | DKIM/SPF/DMARC publicados e envio aceito (HTTP 200); entrega não consultável com chave só de envio | conferir painel Resend ou criar chave de leitura |
 | B12 | Credenciais coladas em conversa | segurança | **devem ser rotacionadas** | ver `10` |
 | B13 | PITR do banco | plano | backup lógico próprio cobre por ora | ativar PITR |
 | B14 | MFA para Super Admin | configuração | não exigido ainda | ativar TOTP no Auth e na conta do dono |

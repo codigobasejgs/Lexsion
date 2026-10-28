@@ -1,5 +1,21 @@
 # 05 — Relatório QA Master (28/10/2026)
 
+## Rodada 2 (auditoria final, versão `0bc50bd`)
+| Suíte | Resultado |
+|---|---|
+| Lint e typecheck | sem erros |
+| Unitários | **143 PASS** · 1 opcional |
+| Banco (RLS, papéis, portal, plataforma, marca/PWA) | **40 PASS** |
+| Integração com Supabase real | **11 PASS** |
+| E2E completo (build local + Supabase real, 2 telas) | **307 PASS** · 14 opcionais pulados; 3 falhas de tempo sob carga, que passaram ao repetir isoladas (PERS-01 em celular corrigido no teste; PAR-CALC-01 com 1 falha em 4; título em `/recuperar-acesso`) |
+| Suítes reais (local, 2 telas) | real-erp + real-auth **14/14** · real-persistencia + real-recuperacao **14/14** |
+| **Produção `lexsion.com.br`** | real-erp + real-auth **7/7** · real-persistencia + real-recuperacao **7/7** |
+| Backup → restauração isolada | **RESTAURACAO_OK** (2ª execução) |
+
+Novos cenários: PERS-01/02/03 (persistência por módulo após sair e entrar), SA-01 (Super Admin cria escritório real), WL-01 (marca e PWA do escritório real), DEMO-ISO-01 (a demonstração não grava no banco), REC-01 (recuperação de senha de uso único).
+
+## Rodada 1
+
 | Suíte | Comando | Ambiente | Resultado |
 |---|---|---|---|
 | Unitários (domínio) | `pnpm test` | Node | **141 PASS** · 1 opcional |

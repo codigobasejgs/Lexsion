@@ -1,5 +1,7 @@
 # 09 — Parecer GO / NO-GO da operação (28/10/2026)
 
+> Atualizado pela auditoria final: ver `11-RELATORIO-FINAL-AUDITORIA.md` (tabela por módulo, percentual comprovado e prontidão comercial).
+
 **Decisão: GO para operação real dos módulos centrais**, com as ressalvas abaixo. **NO-GO** para os módulos que dependem de provedor não credenciado (ficam bloqueados na tela, sem simulação).
 
 | Critério | Situação | Evidência |
