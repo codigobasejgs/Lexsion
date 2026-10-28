@@ -7,7 +7,7 @@
 | Mutação | RLS de `org_records` desligada | idem | **6 FALHAM** (os testes detectam a brecha); restaurado |
 | Integração real (RLS/Storage/convites) | `RUN_REAL=1 pnpm test:real` | Supabase do projeto | **11 PASS** (28/10, após esta implantação); limpeza conferida |
 | E2E completo | `E2E_PROXY=… npx playwright test` | build de produção local + Supabase real | **301 PASS** · 14 pulados (opcionais) · 0 falhas (antes do REAL-ERP-06, que roda à parte: 14/14) |
-| E2E operacional real | incluído acima (`real-erp`, `real-auth`) | Supabase real, escritórios/pessoas sintéticos `qa-…@lexsion-qa.invalid` | **7 cenários × 2 telas = 14 PASS**; limpeza conferida (0 escritórios, 0 registros, 0 arquivos, 0 vínculos) |
+| E2E operacional real | `real-erp`, `real-auth` (local e **em produção**: 7/7 em lexsion.com.br) | Supabase real, escritórios/pessoas sintéticos `qa-…@lexsion-qa.invalid` | **7 cenários × 2 telas = 14 PASS**; limpeza conferida (0 escritórios, 0 registros, 0 arquivos, 0 vínculos) |
 | Backup + restauração | `scripts/backup-logico.mjs` + `scripts/restaurar-teste.mjs` | cópia isolada | **RESTAURACAO_OK** (16 tabelas, RLS e 2 arquivos conferidos) |
 
 ## Cenários reais verificados no navegador
