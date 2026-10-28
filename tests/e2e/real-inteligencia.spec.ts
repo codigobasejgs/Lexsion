@@ -18,6 +18,8 @@ const people: Record<string, U> = {};
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
 test.skip(!ON, "Supabase não configurado neste ambiente");
+// A coleta roda no SERVIDOR: só tem sentido contra a produção (a rede local não alcança a Câmara diretamente).
+test.skip(({ baseURL }) => !String(baseURL).startsWith("https://"), "teste de produção (coleta no servidor)");
 
 async function mkUser(key: string): Promise<U> {
   const email = `qa-${key}-${tag}@lexsion-qa.invalid`, password = `Qa${crypto.randomBytes(12).toString("base64url")}7x`;
