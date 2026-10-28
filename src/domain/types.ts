@@ -676,3 +676,17 @@ export interface AuditEvent extends OrgEntity {
   entityId: ID;
   detail: string;
 }
+
+/** Análise especializada ligada ao caso (paridade: BPC/LOAS, PPP/atividade especial, perícia). Resultado é sempre revisável. */
+export interface Assessment extends OrgEntity {
+  kind: "bpc" | "ppp";
+  caseId: ID;
+  clientId: ID;
+  title: string;
+  status: "rascunho" | "aguardando_revisao" | "revisado";
+  data: Record<string, unknown>;
+  inputsVersion: number;
+  reviewedVersion: number | null;
+  reviewerId?: ID;
+  history: { at: string; actorId: ID; text: string }[];
+}

@@ -11,6 +11,7 @@ import { diffDays, formatCivil } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
 import type { ContributionPeriod } from "@/domain/types";
 import { PensionReport } from "@/modules/pension/report";
+import { CnisDiagnosis } from "@/modules/pension/cnis-panel";
 import { allowed } from "@/domain/permissions";
 
 const STEPS = ["Cliente", "Documentos", "Vínculos", "Pendências", "Cenários", "Revisão", "Relatório"];
@@ -133,6 +134,8 @@ export function PensionAnalysisView({ id }: { id: string }) {
                 ))}
               </ul>
             </section>
+
+            <CnisDiagnosis periods={a.periods} clientId={a.clientId} caseId={a.caseId} />
 
             <section className="panel p-4" aria-labelledby="pend-title">
               <h2 id="pend-title" className="mb-1 flex items-center gap-2 font-semibold"><ListChecks aria-hidden className="size-4 text-accent" /> Pendências</h2>

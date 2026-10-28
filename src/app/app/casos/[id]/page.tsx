@@ -39,6 +39,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
   const analyses = useCollection("pensionAnalyses");
   const drafts = useCollection("drafts");
   const calcs = useCollection("calculations");
+  const assessments = useCollection("assessments");
   const insts = useCollection("installments");
   const act = useAction("cases", "processes", "caseEvents");
   const [addProc, setAddProc] = useState(false);
@@ -139,7 +140,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
           {tab === "tarefas" && <SimpleList empty="Sem tarefas" items={my.tasks.map((t) => ({ id: t.id, title: t.title, meta: `${formatCivil(t.due)} · ${userName(t.assigneeId)}`, right: <Badge tone={t.done ? "success" : "neutral"}>{t.done ? "Concluída" : "Aberta"}</Badge>, href: `/app/tarefas?id=${t.id}` }))} />}
           {tab === "prazos" && <SimpleList empty="Sem prazos" items={my.deadlines.map((d) => ({ id: d.id, title: d.title, meta: `${d.days} dias ${d.counting} · vence ${formatCivil(d.confirmedEnd ?? d.proposedEnd)}`, right: <Badge tone={d.status === "proposto" ? "warning" : d.status === "confirmado" ? "info" : "success"}>{d.status === "proposto" ? "Aguarda confirmação" : d.status === "confirmado" ? "Confirmado" : "Cumprido"}</Badge>, href: `/app/prazos?id=${d.id}` }))} />}
           {tab === "agenda" && <SimpleList empty="Sem compromissos" items={my.events.map((e) => ({ id: e.id, title: e.title, meta: `${formatCivil(civilFromInstant(e.start))} ${formatTime(e.start)} · ${e.location}`, right: <Badge tone={EVENT_TYPE[e.type].tone}>{EVENT_TYPE[e.type].label}</Badge>, href: `/app/agenda?data=${civilFromInstant(e.start)}` }))} />}
-          {tab === "analises" && <SimpleList empty="Sem análises" items={my.analyses.map((a) => ({ id: a.id, title: a.benefit, meta: a.regime, right: null, href: `/app/previdenciario/analises/${a.id}` }))} />}
+          {tab === "analises" && <SimpleList empty="Sem análises" items={[...my.analyses.map((a) => ({ id: a.id, title: a.benefit, meta: a.regime, right: null, href: `/app/previdenciario/analises/${a.id}` })), ...(assessments.data ?? []).filter((x) => x.caseId === id).map((x) => ({ id: x.id, title: x.title, meta: x.kind === "bpc" ? "BPC/LOAS" : "PPP / atividade especial", right: null, href: `/app/previdenciario/especializadas/${x.id}` }))]} />}
           {tab === "calculos" && <SimpleList empty="Sem cálculos vinculados" items={my.calcs.map((c) => ({ id: c.id, title: c.title, meta: `${c.area} · ${c.model}`, right: <Badge tone={c.status === "revisado" ? "success" : "warning"}>{c.status === "revisado" ? "Revisado" : c.status === "aguardando_revisao" ? "Aguardando revisão" : "Rascunho"}</Badge>, href: `/app/calculos/${c.id}` }))} />}
           {tab === "minutas" && <SimpleList empty="Sem minutas" items={my.drafts.map((d) => ({ id: d.id, title: d.title, meta: d.kind, right: <Badge>{d.status}</Badge>, href: `/app/minutas/${d.id}` }))} action={<Link href={`/app/minutas?novo=1&caso=${k.id}`} className="btn btn-secondary">Nova minuta</Link>} />}
           {tab === "financeiro" && <SimpleList empty="Sem parcelas" items={my.insts.map((i) => ({ id: i.id, title: i.label, meta: `vence ${formatCivil(i.due)}`, right: <span className="num">{formatBRL(i.amount - i.paid)}</span>, href: `/app/financeiro?parcela=${i.id}` }))} />}

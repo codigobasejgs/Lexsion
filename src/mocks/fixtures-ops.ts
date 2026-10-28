@@ -1,5 +1,6 @@
 // Fixtures das etapas E3–E7. Tudo fictício. Notícias/precedentes: amostras rotuladas, sem números inventados apresentados como reais.
 import type {
+  Assessment,
   AgentConfig, AgentRun, AppNotification, Automation, AutomationRun, BankLine, Calculation, Campaign, CaseEvent, Charge, ContentPiece,
   CourtProcess, Expense, ImportBatch, IntegrationConnection, IntegrationEvent, LandingPage, LearningProgress, LegalDraft, NewsItem,
   Objection, OrgSettings, OutboxMessage, Proposal, Publication, Receipt, Requisition, StoredFile, Template,
@@ -212,3 +213,28 @@ export const settings: OrgSettings[] = [
 export const learning: LearningProgress[] = [];
 export const files: StoredFile[] = [];
 export const receiptsSeed = receipts;
+
+// Paridade (BPC/LOAS e PPP): dados 100% sintéticos, ligados aos casos existentes do escritório A.
+export const assessments: Assessment[] = [
+  {
+    id: "as-bpc-maria", organizationId: A, kind: "bpc", caseId: "k-maria-bpc", clientId: "c-maria", title: "BPC/LOAS — Maria (idosa)", status: "rascunho",
+    data: {
+      criterio: "idoso", salarioMinimo: "1.518,00", fracao: "0,25",
+      membros: [{ name: "Maria (requerente)", income: 0 }, { name: "Cônjuge — aposentadoria de 1 salário mínimo", income: 151800, excluded: true }, { name: "Neto", income: 60000 }],
+      provas: { "CadÚnico atualizado": true, "Comprovante de residência": false, "Documento de identidade de todos": true, "Comprovantes de renda": false, "Despesas com saúde/medicamentos": false },
+      notas: "",
+    },
+    inputsVersion: 1, reviewedVersion: null, history: [],
+  },
+  {
+    id: "as-ppp-joao", organizationId: A, kind: "ppp", caseId: "k-joao-apos", clientId: "c-joao", title: "Atividade especial — João (PPP)", status: "rascunho",
+    data: {
+      periodos: [
+        { id: "pp1", empregador: "Construtora Alfa (fictícia)", inicio: "1983-02-01", fim: "1991-06-30", agente: "Ruído", intensidade: "92 dB(A)", epiEficaz: "não informado", documento: "PPP", ltcat: false },
+        { id: "pp2", empregador: "Obras Beta (fictícia)", inicio: "1994-03-01", fim: "2008-12-31", agente: "Poeira de sílica", intensidade: "não informada", epiEficaz: "sim", documento: "PPP", ltcat: true },
+      ],
+      quesitos: [],
+    },
+    inputsVersion: 1, reviewedVersion: null, history: [],
+  },
+];

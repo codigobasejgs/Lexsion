@@ -23,6 +23,7 @@ const GLOSSARY: [string, string][] = [
 export default function PrevidenciarioPage() {
   const analyses = useCollection("pensionAnalyses");
   const clients = useCollection("clients");
+  const assessments = useCollection("assessments");
   const [regime, setRegime] = useState<"RGPS" | "RPPS">("RGPS");
   const rows = (analyses.data ?? []).filter((a) => a.regime === regime);
   return (
@@ -52,6 +53,18 @@ export default function PrevidenciarioPage() {
             })}
           </ul>
         )}
+        <section className="mt-6" aria-labelledby="esp-t" data-tour="analises-especializadas">
+          <h2 id="esp-t" className="mb-2 font-semibold">Análises especializadas (BPC/LOAS, atividade especial)</h2>
+          {!assessments.data?.length ? <EmptyState title="Nenhuma análise especializada" text="Elas ficam ligadas ao caso e geram quesitos, pendências e minutas para revisão." /> : (
+            <ul className="space-y-2">{assessments.data.map((x) => (
+              <li key={x.id}><Link href={`/app/previdenciario/especializadas/${x.id}`} className="panel flex flex-wrap items-center gap-3 p-4 hover:border-line-strong">
+                <div className="min-w-0 flex-1"><p className="font-medium">{x.title}</p><p className="text-sm text-fg-muted">{x.kind === "bpc" ? "BPC/LOAS" : "PPP / atividade especial"} · versão {x.inputsVersion}</p></div>
+                <Badge tone={x.status === "revisado" && x.reviewedVersion === x.inputsVersion ? "success" : "warning"}>{x.status === "revisado" && x.reviewedVersion === x.inputsVersion ? "Revisada" : "Aguardando revisão"}</Badge>
+                <ChevronRight aria-hidden className="size-4 text-fg-muted" />
+              </Link></li>
+            ))}</ul>
+          )}
+        </section>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <section className="panel p-4 text-sm"><h2 className="mb-2 font-semibold">Benefícios cobertos (interface)</h2><ul className="list-disc space-y-1 pl-5">{BENEFITS.map((b) => <li key={b}>{b}</li>)}</ul></section>
           <section className="panel p-4 text-sm"><h2 className="mb-2 font-semibold">Modalidades separadas</h2><div className="flex flex-wrap gap-1.5">{MODALITIES.map((m) => <Badge key={m} icon={false}>{m}</Badge>)}</div><p className="mt-2 text-fg-muted">RMI, valor da causa e atrasados: motores futuros, com fonte e versão das regras.</p></section>

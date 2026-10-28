@@ -21,6 +21,8 @@ export default defineConfig({
           { name: "help-mobile", testDir: "tests/capture", testMatch: /help\.capture\.ts$/, use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } } },
           { name: "landing-desktop", testDir: "tests/capture", testMatch: /landing\.capture\.ts$/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
           { name: "landing-mobile", testDir: "tests/capture", testMatch: /landing\.capture\.ts$/, use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } } },
+          { name: "paridade-desktop", testDir: "tests/capture", testMatch: /paridade\.capture\.ts$/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+          { name: "paridade-mobile", testDir: "tests/capture", testMatch: /paridade\.capture\.ts$/, use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } } },
         ]
       : []),
     // Medição de primeira carga (docs/performance.md): só com PERF=1.

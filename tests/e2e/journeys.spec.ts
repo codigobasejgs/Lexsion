@@ -152,6 +152,7 @@ test("6. aprendizagem: tour pausado e retomado; artigo abre", async ({ page }) =
   await expect(pop.getByText("passo 2 de 3")).toBeVisible();
   await pop.getByRole("button", { name: "Avançar" }).click();
   await pop.getByRole("button", { name: "Concluir" }).click();
+  await expect(pop).toBeHidden(); // popover só fecha depois de gravar o progresso (evita navegar antes do IndexedDB)
   await page.goto("/app/academia");
   await expect(page.getByTestId("tour-primeiro-acesso").getByText("Concluído")).toBeVisible();
   await page.goto("/app/ajuda");
