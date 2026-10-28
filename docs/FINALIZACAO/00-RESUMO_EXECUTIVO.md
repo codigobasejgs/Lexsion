@@ -1,9 +1,9 @@
 # 00 — Resumo executivo (frontend LexSion, fase pré-backend)
 
-Data: 27/10/2026 · Branch local `saas-multitenant` · Produção (`lexsion.com.br`) **ainda no commit `c3ae05b`**: as entregas abaixo estão em 10 commits locais, **não publicados**, aguardando autorização.
+Data: 27/10/2026 · **Publicado em produção (`lexsion.com.br`) em 28/10/2026**, commit `790b0b5` em `main`, com autorização do proprietário. Smoke em produção: 4/4 PASS.
 
 ## Antes × depois
-| Tema | Antes (produção atual) | Depois (local, testado) |
+| Tema | Antes (produção até 27/10) | Depois (publicado em 28/10) |
 |---|---|---|
 | Raiz `/` | redireciona para `/entrar` (perfis fictícios) | landing comercial com 10 prints reais do app, FAQ, SEO, CTA |
 | Login | lista de perfis fictícios | `/entrar` profissional, honesto: não cria sessão, informa que o acesso real não está ativo |

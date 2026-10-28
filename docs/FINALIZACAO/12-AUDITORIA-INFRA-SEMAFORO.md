@@ -7,9 +7,9 @@ Feita em 27/10/2026 por HTTP público e DNS-over-HTTPS. **Nenhuma alteração** 
 | `lexsion.com.br` A | `76.76.21.21` (Vercel) | Verde | — |
 | `www` | CNAME `cname.vercel-dns.com`, 308 → raiz | Verde | — |
 | HTTPS/HSTS | `Strict-Transport-Security: max-age=63072000` | Verde | considerar `includeSubDomains; preload` após estabilizar |
-| Cabeçalhos | `X-Frame-Options DENY`, `nosniff`, `Referrer-Policy` | Verde | `Permissions-Policy` adicionada localmente (publica no próximo deploy) |
+| Cabeçalhos | `X-Frame-Options DENY`, `nosniff`, `Referrer-Policy` | Verde | `Permissions-Policy` em produção desde 28/10 |
 | CSP | ausente no HTML (só no `sw.js`) | Amarelo | CSP com nonce na fase backend |
-| Conteúdo em produção | commit `c3ae05b`: `/` → 307 `/entrar`; `/demonstracao`, `/sitemap.xml`, `/robots.txt` → 404 | Amarelo | publicar os commits locais após aprovação |
+| Conteúdo em produção | 27/10: commit `c3ae05b` (`/` → `/entrar`; demo, sitemap e robots 404). 28/10: `790b0b5` publicado, todas as rotas 200 | Verde | — |
 | E-mail raiz | `MX 0 .` + `v=spf1 -all` + `DMARC p=reject` | Verde | domínio raiz não envia nem recebe e-mail (proteção contra falsificação) |
 | Resend (`send.`) | MX/SPF para `send.forge.rmta.net`, DKIM `resend._domainkey` presente | Verde | verificar status “Verified” no painel Resend |
 | Supabase | não criado | Cinza | fase 2 |

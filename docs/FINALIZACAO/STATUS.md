@@ -14,4 +14,4 @@
 | 9 Treinamento | 4 artigos, 2 tours, trilha nova, 42 prints | 3e82809, 09b873d | HELP, QA-RBAC-07, `help` | livros (proprietário) |
 | 10 QA Master | 258 E2E, 119 unit, inventário 101/101, performance, audit, docs | 1f9aa2a + este commit | `18-*` | Firefox/WebKit, leitor de tela |
 
-Próxima onda: **publicação** (após autorização) e **backend fase 2** (após rotação de credenciais e aprovação do modelo).
+Publicação: **feita em 28/10/2026** (`790b0b5`, smoke 4/4). Próxima onda: **backend fase 2** (após rotação de credenciais e aprovação do modelo).

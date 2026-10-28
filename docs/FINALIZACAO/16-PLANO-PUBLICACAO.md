@@ -1,6 +1,6 @@
 # 16 — Plano de publicação
 
-Estado: 10 commits locais em `saas-multitenant` à frente de `origin/main` (`c3ae05b`). **Push em `main` publica automaticamente em `lexsion.com.br`** (Vercel). Nada foi enviado.
+Estado: **publicado em 28/10/2026** por push direto (fast-forward, sem force) em `main` (`c3ae05b` → `790b0b5`), por decisão do proprietário, sem etapa de preview. Pós-deploy verificado: `/`, `/demonstracao`, `/entrar`, `/sitemap.xml`, `/robots.txt`, manifest → 200; `Permissions-Policy` presente; `pnpm test:smoke` 4/4 PASS. O roteiro abaixo fica para as próximas publicações.
 
 ## Opção recomendada: preview antes de produção
 1. Revisar o diff: `git log --oneline origin/main..HEAD` e `git diff --stat origin/main..HEAD`.

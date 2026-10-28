@@ -3,7 +3,7 @@
 Legenda: ✅ atendido e testado localmente · ⏳ depende de autorização/proprietário · ❌ não atendido.
 
 ### Conversão
-- ✅ `/` projetada como landing comercial completa (local; publicação ⏳ autorização).
+- ✅ `/` landing comercial completa, publicada em 28/10/2026.
 - ✅ Prints genuínos do app, com links pertinentes (QA-LANDING-01/03).
 - ✅ Menus, funcionalidades, planos sem preço inventado, FAQ, CTA, SEO (QA-LANDING-02/05).
 - ✅ Responsividade mobile/tablet/desktop documentada (`qa-responsivo`, `lexsion-site` em 360 e 1440).
@@ -32,4 +32,4 @@ Legenda: ✅ atendido e testado localmente · ⏳ depende de autorização/propr
 - ✅ Nenhuma alteração em Cloudflare/DNS/Resend/Vercel/produção nesta fase.
 
 ## Decisão
-**GO técnico para publicar o frontend demonstrativo**, condicionado a: (1) autorização explícita para push/preview/produção; (2) rotação das credenciais. **NO-GO para uso com dados reais** até a fase de backend (autenticação e RLS).
+**Frontend demonstrativo publicado** (28/10/2026, autorizado). Pendente do proprietário: rotação das credenciais. **NO-GO para uso com dados reais** até a fase de backend (autenticação e RLS).

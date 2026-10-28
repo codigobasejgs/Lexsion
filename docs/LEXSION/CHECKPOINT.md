@@ -16,4 +16,4 @@ Branch: `saas-multitenant`. Estado consolidado em `docs/FINALIZACAO/STATUS.md` (
 | E9 tours/ajuda/prints/academia | feito | 3e82809, 09b873d |
 | E10 QA Master + docs | feito | 61cdbd4, 1f9aa2a, (commit de docs) |
 
-Publicação: aguardando autorização (`docs/FINALIZACAO/16-PLANO-PUBLICACAO.md`).
+Publicação: feita em 28/10/2026 (`docs/FINALIZACAO/16-PLANO-PUBLICACAO.md`).
