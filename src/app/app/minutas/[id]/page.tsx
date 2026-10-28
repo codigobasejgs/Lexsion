@@ -19,6 +19,7 @@ import { formatInstant } from "@/lib/dates";
 import type { LegalDraft } from "@/domain/types";
 import { checkCitations } from "@/domain/citations";
 import { SourcesPanel } from "@/modules/drafts/sources-panel";
+import { VersionsPanel } from "@/modules/drafts/versions-panel";
 
 const SECTIONS = ["Fatos (informados)", "Documentos (extraídos)", "Pontos controvertidos", "Fundamentos", "Hipóteses (a confirmar)", "Pedidos", "Referências"];
 
@@ -111,6 +112,7 @@ function Editor({ d }: { d: LegalDraft }) {
               <p className="text-xs text-fg-muted">Exportação só após aprovação. O arquivo sai marcado como rascunho demonstrativo; nada é protocolado.</p>
             </section>
             <SourcesPanel body={d.body} caseId={d.caseId} />
+            <VersionsPanel d={d} current={body} onRestore={setBody} />
             <section className="panel space-y-2 p-4 text-sm">
               <div className="flex items-center gap-2"><h2 className="flex flex-1 items-center gap-1.5 font-semibold text-ai"><Sparkles aria-hidden className="size-4" /> Assistente</h2><SimulatedBadge /></div>
               <p className="text-fg-muted">Sugestões separam fatos, dados extraídos e hipóteses. Nunca inserem texto sozinhas.</p>

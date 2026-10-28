@@ -475,6 +475,8 @@ export interface LegalDraft extends OrgEntity {
   comments: { at: string; actorId: ID; text: string }[];
   history: { at: string; actorId: ID; text: string }[];
   updatedAt: string;
+  /** Versões anteriores do texto (a cada salvamento). Opcional: minutas antigas não têm. */
+  versions?: { n: number; at: string; actorId: ID; body: string }[];
 }
 
 export interface Template extends OrgEntity {

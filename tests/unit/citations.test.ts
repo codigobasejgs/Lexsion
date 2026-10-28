@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkCitations, findCitations } from "@/domain/citations";
+import { lineDiff } from "@/domain/text-diff";
 
 describe("citações verificáveis", () => {
   it("encontra leis, súmulas, recursos e CNJ, sem repetir", () => {
@@ -12,5 +13,12 @@ describe("citações verificáveis", () => {
     expect(r.rows.map((x) => [x.citation, x.status])).toEqual([["Lei 8.213/1991", "VERIFICADO"], ["Súmula 576 do STJ", "NAO_VERIFICADO"], ["REsp 1/SP", "NAO_DISPONIVEL"]]);
     expect(r.blocking).toHaveLength(2);
     expect(checkCitations("Texto sem citação.", sources).blocking).toHaveLength(0);
+  });
+});
+
+describe("diff de versões da minuta", () => {
+  it("marca linhas removidas, incluídas e mantidas na ordem", () => {
+    expect(lineDiff("a\nb\nc", "a\nB\nc\nd")).toEqual([{ op: "=", text: "a" }, { op: "-", text: "b" }, { op: "+", text: "B" }, { op: "=", text: "c" }, { op: "+", text: "d" }]);
+    expect(lineDiff("igual", "igual")).toEqual([{ op: "=", text: "igual" }]);
   });
 });

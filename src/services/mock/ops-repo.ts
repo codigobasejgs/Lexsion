@@ -432,6 +432,7 @@ export const draftService = {
     const materialChange = d.approvedHash && textHash(body) !== d.approvedHash;
     const next: LegalDraft = {
       ...d, body, updatedAt: at,
+      versions: d.body === body ? d.versions : [...(d.versions ?? []), { n: (d.versions?.length ?? 0) + 1, at, actorId: ctx.actorId, body: d.body }].slice(-20),
       status: materialChange ? "ajustes" : d.status, approvedHash: materialChange ? undefined : d.approvedHash,
       history: [...d.history, { at, actorId: ctx.actorId, text: materialChange ? "Alteração após aprovação — aprovação invalidada" : "Texto salvo" }],
     };

@@ -69,3 +69,21 @@ test("PAR-FONTE-02 (E2E-02): verificação de fonte é do escritório — no B a
   await expect(lei2).toContainText("Não disponível"); // fonte do A não vaza para o B
   await expect(lei2).not.toContainText("Conferido por Helena");
 });
+
+test("PAR-MINUTA-01 (JUS-09/TI-16): cada salvamento guarda versão; diff mostra o que mudou e restaurar volta ao editor", async ({ page }) => {
+  await signIn(page, /Helena Prado/);
+  await page.goto("/app/minutas/dr-lucia");
+  const editor = page.getByLabel("Texto da minuta");
+  const original = await editor.inputValue();
+  await editor.fill(original.replace("Pedidos: concessão do benefício desde a data do requerimento.", "Pedidos: concessão do benefício desde o óbito."));
+  await page.getByRole("button", { name: "Salvar" }).click();
+  const v = page.getByTestId("versoes-minuta");
+  await expect(v.getByRole("heading")).toHaveText(/Versões \(1\)/);
+  await v.getByLabel("Comparar com o texto atual").selectOption({ index: 1 });
+  const region = v.getByRole("region", { name: /Diferenças entre v1/ });
+  await expect(region).toContainText("Removida: Pedidos: concessão do benefício desde a data do requerimento.");
+  await expect(region).toContainText("Incluída: Pedidos: concessão do benefício desde o óbito.");
+  await v.getByRole("button", { name: /Restaurar v1/ }).click();
+  await expect(editor).toHaveValue(original);
+  await expect(page.getByRole("button", { name: "Salvar" })).toBeEnabled(); // restaurar não grava sozinho
+});
