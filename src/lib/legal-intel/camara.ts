@@ -27,7 +27,12 @@ export interface NormalizedDoc {
 
 async function getJson<T>(url: string, attempt = 0): Promise<T> {
   if (!ALLOW.test(url)) throw new Error("URL fora da allowlist da Câmara");
-  const r = await fetch(url, { headers: { accept: "application/json", "user-agent": UA }, signal: AbortSignal.timeout(20_000), cache: "no-store" });
+  const r = await fetch(url, { headers: { accept: "application/json", "user-agent": UA }, signal: AbortSignal.timeout(20_000), cache: "no-store" }).catch((e: Error) => e);
+  if (r instanceof Error) {
+    // Falha de rede/tempo esgotado: mesma política de retry exponencial; depois disso o erro sobe e a execução registra.
+    if (attempt < 3) { await new Promise((res) => setTimeout(res, 1000 * 2 ** attempt)); return getJson(url, attempt + 1); }
+    throw new Error(`Câmara inacessível (${(r as Error & { cause?: { code?: string } }).cause?.code ?? r.name})`);
+  }
   if ((r.status === 429 || r.status >= 500) && attempt < 3) {
     await new Promise((res) => setTimeout(res, 1000 * 2 ** attempt)); // retry exponencial
     return getJson(url, attempt + 1);
