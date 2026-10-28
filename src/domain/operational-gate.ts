@@ -3,8 +3,7 @@
 // Liberar uma tela = integração comprovada em produção + remover a entrada daqui.
 export interface Blocked { title: string; reason: string; needs: string }
 
-const WHATSAPP: Blocked = { title: "Atendimento por WhatsApp", reason: "A conexão com o WhatsApp (Evolution API) ainda não foi configurada para o seu escritório.", needs: "URL e chave da instância Evolution e decisão Baileys × Cloud API oficial." };
-const AI: Blocked = { title: "Assistentes de IA", reason: "Nenhum provedor de IA foi contratado e validado para dados jurídicos.", needs: "Provedor, contrato de tratamento de dados (LGPD) e limites por escritório." };
+const AI: Blocked = { title: "Agentes autônomos de IA", reason: "Agentes que respondem sozinhos ao cliente não estão liberados: toda resposta de IA passa por revisão humana.", needs: "Use o Assistente de IA (sugestões com revisão). Agentes autônomos exigem política de uso aprovada pelo escritório." };
 const PAY: Blocked = { title: "Cobranças online", reason: "Nenhum provedor de pagamento (Asaas, InfinitePay ou Mercado Pago) está credenciado. Nenhuma cobrança é emitida.", needs: "Conta do escritório no provedor, chaves de API e segredo de webhook." };
 const SIGN: Blocked = { title: "Assinatura eletrônica", reason: "A assinatura eletrônica (ZapSign) não está credenciada; registrar assinatura sem provedor não tem validade.", needs: "Token da conta ZapSign e webhook de conclusão." };
 const ADS: Blocked = { title: "Marketing e anúncios", reason: "As contas de anúncios (Meta/Google) e a publicação de páginas não estão conectadas.", needs: "OAuth das contas do escritório e aprovação do app." };
@@ -13,8 +12,10 @@ const RESEARCH: Blocked = { title: "Pesquisa de jurisprudência", reason: "Nenhu
 const AUTOMATION: Blocked = { title: "Automações", reason: "As automações disparam mensagens por WhatsApp/e-mail, que ainda não estão configurados para clientes.", needs: "WhatsApp e e-mail transacional a clientes habilitados." };
 
 export const BLOCKED_ROUTES: [prefix: string, b: Blocked][] = [
-  ["/app/atendimento", WHATSAPP],
-  ["/app/ia", AI],
+  // Atendimento (WhatsApp/Evolution) e Assistente de IA (Gemini) estão LIBERADOS: integrações reais no servidor.
+  ["/app/ia/agentes", AI],
+  ["/app/ia/simulador", AI],
+  ["/app/ia/execucoes", AI],
   ["/app/automacoes", AUTOMATION],
   ["/app/pagamentos", PAY],
   ["/app/assinaturas", SIGN],

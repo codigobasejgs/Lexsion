@@ -59,6 +59,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Inteligência e conteúdo",
     items: [
+      { href: "/app/ia/assistente", label: "Assistente de IA", icon: Bot, area: "ia" },
       { href: "/app/ia/agentes", label: "Agentes de IA", icon: Bot, area: "ia" },
       { href: "/app/automacoes", label: "Automações", icon: Workflow, area: "automacoes" },
       { href: "/app/jornal", label: "Jornal do Advogado", icon: Newspaper, area: "jornal" },

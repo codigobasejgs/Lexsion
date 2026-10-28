@@ -11,6 +11,7 @@ import { INT_STATUS } from "@/modules/integrations/labels";
 import { messagingService } from "@/services/mock/ops-repo";
 import { createRow } from "@/services/mock/generic";
 import { formatInstant } from "@/lib/dates";
+import { WhatsAppReal } from "@/modules/integrations/real-panels";
 
 export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[provider]">) {
   const live = useLive();
@@ -43,6 +44,7 @@ export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[
             <h2 className="font-semibold">Configuração (mascarada)</h2>
             {Object.keys(i.maskedConfig).length ? <dl>{Object.entries(i.maskedConfig).map(([k, v]) => <div key={k} className="flex justify-between gap-2"><dt className="text-fg-muted">{k}</dt><dd className="font-mono">{v}</dd></div>)}</dl> : <p className="text-fg-muted">Nada configurado. Chaves ficam só no servidor (nunca no navegador).</p>}
             <p className="text-fg-muted">Última sincronização: {i.lastSync ? formatInstant(i.lastSync) : "—"}</p>
+            {provider === "evolution" && live && <WhatsAppReal />}
             {provider === "evolution" && !live && (
               <div className="space-y-2 border-t border-line pt-3">
                 <h3 className="font-medium" data-tour="conexao-whatsapp">Conexão WhatsApp (simulação)</h3>

@@ -175,7 +175,8 @@ export function Inbox({ conversationId }: { conversationId?: string }) {
 }
 
 function ConversationView({ conv, messages, backHref, showContext, toggleContext, openMobileContext }: { conv: Conversation; messages: Message[]; backHref: string; showContext: boolean; toggleContext: () => void; openMobileContext: () => void }) {
-  const { ctx } = useSession();
+  const { ctx, mode: sessionMode } = useSession();
+  const live = sessionMode === "real";
   const invalidate = useInvalidate();
   const [draft, setDraft] = useState("");
   const [mode, setMode] = useState<"equipe" | "nota">(conv.aiActive ? "nota" : "equipe");
@@ -220,6 +221,12 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
       return;
     }
     setDraft("");
+    // Operação: a mensagem gravada é despachada pelo WhatsApp do escritório (servidor). Sem conexão, fica na fila.
+    if (live && mode === "equipe" && ctx) {
+      const res = await fetch("/api/whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: ctx.organizationId, action: "send", conversationId: conv.id, messageId: r.data.id }) }).catch(() => null);
+      const j = (await res?.json().catch(() => null)) as { ok: boolean; error?: { message: string } } | null;
+      if (!j?.ok) setError(j?.error?.message ?? "Sem conexão: a mensagem ficou na fila.");
+    }
     await invalidate("conversations", "messages");
   };
 
@@ -352,10 +359,26 @@ function Bubble({ m }: { m: Message }) {
 }
 
 function ContextPanel({ conv, caseTitle, fees, onClose, visibility }: { conv: Conversation; caseTitle?: string; fees?: number; onClose: () => void; visibility: string }) {
-  const { ctx } = useSession();
+  const { ctx, mode } = useSession();
+  const live = mode === "real";
   const invalidate = useInvalidate();
   const [summary, setSummary] = useState(conv.summary);
   const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const msgs = useCollection("messages");
+  const askAi = async () => {
+    if (!ctx) return;
+    setAiBusy(true);
+    setAiError(null);
+    // Contexto mínimo: as últimas mensagens desta conversa (sem documentos nem dados de outros clientes).
+    const last = (msgs.data ?? []).filter((m) => m.conversationId === conv.id && m.author !== "nota").slice(-8).map((m) => `${m.author === "contato" ? "Cliente" : "Escritório"}: ${m.text}`).join("\n");
+    const res = await fetch("/api/ia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: ctx.organizationId, purpose: "resposta", context: last || conv.summary || "Cliente aguardando retorno." }) }).catch(() => null);
+    const j = (await res?.json().catch(() => null)) as { ok: boolean; data?: { text: string }; error?: { message: string } } | null;
+    setAiBusy(false);
+    if (j?.ok && j.data) setSuggestion(j.data.text);
+    else setAiError(j?.error?.message ?? "A IA não respondeu agora.");
+  };
   const dirty = summary !== conv.summary;
   useDirtyGuard(`summary-${conv.id}`, dirty);
 
@@ -401,8 +424,9 @@ function ContextPanel({ conv, caseTitle, fees, onClose, visibility }: { conv: Co
         <section className="rounded-[var(--radius-panel)] border border-ai/30 bg-ai-bg/50 p-3">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="flex items-center gap-1.5 font-medium text-ai"><Sparkles aria-hidden className="size-4" /> Sugestão de resposta</h3>
-            <SimulatedBadge />
+            {live ? <Badge icon={false}>IA · revisar antes de usar</Badge> : <SimulatedBadge />}
           </div>
+          {aiError && <p role="alert" className="mb-2 text-xs text-danger">{aiError}</p>}
           {suggestion ? (
             <>
               <p className="rounded border border-line bg-surface p-2">{suggestion}</p>
@@ -410,7 +434,7 @@ function ContextPanel({ conv, caseTitle, fees, onClose, visibility }: { conv: Co
               <button className="btn btn-secondary mt-2 min-h-9 w-full" onClick={async () => { await navigator.clipboard?.writeText(suggestion).catch(() => {}); }}>Copiar sugestão</button>
             </>
           ) : (
-            <button className="btn btn-secondary min-h-9 w-full" onClick={() => setSuggestion(conv.missingDocs.length ? `Olá! Para seguirmos, ainda precisamos de: ${conv.missingDocs.join(" e ")}. Pode enviar por aqui mesmo, uma foto nítida já ajuda.` : "Olá! Recebemos sua mensagem. A advogada responsável vai analisar e retorna em breve.")}>
+            live ? <button className="btn btn-secondary min-h-9 w-full" disabled={aiBusy} onClick={askAi}>{aiBusy ? "Gerando…" : "Gerar sugestão com IA"}</button> : <button className="btn btn-secondary min-h-9 w-full" onClick={() => setSuggestion(conv.missingDocs.length ? `Olá! Para seguirmos, ainda precisamos de: ${conv.missingDocs.join(" e ")}. Pode enviar por aqui mesmo, uma foto nítida já ajuda.` : "Olá! Recebemos sua mensagem. A advogada responsável vai analisar e retorna em breve.")}>
               Gerar sugestão (demonstração)
             </button>
           )}

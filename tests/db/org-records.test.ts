@@ -185,3 +185,22 @@ describe("PWA white-label (marca pública)", () => {
     expect(await denied(U.adminA, "insert into storage.objects (bucket_id, name) values ('marcas', 'slug-escritorio-b/x.png')")).toMatch(/row-level/);
   });
 });
+
+describe("WhatsApp e IA (estado e consentimento)", () => {
+  it("instância só com prefixo lexsion-; equipe lê o estado mas não grava; outro escritório não vê", async () => {
+    expect(await denied(U.superadmin, "insert into public.whatsapp_instances (organization_id, instance_name, webhook_secret_hash) values ($1,'tubarao-prod','x')", [orgA]).catch(String)).toMatch(/check constraint|row-level|permission/);
+    await db.query("insert into public.whatsapp_instances (organization_id, instance_name, webhook_secret_hash) values ($1,'lexsion-escritorio-a','h')", [orgA]);
+    expect((await as(U.advA, "select instance_name, status from public.whatsapp_instances")).length).toBe(1);
+    expect(await as(U.adminB, "select instance_name from public.whatsapp_instances")).toEqual([]);
+    expect(await denied(U.adminA, "update public.whatsapp_instances set status = 'operacional'")).toMatch(/permission denied/);
+    expect(await denied(U.advA, "select webhook_secret_hash from public.whatsapp_instances")).toMatch(/permission denied/);
+  });
+  it("IA: só o titular habilita (auditado); uso visível só a titular/gestor", async () => {
+    expect(await denied(U.advA, "select public.set_ai_enabled($1, true)", [orgA])).toMatch(/somente o titular/);
+    await as(U.adminA, "select public.set_ai_enabled($1, true)", [orgA]);
+    expect((await as<{ ai_enabled_at: string }>(U.advA, "select ai_enabled_at from public.organizations where id = $1", [orgA]))[0].ai_enabled_at).not.toBeNull();
+    await db.query("insert into public.ai_usage (organization_id, actor_id, purpose, model, input_chars, output_chars) values ($1,$2,'resumo','m',10,5)", [orgA, U.advA]);
+    expect(await as(U.advA, "select id from public.ai_usage")).toEqual([]);
+    expect((await as(U.adminA, "select id from public.ai_usage")).length).toBe(1);
+  });
+});
