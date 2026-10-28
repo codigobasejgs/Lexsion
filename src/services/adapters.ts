@@ -10,7 +10,7 @@ export type AdapterMode = "demo" | "not_configured" | "real";
 export interface ProviderInfo {
   id: string;
   name: string;
-  category: "dados" | "mensagens" | "email" | "pagamentos" | "assinatura" | "armazenamento" | "juridico" | "ia";
+  category: "dados" | "mensagens" | "email" | "pagamentos" | "assinatura" | "armazenamento" | "juridico" | "ia" | "indices" | "anuncios";
   mode: AdapterMode;
   status: IntegrationStatus; // "active" é impossível sem backend (testado)
   owner: "platform" | "tenant"; // quem contrata e configura
@@ -44,6 +44,8 @@ export interface EmailAdapter { info: ProviderInfo; send(input: { to: string; su
 export interface SignatureAdapter { info: ProviderInfo; createEnvelope(input: { documentName: string; signers: { name: string; email: string }[] }): Promise<Result<{ envelopeId: string; simulated: true }>> }
 export interface LegalDataAdapter { info: ProviderInfo; search(input: { cnj: string }): Promise<Result<{ found: false; reason: string }>> }
 export interface ObjectStorageAdapter { info: ProviderInfo; signedUploadUrl(input: { key: string; contentType: string }): Promise<Result<never>> }
+/** Índices de correção (série mensal). Hoje a série é INFORMADA pelo usuário na central de cálculos. */
+export interface IndexSourceAdapter { info: ProviderInfo; series(input: { index: string; from: string; to: string }): Promise<Result<{ month: string; rate: number }[]>> }
 export interface AIProviderAdapter { info: ProviderInfo; suggest(input: { prompt: string }): Promise<Result<{ text: string; requiresHumanReview: true }>> }
 
 const cid = () => crypto.randomUUID().slice(0, 8);
@@ -82,7 +84,7 @@ export const signatureAdapter: SignatureAdapter = {
   createEnvelope: async () => ({ ok: true, data: { envelopeId: `sim-${cid()}`, simulated: true }, correlationId: cid() }),
 };
 export const legalDataAdapter: LegalDataAdapter = {
-  info: { id: "datajud", name: "CNJ DataJud e tribunais", category: "juridico", mode: "not_configured", status: "planned", owner: "platform", requires: ["DATAJUD_API_KEY"], notes: "Só metadados públicos; autos sigilosos e scraping fora de escopo." },
+  info: { id: "datajud", name: "CNJ DataJud e tribunais", category: "juridico", mode: "not_configured", status: "planned", owner: "platform", requires: ["DATAJUD_API_KEY (chave pública do CNJ, pode mudar)"], notes: "Só metadados públicos (capa e movimentações); sem partes, inteiro teor ou sigilosos. Termos do CNJ restringem uso comercial: avaliar antes de conectar." },
   search: async () => ({ ok: true, data: { found: false, reason: "Consulta processual ainda não conectada. Cadastre o andamento manualmente." }, correlationId: cid() }),
 };
 export const storageAdapter: ObjectStorageAdapter = {
@@ -93,6 +95,15 @@ export const aiAdapter: AIProviderAdapter = {
   info: { id: "ia", name: "Assistente de IA", category: "ia", mode: "demo", status: "planned", owner: "platform", requires: ["provedor e contrato a definir"], notes: "Respostas fixas na demonstração; revisão humana obrigatória." },
   suggest: async () => ({ ok: true, data: { text: "Sugestão de demonstração (texto fixo). Revise antes de usar.", requiresHumanReview: true }, correlationId: cid() }),
 };
+export const indexSourceAdapter: IndexSourceAdapter = {
+  info: { id: "cj-indices", name: "API de índices (Cálculo Jurídico)", category: "indices", mode: "not_configured", status: "planned", owner: "platform", requires: ["CJ_API_KEY (cabeçalho X-CJ-API-KEY, só servidor)"], notes: "Produto comercial só de índices (tribunais, compostos, IPCA/INPC/SELIC etc.); não inclui as calculadoras. Chave por contato comercial; limites por plano." },
+  series: async () => notConfigured("A fonte de índices"),
+};
+export const legalKnowledgeInfo: ProviderInfo = { id: "jusbrasil", name: "Jusbrasil Soluções (API)", category: "juridico", mode: "not_configured", status: "planned", owner: "platform", requires: ["contrato e credencial a definir"], notes: "Documentação pública não acessível em 28/10/2026 (bloqueio anti-bot). Não presumir API do Jus IA; avaliar produto e licença com o fornecedor." };
+export const adsInfo: ProviderInfo[] = [
+  { id: "meta-ads", name: "Meta Ads (campanhas e leads)", category: "anuncios", mode: "not_configured", status: "planned", owner: "tenant", requires: ["OAuth da conta do escritório (servidor)"], notes: "Importa leads com UTM; nunca dispara campanha nesta fase. Publicidade conforme Provimento OAB 205/2021." },
+  { id: "google-ads", name: "Google Ads (campanhas e conversões)", category: "anuncios", mode: "not_configured", status: "planned", owner: "tenant", requires: ["OAuth da conta do escritório (servidor)"], notes: "Leitura de métricas e conversões; sem disparo nesta fase." },
+];
 export const authAdapterInfo: ProviderInfo = { id: "supabase", name: "Supabase (login, banco e regras de acesso)", category: "dados", mode: "not_configured", status: "requires_credentials", owner: "platform", requires: ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY (só servidor)"], notes: "Fase 2: autenticação, separação por escritório no banco (RLS) e auditoria." };
 
-export const ALL_PROVIDERS: ProviderInfo[] = [authAdapterInfo, emailAdapter.info, messagingAdapter.info, ...Object.values(paymentAdapters).map((a) => a.info), signatureAdapter.info, storageAdapter.info, legalDataAdapter.info, aiAdapter.info];
+export const ALL_PROVIDERS: ProviderInfo[] = [authAdapterInfo, emailAdapter.info, messagingAdapter.info, ...Object.values(paymentAdapters).map((a) => a.info), signatureAdapter.info, storageAdapter.info, legalDataAdapter.info, aiAdapter.info, indexSourceAdapter.info, legalKnowledgeInfo, ...adsInfo];

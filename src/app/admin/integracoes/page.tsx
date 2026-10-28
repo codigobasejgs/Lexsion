@@ -4,7 +4,7 @@ import { Badge, PageHeader } from "@/components/ui";
 import { ALL_PROVIDERS } from "@/services/adapters";
 import { INTEGRATION_STATUS_LABEL } from "@/domain/saas";
 
-const CATEGORY: Record<string, string> = { dados: "Dados e login", mensagens: "Mensagens", email: "E-mail", pagamentos: "Pagamentos", assinatura: "Assinatura", armazenamento: "Arquivos", juridico: "Fontes jurídicas", ia: "Inteligência artificial" };
+const CATEGORY: Record<string, string> = { dados: "Dados e login", mensagens: "Mensagens", email: "E-mail", pagamentos: "Pagamentos", assinatura: "Assinatura", armazenamento: "Arquivos", juridico: "Fontes jurídicas", ia: "Inteligência artificial", indices: "Índices de correção", anuncios: "Anúncios" };
 
 // Integrações globais da plataforma. Estado honesto: nenhum aparece "Ativo" sem backend e credenciais no servidor.
 export default function IntegracoesGlobaisPage() {

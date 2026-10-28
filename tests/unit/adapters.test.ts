@@ -31,3 +31,12 @@ describe("adaptadores de integração (fase sem backend)", () => {
     expect(fs.readFileSync("src/services/adapters.ts", "utf8")).not.toMatch(/\bfetch\(|XMLHttpRequest|axios/);
   });
 });
+
+describe("adaptadores futuros mapeados (paridade)", () => {
+  it("índices, Jusbrasil e anúncios estão listados como planejados, sem modo real", async () => {
+    const { ALL_PROVIDERS: all, indexSourceAdapter } = await import("@/services/adapters");
+    for (const id of ["cj-indices", "jusbrasil", "meta-ads", "google-ads", "datajud"]) expect(all.find((p) => p.id === id)?.status, id).toBe("planned");
+    const r = await indexSourceAdapter.series({ index: "IPCA-E", from: "2025-01", to: "2025-12" });
+    expect(!r.ok && r.error.code).toBe("not_configured");
+  });
+});
