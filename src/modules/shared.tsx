@@ -27,6 +27,11 @@ export function useUrlState() {
   return { get: (k: string) => sp.get(k), set };
 }
 
+/** Operação real (Supabase): ações simuladas ficam ocultas ou viram registro manual do que aconteceu fora do sistema. */
+export function useLive() {
+  return useSession().mode === "real";
+}
+
 /** Executa uma ação de serviço com prevenção de duplo clique, mensagem de erro e invalidação. */
 export function useAction(...collections: CollectionName[]) {
   const { ctx } = useSession();

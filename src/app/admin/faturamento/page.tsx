@@ -10,10 +10,12 @@ import { formatBRL } from "@/lib/money";
 import { formatCivil, formatInstant } from "@/lib/dates";
 import { applyInvoiceEvent, INTEGRATION_STATUS_LABEL, INVOICE_STATUS_LABEL, type SaasInvoice } from "@/domain/saas";
 import { PLAN_LABEL } from "@/domain/tenancy";
+import { useLive } from "@/modules/shared";
 
 type Ev = Parameters<typeof applyInvoiceEvent>[1]["type"];
 
 export default function FaturamentoPage() {
+  const live = useLive();
   const { user } = useSession();
   const qc = useQueryClient();
   const data = useQuery({ queryKey: ["saasInvoices"], queryFn: async () => ({ inv: await readAll("saasInvoices"), tenants: await readAll("tenants"), providers: await readAll("platformProviders") }) });
@@ -38,11 +40,12 @@ export default function FaturamentoPage() {
   return (
     <>
       <PageHeader title="Financeiro da plataforma" description="Faturas da assinatura LexSion cobradas dos escritórios. Separado dos honorários que cada escritório cobra dos clientes dele." />
+      {live && !data.data?.inv.length && <p className="mb-4 rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning">Faturamento automático da assinatura ainda não está ativo: nenhum provedor de pagamento da plataforma foi credenciado. Nenhuma fatura é emitida nem cobrada.</p>}
       <div aria-live="polite">{log && <p role="status" className="mb-4 rounded border border-info/30 bg-info-bg p-3 text-sm text-info" data-testid="webhook-log">{log}</p>}</div>
       <section className="panel mb-6 overflow-x-auto" tabIndex={0} aria-label="Faturas SaaS (role horizontalmente)" data-tour="sa-faturas">
         <table className="w-full min-w-[760px] text-sm">
           <caption className="sr-only">Faturas da plataforma</caption>
-          <thead><tr className="text-left text-xs text-fg-muted"><th className="p-3">Escritório</th><th>Plano</th><th>Período</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th className="p-3">Simular evento do provedor</th></tr></thead>
+          <thead><tr className="text-left text-xs text-fg-muted"><th className="p-3">Escritório</th><th>Plano</th><th>Período</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th className="p-3">{live ? "Cobrança automática" : "Simular evento do provedor"}</th></tr></thead>
           <tbody>
             {data.data?.inv.map((i) => (
               <tr key={i.id} className="border-t border-line" data-testid={`fatura-${i.id}`}>
@@ -53,12 +56,12 @@ export default function FaturamentoPage() {
                 <td className="num">{formatBRL(i.amount)}</td>
                 <td><Badge tone={i.status === "paga" ? "success" : i.status === "pendente" ? "info" : "warning"}>{INVOICE_STATUS_LABEL[i.status]}</Badge>{i.paidAt && <span className="block text-xs text-fg-muted">{formatInstant(i.paidAt)}</span>}</td>
                 <td className="p-3">
-                  <div className="flex flex-wrap gap-1">
+                  {live ? <span className="text-xs text-fg-muted">Provedor de pagamento não credenciado</span> : <div className="flex flex-wrap gap-1">
                     <button className="btn btn-ghost min-h-9" onClick={() => send(i, "pagamento_confirmado")}>Pagamento confirmado</button>
                     <button className="btn btn-ghost min-h-9" onClick={() => send(i, "pagamento_falhou")}>Falha</button>
                     <button className="btn btn-ghost min-h-9" onClick={() => send(i, "estorno")}>Estorno</button>
                     <button className="btn btn-ghost min-h-9" disabled={!lastEvent[i.id]} onClick={() => send(i, "pagamento_confirmado", true)}>Reenviar último evento</button>
-                  </div>
+                  </div>}
                 </td>
               </tr>
             ))}

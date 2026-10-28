@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/components/ui";
-import { Feedback, useAction, userName } from "@/modules/shared";
+import { Feedback, useAction, useLive, userName } from "@/modules/shared";
 import { ProposalForm } from "@/modules/commercial/proposal-form";
 import { FEE_KIND, PROPOSAL_STATUS } from "@/modules/commercial/labels";
 import { commercialService } from "@/services/mock/ops-repo";
@@ -18,6 +18,7 @@ export default function PropostaPage({ params }: PageProps<"/app/propostas/[id]"
   const { id } = use(params);
   const router = useRouter();
   const { user } = useSession();
+  const live = useLive();
   const props = useCollection("proposals");
   const clients = useCollection("clients");
   const leads = useCollection("leads");
@@ -55,9 +56,9 @@ export default function PropostaPage({ params }: PageProps<"/app/propostas/[id]"
               {p.status === "em_revisao" && user && canApprove(user.role) && <button className="btn btn-primary w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "aprovada", ctx))}>Aprovar</button>}
               {p.status === "aprovada" && <button className="btn btn-primary w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "enviada", ctx), "Marcada como enviada (simulação — nada foi enviado).")}>Enviar ao cliente (simulação)</button>}
               {p.status === "enviada" && <>
-                <div className="flex items-center gap-2"><SimulatedBadge /><span className="text-fg-muted">resposta do cliente</span></div>
-                <button className="btn btn-primary w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "aceita", ctx))}>Simular aceite</button>
-                <button className="btn btn-ghost w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "recusada", ctx))}>Simular recusa</button>
+                <div className="flex items-center gap-2">{live ? <span className="text-fg-muted">Registrar a resposta do cliente (recebida por e-mail, telefone ou pessoalmente)</span> : <><SimulatedBadge /><span className="text-fg-muted">resposta do cliente</span></>}</div>
+                <button className="btn btn-primary w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "aceita", ctx))}>{live ? "Cliente aceitou" : "Simular aceite"}</button>
+                <button className="btn btn-ghost w-full" onClick={() => act.run((ctx) => commercialService.setProposalStatus(p.id, "recusada", ctx))}>{live ? "Cliente recusou" : "Simular recusa"}</button>
               </>}
               {p.status === "aceita" && !p.contractId && (
                 <div className="space-y-2">

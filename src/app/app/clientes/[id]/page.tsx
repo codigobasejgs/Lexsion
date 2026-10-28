@@ -35,7 +35,7 @@ const INST_STATUS = { aberta: { label: "Em aberto", tone: "neutral" }, parcial: 
 
 export default function Cliente360({ params }: PageProps<"/app/clientes/[id]">) {
   const { id } = use(params);
-  const { user } = useSession();
+  const { user, org, mode } = useSession();
   const sp = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -99,6 +99,7 @@ export default function Cliente360({ params }: PageProps<"/app/clientes/[id]">) 
           title={client.name}
           actions={role !== "financeiro" && role !== "atendimento" ? <button className="btn btn-primary" onClick={() => setOpeningCase(true)} data-tour="abrir-caso"><Briefcase aria-hidden className="size-4" /> Abrir caso</button> : undefined}
         />
+        {mode === "real" && org && (role === "admin" || role === "tenant_admin" || role === "advogado") && <PortalAccess organizationId={org.id} clientId={client.id} defaultEmail={client.email ?? ""} name={client.name} />}
         {sp.get("criado") === "1" && <p role="status" className="mb-4 rounded-[var(--radius-control)] border border-success/30 bg-success-bg p-3 text-sm text-success">Cliente cadastrado. Próximo passo: abrir o primeiro caso.</p>}
 
         {/* Identificação */}
@@ -260,5 +261,33 @@ function Timeline({ items }: { items: { at: string; kind: string; text: string }
         </li>
       ))}
     </ol>
+  );
+}
+
+/** Libera o portal ao cliente: convite por e-mail para definir a senha; o vínculo é conferido no banco (RLS). */
+function PortalAccess({ organizationId, clientId, defaultEmail, name }: { organizationId: string; clientId: string; defaultEmail: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(defaultEmail);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const send = async () => {
+    setBusy(true);
+    setMsg(null);
+    const res = await fetch("/api/portal/convites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId, clientId, email: email.trim(), fullName: name }) }).catch(() => null);
+    const j = (await res?.json().catch(() => null)) as { ok: boolean; data?: { invited: boolean }; error?: { message: string } } | null;
+    setBusy(false);
+    setMsg(j?.ok ? { ok: true, text: j.data?.invited ? `Convite enviado para ${email}. O cliente define a senha pelo link e entra em “Sou cliente”.` : `${email} já tinha conta: acesso ao portal liberado.` } : { ok: false, text: j?.error?.message ?? "Sem conexão. Nenhum convite foi enviado." });
+  };
+  return (
+    <section className="panel mb-5 space-y-2 p-4 text-sm" aria-labelledby="portal-h">
+      <div className="flex flex-wrap items-center gap-2"><h2 id="portal-h" className="flex-1 font-semibold">Acesso ao portal do cliente</h2><button className="btn btn-secondary min-h-9" aria-expanded={open} onClick={() => setOpen((v) => !v)}><Mail aria-hidden className="size-4" /> Liberar portal</button></div>
+      {open && (
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="block min-w-0 flex-1"><span className="label">E-mail do cliente</span><input type="email" inputMode="email" autoComplete="off" className="field" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <button className="btn btn-primary" disabled={busy || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())} onClick={send}>{busy ? "Enviando…" : "Enviar convite"}</button>
+        </div>
+      )}
+      <p role={msg && !msg.ok ? "alert" : "status"} className={msg ? (msg.ok ? "text-success" : "text-danger") : "sr-only"}>{msg?.text}</p>
+    </section>
   );
 }

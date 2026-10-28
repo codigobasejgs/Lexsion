@@ -7,11 +7,13 @@ import { useSession } from "@/components/providers";
 import { PageHeader } from "@/components/ui";
 import { TEMPLATES, renderEmail, type TemplateId } from "@/domain/email-templates";
 import { emailAdapter } from "@/services/adapters";
+import { useLive } from "@/modules/shared";
 
 const SAMPLE: Record<string, string> = { nome: "Maria das Graças Exemplo", documento: "comprovante de residência", caso: "BPC/LOAS — pessoa idosa", valor: "R$ 150,00", vencimento: "10/11/2026" };
 
 // Prévia dos e-mails com a marca do escritório. Envio real depende do backend (Resend + domínio verificado).
 export default function EmailsPage() {
+  const live = useLive();
   const { tenant } = useSession();
   const [id, setId] = useState<TemplateId>("documento-pendente");
   const [notice, setNotice] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function EmailsPage() {
             <p className="text-sm"><span className="text-fg-muted">Assunto:</span> <strong data-testid="assunto" dangerouslySetInnerHTML={{ __html: r.subject }} /></p>
             {/* sandbox sem scripts: a prévia não executa nada do HTML */}
             <iframe title="Prévia do e-mail" sandbox="" srcDoc={r.html} className="h-[560px] w-full rounded-[var(--radius-panel)] border border-line bg-white" />
-            <button className="btn btn-secondary" onClick={async () => { const s = await emailAdapter.send({ to: "teste@exemplo.test", subject: r.subject, html: r.html, organizationId: tenant.id }); setNotice(s.ok ? "Envio simulado — nenhum e-mail real foi enviado." : s.error.message); }}><Send aria-hidden className="size-4" /> Enviar teste (simulado)</button>
+            {!live && <button className="btn btn-secondary" onClick={async () => { const s = await emailAdapter.send({ to: "teste@exemplo.test", subject: r.subject, html: r.html, organizationId: tenant.id }); setNotice(s.ok ? "Envio simulado — nenhum e-mail real foi enviado." : s.error.message); }}><Send aria-hidden className="size-4" /> Enviar teste (simulado)</button>}
             <p role="status" aria-live="polite" className="text-sm text-accent">{notice}</p>
           </section>
         </div>

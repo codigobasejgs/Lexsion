@@ -14,6 +14,7 @@ import { diffDays } from "@/lib/dates";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { people as users } from "@/components/people";
 import type { Lead, StageKey } from "@/domain/types";
+import { useLive } from "@/modules/shared";
 
 const EVIDENCE = { confirmada: { label: "Origem confirmada", tone: "success" }, declarada: { label: "Origem declarada", tone: "info" }, nao_identificada: { label: "Origem não identificada", tone: "neutral" } } as const;
 
@@ -22,6 +23,7 @@ function aging(l: Lead) {
 }
 
 export default function CrmPage() {
+  const live = useLive();
   const sp = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -77,7 +79,7 @@ export default function CrmPage() {
           title="Funil comercial"
           description="Etapa comercial do interessado. Não confunda com a fase jurídica do caso."
           actions={<>
-            <Link href="/app/crm/captura" className="btn btn-secondary"><Megaphone aria-hidden className="size-4" /> Simular formulário de campanha</Link>
+            {!live && <Link href="/app/crm/captura" className="btn btn-secondary"><Megaphone aria-hidden className="size-4" /> Simular formulário de campanha</Link>}
             <button className="btn btn-primary" data-tour="novo-lead" onClick={() => set("novo", "1")}><Plus aria-hidden className="size-4" /> Novo lead</button>
           </>}
         />

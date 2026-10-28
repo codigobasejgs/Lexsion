@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BellRing, Info, ReceiptText, RotateCcw, Wallet } from "lucide-react";
-import { Feedback, useAction } from "@/modules/shared";
+import { Feedback, useAction, useLive } from "@/modules/shared";
 import { financeOps } from "@/services/mock/ops-repo";
 import { buildSchedule } from "@/domain/commercial";
 import { addDays } from "@/lib/dates";
@@ -304,7 +304,7 @@ function DetailDialog({ inst, payments, clientName, onClose }: { inst: Installme
               <li key={p.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                 {p.amount < 0 ? <RotateCcw aria-hidden className="size-4 text-danger" /> : <Wallet aria-hidden className="size-4 text-success" />}
                 <span className="num">{formatCivil(p.date)}</span>
-                <span className="min-w-0 flex-1 text-fg-muted">{p.amount < 0 ? "Estorno" : METHOD[p.method]} · {p.source === "manual" ? "baixa manual" : "provedor (simulado)"}{p.note ? ` · ${p.note}` : ""}</span>
+                <span className="min-w-0 flex-1 text-fg-muted">{p.amount < 0 ? "Estorno" : METHOD[p.method]} · {p.source === "manual" ? "baixa manual" : "provedor"}{p.note ? ` · ${p.note}` : ""}</span>
                 <span className={`num font-semibold ${p.amount < 0 ? "text-danger" : ""}`}>{formatBRL(p.amount)}</span>
                 {p.amount > 0 && !reversed && <ReceiptButton paymentId={p.id} />}
                 {p.amount > 0 && !reversed && <button className="btn btn-danger min-h-9" onClick={() => { setReversing(p); setError(null); }}>Estornar</button>}
@@ -346,6 +346,7 @@ function ReceiptButton({ paymentId }: { paymentId: string }) {
 
 /** Lembrete simulado e renegociação (saldo migra para novas parcelas; antigas preservadas). */
 function InstallmentActions({ inst, onDone }: { inst: Installment; onDone: () => void }) {
+  const live = useLive();
   const act = useAction("installments");
   const [reneg, setReneg] = useState(false);
   const balance = inst.amount - inst.paid;
@@ -359,7 +360,7 @@ function InstallmentActions({ inst, onDone }: { inst: Installment; onDone: () =>
   return (
     <section className="mt-4 space-y-3 border-t border-line pt-4 text-sm">
       <div className="flex flex-wrap gap-2">
-        <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => financeOps.remind(inst.id, ctx), "Lembrete registrado (simulação — nenhuma mensagem enviada).")}><BellRing aria-hidden className="size-4" /> Lembrete (simulado)</button>
+        <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => financeOps.remind(inst.id, ctx), live ? "Lembrete registrado (contato feito pela equipe)." : "Lembrete registrado (simulação — nenhuma mensagem enviada).")}><BellRing aria-hidden className="size-4" /> {live ? "Registrar lembrete feito" : "Lembrete (simulado)"}</button>
         <button className="btn btn-secondary min-h-9" onClick={() => setReneg((v) => !v)} aria-expanded={reneg}>Renegociar saldo</button>
       </div>
       {inst.lastReminderAt && <p className="text-fg-muted">Último lembrete: {formatCivil(inst.lastReminderAt.slice(0, 10))}</p>}

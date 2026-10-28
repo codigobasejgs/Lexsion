@@ -160,7 +160,30 @@ test("REAL-ERP-04: portal — cliente vê só o próprio caso, envia documento a
   expect(t?.some((x) => (x.data as { assigneeId: string }).assigneeId === people.adv.id)).toBe(true);
 });
 
-test("REAL-ERP-05: módulo dependente de provedor sem credencial fica bloqueado com o motivo (nada simulado)", async ({ page }) => {
+test("REAL-ERP-06: advogada libera o portal a um cliente pela tela (convite + vínculo no banco); estagiário não vê a opção", async ({ page }) => {
+  const { data: c } = await admin.from("org_records").select("id").eq("organization_id", orgA).eq("collection", "clients").single();
+  const email = `qa-portal2-${tag}@lexsion-qa.invalid`;
+  await login(page, people.adv);
+  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.goto(`/app/clientes/${c!.id}`);
+  await page.getByRole("button", { name: "Liberar portal" }).click();
+  await page.getByLabel("E-mail do cliente").fill(email);
+  await page.getByRole("button", { name: "Enviar convite" }).click();
+  await expect(page.getByText(new RegExp(`Convite enviado para ${email.replace(/[.]/g, "\\.")}`))).toBeVisible({ timeout: 20_000 });
+  const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const u = users.users.find((x) => x.email === email)!;
+  people.portal2 = { id: u.id, email, password: "" }; // apagado no afterAll
+  const { data: link } = await admin.from("portal_links").select("client_id").eq("user_id", u.id).single();
+  expect(link?.client_id).toBe(c!.id);
+  await page.context().clearCookies();
+  await login(page, people.est);
+  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.goto(`/app/clientes/${c!.id}`);
+  await expect(page.getByRole("heading", { name: "Maria QA Sintética" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Liberar portal" })).toHaveCount(0);
+});
+
+test("REAL-ERP-05:módulo dependente de provedor sem credencial fica bloqueado com o motivo (nada simulado)", async ({ page }) => {
   await login(page, people.tit);
   await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
   await page.goto("/app/pagamentos");

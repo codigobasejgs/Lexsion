@@ -6,13 +6,14 @@ import { PlugZap, RefreshCw, Unplug } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/components/ui";
-import { Feedback, useAction } from "@/modules/shared";
+import { Feedback, useAction, useLive } from "@/modules/shared";
 import { INT_STATUS } from "@/modules/integrations/labels";
 import { messagingService } from "@/services/mock/ops-repo";
 import { createRow } from "@/services/mock/generic";
 import { formatInstant } from "@/lib/dates";
 
 export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[provider]">) {
+  const live = useLive();
   const { provider } = use(params);
   const { user } = useSession();
   const ints = useCollection("integrations");
@@ -29,7 +30,7 @@ export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[
   return (
     <Guard area="integracoes">
       <div className="mx-auto max-w-[1000px]">
-        <PageHeader breadcrumb={[{ href: "/app/integracoes", label: "Integrações" }]} title={i.name} description={i.purpose} actions={<><SimulatedBadge label={`Modo ${i.mode}`} /><Badge tone={INT_STATUS[i.status].tone}>{INT_STATUS[i.status].label}</Badge></>} />
+        <PageHeader breadcrumb={[{ href: "/app/integracoes", label: "Integrações" }]} title={i.name} description={i.purpose} actions={<>{!live && <SimulatedBadge label={`Modo ${i.mode}`} />}<Badge tone={INT_STATUS[i.status].tone}>{INT_STATUS[i.status].label}</Badge></>} />
         {i.lastError && <p role="alert" className="mb-4 rounded-[var(--radius-control)] border border-danger/40 bg-danger-bg p-3 text-sm text-danger">{i.lastError}. {isAdmin ? "Como resolver: reconecte a instância (leia o QR no aparelho do escritório). Mensagens pendentes serão reenviadas uma única vez." : "A equipe administradora já foi avisada; suas mensagens ficam guardadas e serão enviadas quando a conexão voltar."}</p>}
         <div className="grid gap-5 md:grid-cols-2">
           <section className="panel p-4 text-sm">
@@ -42,7 +43,7 @@ export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[
             <h2 className="font-semibold">Configuração (mascarada)</h2>
             {Object.keys(i.maskedConfig).length ? <dl>{Object.entries(i.maskedConfig).map(([k, v]) => <div key={k} className="flex justify-between gap-2"><dt className="text-fg-muted">{k}</dt><dd className="font-mono">{v}</dd></div>)}</dl> : <p className="text-fg-muted">Nada configurado. Chaves ficam só no servidor (nunca no navegador).</p>}
             <p className="text-fg-muted">Última sincronização: {i.lastSync ? formatInstant(i.lastSync) : "—"}</p>
-            {provider === "evolution" && (
+            {provider === "evolution" && !live && (
               <div className="space-y-2 border-t border-line pt-3">
                 <h3 className="font-medium" data-tour="conexao-whatsapp">Conexão WhatsApp (simulação)</h3>
                 <div aria-label="QR de exemplo, não funcional" role="img" className="grid size-32 grid-cols-8 gap-0.5 rounded bg-white p-2">{Array.from({ length: 64 }, (_, k) => <span key={k} className={(k * 7) % 3 === 0 || k % 9 === 0 ? "bg-black" : "bg-white"} />)}</div>
@@ -55,7 +56,7 @@ export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[
                 </div>
               </div>
             )}
-            {provider !== "evolution" && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => createRow("integrationEvents", { provider, correlationId: `corr-${crypto.randomUUID().slice(0, 6)}`, type: "connection.test", attempt: 1, at: new Date().toISOString(), status: "sucesso", detail: "Teste simulado: nenhuma chamada externa realizada" }, ctx, "Teste de conexão simulado"), "Teste simulado registrado no log.")}>Testar (simulado)</button>}
+            {provider !== "evolution" && !live && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => createRow("integrationEvents", { provider, correlationId: `corr-${crypto.randomUUID().slice(0, 6)}`, type: "connection.test", attempt: 1, at: new Date().toISOString(), status: "sucesso", detail: "Teste simulado: nenhuma chamada externa realizada" }, ctx, "Teste de conexão simulado"), "Teste simulado registrado no log.")}>Testar (simulado)</button>}
             <Feedback error={act.error} notice={act.notice} />
           </section>
         </div>

@@ -178,7 +178,7 @@ function Notifications({ s }: { s: OrgSettings }) {
   return (
     <section className="panel space-y-4 p-5 text-sm">
       <table className="w-full"><caption className="sr-only">Preferências por evento e canal</caption>
-        <thead><tr className="text-left text-xs text-fg-muted"><th className="py-1">Evento</th><th>No app</th><th>E-mail (simulado)</th><th>WhatsApp (simulado)</th></tr></thead>
+        <thead><tr className="text-left text-xs text-fg-muted"><th className="py-1">Evento</th><th>No app</th><th>E-mail (ainda não enviado)</th><th>WhatsApp (ainda não enviado)</th></tr></thead>
         <tbody>{Object.entries(prefs).map(([ev, p]) => <tr key={ev} className="border-t border-line"><th scope="row" className="py-2 text-left font-normal">{ev}</th>{(["app", "email", "whatsapp"] as const).map((ch) => <td key={ch}><input type="checkbox" aria-label={`${ev} por ${ch}`} className="size-4 accent-[var(--brand)]" checked={p[ch]} onChange={(e) => setPrefs({ ...prefs, [ev]: { ...p, [ch]: e.target.checked } })} /></td>)}</tr>)}</tbody>
       </table>
       <button className="btn btn-primary" onClick={() => act.run((ctx) => updateRow("settings", s.id, ctx, (x: OrgSettings) => ({ ...x, notificationPrefs: prefs }), "Notificações"), "Preferências salvas.")}>Salvar preferências</button>

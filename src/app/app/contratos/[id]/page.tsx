@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, FileSignature, XCircle } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection } from "@/components/providers";
 import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/components/ui";
-import { Feedback, useAction, userName } from "@/modules/shared";
+import { Feedback, useAction, useLive, userName } from "@/modules/shared";
 import { CONTRACT_STATUS } from "@/modules/commercial/labels";
 import { commercialService } from "@/services/mock/ops-repo";
 import { formatBRL } from "@/lib/money";
@@ -16,6 +16,7 @@ import { formatCivil, formatInstant } from "@/lib/dates";
 export default function ContratoPage({ params }: PageProps<"/app/contratos/[id]">) {
   const { id } = use(params);
   const router = useRouter();
+  const live = useLive();
   const contracts = useCollection("contracts");
   const insts = useCollection("installments");
   const act = useAction("contracts", "installments", "leads", "cases");
@@ -49,19 +50,20 @@ export default function ContratoPage({ params }: PageProps<"/app/contratos/[id]"
           </section>
           <section className="panel p-4 text-sm" data-tour="signatarios">
             <h2 className="mb-2 font-semibold">Signatários</h2>
+            {live && <p className="mb-2 text-xs text-fg-muted">Assinatura eletrônica (ZapSign) ainda não está ativa. Registre aqui a assinatura feita em papel ou em outra ferramenta; o registro fica na auditoria com seu nome.</p>}
             <ol className="space-y-2">
               {signers.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] border border-line p-2">
                   {s.status === "assinado" ? <CheckCircle2 aria-hidden className="size-4 text-success" /> : s.status === "recusado" ? <XCircle aria-hidden className="size-4 text-danger" /> : <Clock aria-hidden className="size-4 text-fg-muted" />}
                   <span className="min-w-0 flex-1"><span className="block font-medium">{s.order}. {s.name}</span><span className="text-fg-muted">{s.role}{s.required ? " · obrigatório" : " · opcional"}{s.signedAt ? ` · ${formatInstant(s.signedAt)}` : ""}</span></span>
-                  {(c.status === "enviado" || c.status === "parcial") && s.status === "pendente" && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => commercialService.sign(c.id, s.id, ctx), (r) => (r.created ? `Contrato concluído: ${r.created} parcela(s) criada(s) no financeiro.` : r.contract.status === "concluido" ? "Contrato concluído." : "Assinatura registrada (simulação)."))}><FileSignature aria-hidden className="size-4" /> Simular assinatura</button>}
-                  {s.status === "assinado" && <button className="btn btn-ghost min-h-9 text-xs" onClick={() => act.run((ctx) => commercialService.sign(c.id, s.id, ctx), "Evento repetido ignorado: nada mudou.")}>Reenviar evento</button>}
+                  {(c.status === "enviado" || c.status === "parcial") && s.status === "pendente" && <button className="btn btn-secondary min-h-9" onClick={() => act.run((ctx) => commercialService.sign(c.id, s.id, ctx), (r) => (r.created ? `Contrato concluído: ${r.created} parcela(s) criada(s) no financeiro.` : r.contract.status === "concluido" ? "Contrato concluído." : (live ? "Assinatura registrada manualmente." : "Assinatura registrada (simulação).")))}><FileSignature aria-hidden className="size-4" /> {live ? "Registrar assinatura" : "Simular assinatura"}</button>}
+                  {s.status === "assinado" && !live && <button className="btn btn-ghost min-h-9 text-xs" onClick={() => act.run((ctx) => commercialService.sign(c.id, s.id, ctx), "Evento repetido ignorado: nada mudou.")}>Reenviar evento</button>}
                 </li>
               ))}
             </ol>
             <div className="mt-3 flex flex-wrap gap-2">
-              {c.status === "rascunho" && <button className="btn btn-primary" onClick={() => act.run((ctx) => commercialService.sendForSignature(c.id, ctx))}>Enviar para assinatura (simulação)</button>}
-              {(c.status === "enviado" || c.status === "parcial") && <><button className="btn btn-ghost" onClick={() => act.run((ctx) => commercialService.reject(c.id, "recusado", ctx))}>Simular recusa</button><button className="btn btn-ghost" onClick={() => act.run((ctx) => commercialService.reject(c.id, "expirado", ctx))}>Simular expiração</button><button className="btn btn-ghost" onClick={() => setCancelOpen(true)}>Cancelar envio</button></>}
+              {c.status === "rascunho" && <button className="btn btn-primary" onClick={() => act.run((ctx) => commercialService.sendForSignature(c.id, ctx))}>{live ? "Liberar para coleta de assinaturas" : "Enviar para assinatura (simulação)"}</button>}
+              {(c.status === "enviado" || c.status === "parcial") && <><button className="btn btn-ghost" onClick={() => act.run((ctx) => commercialService.reject(c.id, "recusado", ctx))}>{live ? "Registrar recusa" : "Simular recusa"}</button><button className="btn btn-ghost" onClick={() => act.run((ctx) => commercialService.reject(c.id, "expirado", ctx))}>{live ? "Registrar expiração" : "Simular expiração"}</button><button className="btn btn-ghost" onClick={() => setCancelOpen(true)}>Cancelar envio</button></>}
               {(c.status === "recusado" || c.status === "expirado" || c.status === "cancelado") && <button className="btn btn-primary" onClick={async () => { const v = await act.run((ctx) => commercialService.newVersion(c.id, ctx)); if (v) router.push(`/app/contratos/${v.id}`); }}>Corrigir e gerar nova versão</button>}
             </div>
             <Feedback error={act.error} notice={act.notice} />
@@ -75,7 +77,7 @@ export default function ContratoPage({ params }: PageProps<"/app/contratos/[id]"
         )}
         <section className="panel mt-5 p-4 text-sm"><h2 className="mb-2 font-semibold">Histórico</h2><ol className="space-y-1 text-fg-muted">{[...(c.history ?? [])].reverse().map((h, i) => <li key={i}>{formatInstant(h.at)} · {userName(h.actorId)} — {h.text}</li>)}</ol></section>
         <Dialog open={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancelar envio para assinatura?">
-          <p className="text-sm">O envelope simulado é encerrado. Assinaturas já registradas ficam no histórico e nenhuma parcela é criada. Depois você pode gerar nova versão.</p>
+          <p className="text-sm">{live ? "O contrato é cancelado." : "O envelope simulado é encerrado."} Assinaturas já registradas ficam no histórico e nenhuma parcela é criada. Depois você pode gerar nova versão.</p>
           <label className="mt-3 block"><span className="label">Motivo (vai para a trilha)</span><input className="field" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
           <div className="mt-4 flex justify-end gap-2"><button className="btn btn-ghost" onClick={() => setCancelOpen(false)}>Voltar</button><button className="btn btn-danger" disabled={reason.trim().length < 5} onClick={async () => { if (await act.run((ctx) => commercialService.cancel(c.id, reason, ctx), "Envio cancelado (simulação).")) { setCancelOpen(false); setReason(""); } }}>Cancelar envio</button></div>
         </Dialog>
