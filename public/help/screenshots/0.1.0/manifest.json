@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-10-27T20:40:16.775Z",
+  "generatedAt": "2026-10-28T12:50:13.752Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -463,6 +463,61 @@
       "selector": "text=Receita recorrente mensal",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/super-admin-escritorios-1.png"
+    },
+    {
+      "article": "workflows-por-caso",
+      "step": 2,
+      "mobile": false,
+      "caption": "Modelo de workflow com etapas e datas",
+      "route": "/app/workflows",
+      "profile": "Helena Prado",
+      "selector": "[data-tour=\"workflow-modelo\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/workflows-por-caso-2.png"
+    },
+    {
+      "article": "analisar-cnis-bpc-ppp",
+      "step": 1,
+      "mobile": false,
+      "caption": "Diagnóstico do CNIS com ações",
+      "route": "/app/previdenciario/analises/pa-joao",
+      "profile": "Helena Prado",
+      "selector": "[data-testid=\"cnis-diagnostico\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/analisar-cnis-bpc-ppp-1.png"
+    },
+    {
+      "article": "analisar-cnis-bpc-ppp",
+      "step": 3,
+      "mobile": false,
+      "caption": "BPC/LOAS: composição familiar e renda per capita",
+      "route": "/app/previdenciario/especializadas/as-bpc-maria",
+      "profile": "Helena Prado",
+      "selector": "[data-testid=\"bpc-per-capita\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/analisar-cnis-bpc-ppp-3.png"
+    },
+    {
+      "article": "fontes-e-versoes-da-minuta",
+      "step": 2,
+      "mobile": false,
+      "caption": "Painel de fontes citadas",
+      "route": "/app/minutas/dr-lucia",
+      "profile": "Helena Prado",
+      "selector": "[data-testid=\"painel-fontes\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/fontes-e-versoes-da-minuta-2.png"
+    },
+    {
+      "article": "follow-up-e-opt-out",
+      "step": 1,
+      "mobile": false,
+      "caption": "Painel de follow-up do lead",
+      "route": "/app/crm/leads/l-01",
+      "profile": "Helena Prado",
+      "selector": "[data-testid=\"follow-up\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/follow-up-e-opt-out-1.png"
     }
   ]
 }

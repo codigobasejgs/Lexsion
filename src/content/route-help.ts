@@ -11,6 +11,7 @@ export const ROUTE_HELP: { prefix: string; article: string; title: string; tour?
   { prefix: "/app/publicacoes", article: "registrar-prazo", title: "Registrar e confirmar um prazo", tour: "caso" },
   { prefix: "/app/prazos", article: "registrar-prazo", title: "Registrar e confirmar um prazo", tour: "caso" },
   { prefix: "/app/tarefas", article: "tarefas-recorrentes", title: "Criar tarefas que se repetem", tour: "meu-dia" },
+  { prefix: "/app/workflows", article: "workflows-por-caso", title: "Aplicar um workflow ao caso" },
   { prefix: "/app/agenda", article: "agendar-pericia", title: "Agendar perícia ou audiência", tour: "agenda" },
   { prefix: "/app/audiencias", article: "agendar-pericia", title: "Agendar perícia ou audiência", tour: "agenda" },
   { prefix: "/app/pericias", article: "agendar-pericia", title: "Agendar perícia ou audiência", tour: "agenda" },

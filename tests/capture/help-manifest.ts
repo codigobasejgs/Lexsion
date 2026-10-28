@@ -53,6 +53,11 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "trocar-logo-e-cores:4": { route: "/app/configuracoes/branding", selector: "text=Prévia ao vivo" },
   "instalar-app-do-escritorio:1": { route: "/app/configuracoes/branding", selector: 'role=img[name=/QR Code/]' },
   "tarefas-recorrentes:2": { route: "/app/tarefas", selector: "h1" },
+  "workflows-por-caso:2": { route: "/app/workflows", selector: '[data-tour="workflow-modelo"]' },
+  "analisar-cnis-bpc-ppp:1": { route: "/app/previdenciario/analises/pa-joao", selector: '[data-testid="cnis-diagnostico"]' },
+  "analisar-cnis-bpc-ppp:3": { route: "/app/previdenciario/especializadas/as-bpc-maria", selector: '[data-testid="bpc-per-capita"]' },
+  "fontes-e-versoes-da-minuta:2": { route: "/app/minutas/dr-lucia", selector: '[data-testid="painel-fontes"]' },
+  "follow-up-e-opt-out:1": { route: "/app/crm/leads/l-01", selector: '[data-testid="follow-up"]' },
   "super-admin-escritorios:1": { route: "/admin", selector: "text=Receita recorrente mensal", profile: "Suporte LexSion" },
 };
 
