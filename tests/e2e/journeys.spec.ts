@@ -253,7 +253,7 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
 test("detalhes via lista: contratos, agentes, importações, requisitórios, planejamento e suporte", async ({ page }) => {
   test.setTimeout(90_000);
   await signIn(page, /Helena Prado/);
-  for (const [list, detail] of [["/app/contratos", /\/app\/contratos\/[\w-]+$/], ["/app/ia/agentes", /\/app\/ia\/agentes\/[\w-]+$/], ["/app/importacoes", /\/app\/importacoes\/[\w-]+$/], ["/app/requisitorios", /\/app\/requisitorios\/[\w-]+$/], ["/app/previdenciario", /\/app\/previdenciario\/analises\/[\w-]+$/]] as const) {
+  for (const [list, detail] of [["/app/contratos", /\/app\/contratos\/[\w-]+$/], ["/app/ia/agentes", /\/app\/ia\/agentes\/[\w-]+$/], ["/app/importacoes", /\/app\/importacoes\/[\w-]+$/], ["/app/requisitorios", /\/app\/requisitorios\/[\w-]+$/], ["/app/previdenciario", /\/app\/previdenciario\/planejamentos\/[\w-]+$/]] as const) {
     await page.goto(list);
     await expect(page.locator("h1").first()).toBeVisible();
     await noOverflow(page);
@@ -267,7 +267,7 @@ test("detalhes via lista: contratos, agentes, importações, requisitórios, pla
       const prefix = list === "/app/previdenciario" ? "/app/previdenciario/planejamentos/" : `${list}/`;
       await page.locator(`a[href^="${prefix}"]`).locator("visible=true").first().click();
     }
-    await expect(page).toHaveURL(detail); // planejamento redireciona para a análise
+    await expect(page).toHaveURL(detail); // planejamento abre a tela da análise na própria URL (sem redirect intermediário)
     await expect(page.locator("h1").first()).toBeVisible();
     await expect(page.getByText(/não encontrad/i)).toHaveCount(0);
     await noOverflow(page);

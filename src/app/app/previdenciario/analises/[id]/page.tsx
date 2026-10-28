@@ -24,7 +24,11 @@ const FLAG: Record<NonNullable<ContributionPeriod["flag"]>, { label: string; ton
 const CATEGORY: Record<ContributionPeriod["category"], string> = { empregado: "Empregado", contribuinte_individual: "Contribuinte individual", facultativo: "Facultativo", rural: "Rural", especial: "Especial" };
 
 export default function AnalisePage({ params }: PageProps<"/app/previdenciario/analises/[id]">) {
-  const { id } = use(params);
+  return <PensionAnalysisView id={use(params).id} />;
+}
+
+/** Também usada por /previdenciario/planejamentos/[id] (mesma análise, URL própria). */
+export function PensionAnalysisView({ id }: { id: string }) {
   const { ctx, user } = useSession();
   const invalidate = useInvalidate();
   const analyses = useCollection("pensionAnalyses");

@@ -1,14 +1,10 @@
 "use client";
 
-import { use, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { use } from "react";
+import { PensionAnalysisView } from "../../analises/[id]/page";
 
 // Planejamento é uma análise com modalidade "planejamento": mesma tela, URL própria.
+// Antes redirecionava no cliente; a tela intermediária "Abrindo planejamento…" deixava o teste intermitente (baseline 1/261).
 export default function PlanejamentoPage({ params }: PageProps<"/app/previdenciario/planejamentos/[id]">) {
-  const { id } = use(params);
-  const router = useRouter();
-  useEffect(() => {
-    router.replace(`/app/previdenciario/analises/${id}`);
-  }, [id, router]);
-  return <p className="p-6 text-fg-muted">Abrindo planejamento…</p>;
+  return <PensionAnalysisView id={use(params).id} />;
 }
