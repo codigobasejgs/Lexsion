@@ -21,8 +21,16 @@ export interface RealSession { user: User; org: Organization | null; tenant: Ten
 const ORG_PREF = "lexsion.org";
 export const preferOrg = (id: string) => { try { localStorage.setItem(ORG_PREF, id); } catch {} };
 
-/** Lê a sessão do Supabase e os vínculos REAIS. null = ninguém autenticado (ou backend não configurado). */
+/** Lê a sessão real; falha de rede é tentada de novo (até 3x, 1 s e 3 s) antes de mostrar "Sem conexão". */
 export async function loadRealSession(): Promise<RealSession | null> {
+  for (const wait of [1000, 3000]) {
+    try { return await loadOnce(); } catch { await new Promise((r) => setTimeout(r, wait)); }
+  }
+  return loadOnce();
+}
+
+/** Lê a sessão do Supabase e os vínculos REAIS. null = ninguém autenticado (ou backend não configurado). */
+async function loadOnce(): Promise<RealSession | null> {
   if (!supabaseConfigured()) return null;
   const sb = supabaseBrowser();
   // Sem cookie de sessão: ninguém entrou (não consulta a rede).

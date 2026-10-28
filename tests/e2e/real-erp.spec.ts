@@ -65,10 +65,10 @@ test.afterAll(async () => {
 
 test("REAL-ERP-01: titular entra, vê a equipe real, cadastra cliente e abre caso no banco", async ({ page }) => {
   await login(page, people.tit);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await expect(page.getByText("Ambiente demonstrativo")).toHaveCount(0);
   await page.goto("/app/equipe");
-  await expect(page.getByText("QA Advogada")).toBeVisible();
+  await expect(page.getByText("QA Advogada")).toBeVisible({ timeout: 30_000 }); // sessão real carrega pela rede
   await expect(page.getByText("Rafael", { exact: false })).toHaveCount(0); // nenhum perfil fictício
 
   await page.goto("/app/clientes/novo");
@@ -78,7 +78,7 @@ test("REAL-ERP-01: titular entra, vê a equipe real, cadastra cliente e abre cas
   await page.getByLabel("Cidade").fill("Salvador");
   await page.getByLabel("Responsável").selectOption({ label: "QA Advogada" });
   await page.getByRole("button", { name: /Salvar|Cadastrar/ }).click();
-  await page.waitForURL(/\/app\/clientes\/c-/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/clientes\/c-/, { timeout: Number(process.env.SLOW ?? 20_000) });
   const { data } = await admin.from("org_records").select("data").eq("organization_id", orgA).eq("collection", "clients");
   expect(data?.map((r) => (r.data as { name: string }).name)).toEqual(["Maria QA Sintética"]);
   expect((data?.[0].data as { ownerId: string }).ownerId).toBe(people.adv.id);
@@ -94,7 +94,7 @@ test("REAL-ERP-01: titular entra, vê a equipe real, cadastra cliente e abre cas
 
 test("REAL-ERP-02: isolamento no navegador — outro escritório não vê o cliente; estagiário não aprova minuta", async ({ page }) => {
   await login(page, people.outro);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await page.goto("/app/clientes");
   await expect(page.getByText("Maria QA Sintética")).toHaveCount(0);
   // Tentativa direta com a sessão do titular de OUTRO escritório, pedindo os registros do A: o banco devolve zero linhas.
@@ -114,7 +114,7 @@ test("REAL-ERP-03: estagiário cria minuta e não consegue aprovar (recusa do ba
   const now = new Date().toISOString();
   await admin.from("org_records").insert({ organization_id: orgA, collection: "drafts", id: `dr-${tag}`, data: { id: `dr-${tag}`, organizationId: orgA, title: "Minuta QA", kind: "petição", body: "Texto completo da minuta de teste.", status: "revisao", references: [], comments: [], history: [], updatedAt: now } }).throwOnError();
   await login(page, people.est);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await page.goto(`/app/minutas/dr-${tag}`);
   await expect(page.getByText("Minuta QA").first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("button", { name: /^Aprovar/ })).toHaveCount(0);
@@ -135,7 +135,7 @@ test("REAL-ERP-04: portal — cliente vê só o próprio caso, envia documento a
   await admin.from("portal_links").insert({ user_id: people.cli.id, organization_id: orgA, client_id: clientId }).throwOnError();
 
   await login(page, people.cli, "cliente");
-  await page.waitForURL(/\/portal/, { timeout: 20_000 });
+  await page.waitForURL(/\/portal/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await expect(page.getByText("Estamos reunindo seus documentos.")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("ANOTACAO-INTERNA")).toHaveCount(0);
   await page.goto("/portal/documentos");
@@ -144,7 +144,7 @@ test("REAL-ERP-04: portal — cliente vê só o próprio caso, envia documento a
   // PDF mínimo válido gerado no teste (sem dado pessoal).
   const pdf = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
   await page.locator('input[type="file"]').first().setInputFiles({ name: "rg-qa.pdf", mimeType: "application/pdf", buffer: pdf });
-  await expect(page.getByText(/rg-qa\.pdf/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/rg-qa\.pdf/)).toBeVisible({ timeout: Number(process.env.SLOW ?? 20_000) });
 
   const { data: d } = await admin.from("org_records").select("data").eq("id", `doc-${tag}`).single();
   expect((d!.data as { status: string; origin: string }).status).toBe("recebido");
@@ -164,12 +164,12 @@ test("REAL-ERP-06: advogada libera o portal a um cliente pela tela (convite + v�
   const { data: c } = await admin.from("org_records").select("id").eq("organization_id", orgA).eq("collection", "clients").single();
   const email = `qa-portal2-${tag}@lexsion-qa.invalid`;
   await login(page, people.adv);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await page.goto(`/app/clientes/${c!.id}`);
   await page.getByRole("button", { name: "Liberar portal" }).click();
   await page.getByLabel("E-mail do cliente").fill(email);
   await page.getByRole("button", { name: "Enviar convite" }).click();
-  await expect(page.getByText(new RegExp(`Convite enviado para ${email.replace(/[.]/g, "\\.")}`))).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(new RegExp(`Convite enviado para ${email.replace(/[.]/g, "\\.")}`))).toBeVisible({ timeout: Number(process.env.SLOW ?? 20_000) });
   const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const u = users.users.find((x) => x.email === email)!;
   people.portal2 = { id: u.id, email, password: "" }; // apagado no afterAll
@@ -177,7 +177,7 @@ test("REAL-ERP-06: advogada libera o portal a um cliente pela tela (convite + v�
   expect(link?.client_id).toBe(c!.id);
   await page.context().clearCookies();
   await login(page, people.est);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await page.goto(`/app/clientes/${c!.id}`);
   await expect(page.getByRole("heading", { name: "Maria QA Sintética" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("button", { name: "Liberar portal" })).toHaveCount(0);
@@ -185,7 +185,7 @@ test("REAL-ERP-06: advogada libera o portal a um cliente pela tela (convite + v�
 
 test("REAL-ERP-05:módulo dependente de provedor sem credencial fica bloqueado com o motivo (nada simulado)", async ({ page }) => {
   await login(page, people.tit);
-  await page.waitForURL(/\/app\/inicio/, { timeout: 20_000 });
+  await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await page.goto("/app/pagamentos");
   await expect(page.getByText("Integração pendente")).toBeVisible();
   await expect(page.getByText(/Nenhuma cobrança é emitida/)).toBeVisible();
