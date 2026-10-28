@@ -9,8 +9,10 @@ import { Badge, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/c
 import { Chips, useUrlState } from "@/modules/shared";
 import { NEWS_KIND } from "@/modules/news/labels";
 import { formatCivil, formatInstant } from "@/lib/dates";
+import { RealJornal } from "@/modules/news/real-intel";
+import { useSession } from "@/components/providers";
 
-export default function JornalPage() {
+function JornalDemo() {
   const url = useUrlState();
   const news = useCollection("news");
   const area = url.get("area") ?? "todas";
@@ -40,4 +42,11 @@ export default function JornalPage() {
       </div>
     </Guard>
   );
+}
+
+/** Operação: dados reais coletados de fontes oficiais. Demonstração: amostras. */
+export default function JornalPage() {
+  const { mode } = useSession();
+  if (mode === "real") return <Guard area="jornal"><div className="mx-auto max-w-[1000px]"><PageHeader title="Jornal do Advogado" description="Atualizações coletadas automaticamente de fontes oficiais, com data, situação e link para o texto oficial." actions={<Link href="/app/jornal/alertas" className="btn btn-secondary"><Bell aria-hidden className="size-4" /> Alertas</Link>} /><RealJornal /></div></Guard>;
+  return <JornalDemo />;
 }

@@ -10,8 +10,9 @@ import { Feedback, useAction } from "@/modules/shared";
 import { NEWS_KIND, readNewsPrefs, writeNewsPrefs } from "@/modules/news/labels";
 import { createRow } from "@/services/mock/generic";
 import { formatCivil, formatInstant } from "@/lib/dates";
+import { RealJornalItem } from "@/modules/news/real-intel";
 
-export default function NoticiaPage({ params }: PageProps<"/app/jornal/[id]">) {
+function NoticiaDemo({ params }: PageProps<"/app/jornal/[id]">) {
   const { id } = use(params);
   const { user } = useSession();
   const news = useCollection("news");
@@ -49,4 +50,12 @@ export default function NoticiaPage({ params }: PageProps<"/app/jornal/[id]">) {
       </article>
     </Guard>
   );
+}
+
+/** Operação: dados reais coletados de fontes oficiais. Demonstração: amostras. */
+export default function NoticiaPage({ params, searchParams }: PageProps<"/app/jornal/[id]">) {
+  const { mode } = useSession();
+  const { id: realId } = use(params);
+  if (mode === "real") return <Guard area="jornal"><div className="mx-auto max-w-3xl"><PageHeader breadcrumb={[{ href: "/app/jornal", label: "Jornal" }]} title="Atualização" /><RealJornalItem id={realId} /></div></Guard>;
+  return <NoticiaDemo params={params} searchParams={searchParams} />;
 }

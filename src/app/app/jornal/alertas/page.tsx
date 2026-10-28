@@ -5,8 +5,10 @@ import { Guard } from "@/components/guard";
 import { PageHeader, SimulatedBadge } from "@/components/ui";
 import { readNewsPrefs, writeNewsPrefs } from "@/modules/news/labels";
 import { ALL_AREAS } from "@/domain/areas";
+import { IntelPreferences } from "@/modules/news/real-intel";
+import { useSession } from "@/components/providers";
 
-export default function AlertasPage() {
+function AlertasDemo() {
   const [topics, setTopics] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   useEffect(() => {
@@ -25,4 +27,11 @@ export default function AlertasPage() {
       </div>
     </Guard>
   );
+}
+
+/** Operação: dados reais coletados de fontes oficiais. Demonstração: amostras. */
+export default function AlertasPage() {
+  const { mode } = useSession();
+  if (mode === "real") return <Guard area="jornal"><div className="mx-auto max-w-3xl"><PageHeader breadcrumb={[{ href: "/app/jornal", label: "Jornal" }]} title="Inteligência jurídica — alertas do escritório" description="Áreas e palavras-chave que geram alerta. Alerta indica possível relevância; não significa que a norma se aplica a todos os casos." /><IntelPreferences /></div></Guard>;
+  return <AlertasDemo />;
 }

@@ -41,7 +41,7 @@ beforeAll(async () => {
   db = await PGlite.create({ extensions: { pgcrypto } });
   await db.exec("create extension if not exists pgcrypto");
   await db.exec(fs.readFileSync("supabase/tests/stub-supabase.sql", "utf8"));
-  for (const f of fs.readdirSync("supabase/migrations").sort()) await db.exec(fs.readFileSync(path.join("supabase/migrations", f), "utf8"));
+  for (const f of fs.readdirSync("supabase/migrations").sort()) await db.exec(fs.readFileSync(path.join("supabase/migrations", f), "utf8").replace(/^create extension if not exists (pg_cron|pg_net);.*$/gm, ""));
   await db.query(`insert into auth.users (id, email) select unnest($1::uuid[]), unnest($2::text[])`, [Object.values(U), Object.keys(U).map((k) => `${k}@teste.invalid`)]);
   await db.query("insert into public.platform_members (user_id, role) values ($1, 'superadmin')", [U.superadmin]);
   orgA = (await as<{ id: string }>(U.superadmin, "select (public.create_organization('escritorio-a','Escritório A', $1)).id", [U.adminA]))[0].id;

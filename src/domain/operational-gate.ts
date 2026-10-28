@@ -7,7 +7,6 @@ const AI: Blocked = { title: "Agentes autônomos de IA", reason: "Agentes que re
 const PAY: Blocked = { title: "Cobranças online", reason: "Nenhum provedor de pagamento (Asaas, InfinitePay ou Mercado Pago) está credenciado. Nenhuma cobrança é emitida.", needs: "Conta do escritório no provedor, chaves de API e segredo de webhook." };
 const SIGN: Blocked = { title: "Assinatura eletrônica", reason: "A assinatura eletrônica (ZapSign) não está credenciada; registrar assinatura sem provedor não tem validade.", needs: "Token da conta ZapSign e webhook de conclusão." };
 const ADS: Blocked = { title: "Marketing e anúncios", reason: "As contas de anúncios (Meta/Google) e a publicação de páginas não estão conectadas.", needs: "OAuth das contas do escritório e aprovação do app." };
-const NEWS: Blocked = { title: "Jornal do Advogado", reason: "A coleta de notícias e normas de fontes oficiais ainda não está ativa.", needs: "Rotina de coleta das fontes oficiais com verificação de licença." };
 const RESEARCH: Blocked = { title: "Pesquisa de jurisprudência", reason: "Nenhuma base de jurisprudência licenciada está conectada.", needs: "Licença de base (ex.: Jusbrasil) ou parecer sobre uso do DataJud." };
 const AUTOMATION: Blocked = { title: "Automações", reason: "As automações disparam mensagens por WhatsApp/e-mail, que ainda não estão configurados para clientes.", needs: "WhatsApp e e-mail transacional a clientes habilitados." };
 
@@ -21,7 +20,6 @@ export const BLOCKED_ROUTES: [prefix: string, b: Blocked][] = [
   ["/app/assinaturas", SIGN],
   ["/app/marketing", ADS],
   ["/app/crm/captura", ADS],
-  ["/app/jornal", NEWS],
   ["/app/pesquisa", RESEARCH],
 ];
 

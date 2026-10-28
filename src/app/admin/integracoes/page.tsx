@@ -3,11 +3,13 @@
 import { Badge, PageHeader } from "@/components/ui";
 import { ALL_PROVIDERS } from "@/services/adapters";
 import { INTEGRATION_STATUS_LABEL } from "@/domain/saas";
+import { ConnectorHealth } from "@/modules/news/real-intel";
+import { useSession } from "@/components/providers";
 
 const CATEGORY: Record<string, string> = { dados: "Dados e login", mensagens: "Mensagens", email: "E-mail", pagamentos: "Pagamentos", assinatura: "Assinatura", armazenamento: "Arquivos", juridico: "Fontes jurídicas", ia: "Inteligência artificial", indices: "Índices de correção", anuncios: "Anúncios" };
 
 // Integrações globais da plataforma. Estado honesto: nenhum aparece "Ativo" sem backend e credenciais no servidor.
-export default function IntegracoesGlobaisPage() {
+function IntegracoesDemo() {
   return (
     <>
       <PageHeader title="Integrações" description="Provedores preparados para a fase com backend. As credenciais ficarão somente no servidor; esta tela nunca mostra nem guarda chaves." />
@@ -24,4 +26,11 @@ export default function IntegracoesGlobaisPage() {
       </ul>
     </>
   );
+}
+
+/** Operação: dados reais coletados de fontes oficiais. Demonstração: amostras. */
+export default function IntegracoesGlobaisPage() {
+  const { mode } = useSession();
+  if (mode === "real") return <><PageHeader title="Saúde dos conectores jurídicos" description="Fontes oficiais e provedores: estado verdadeiro, última atualização confirmada, próxima execução e erros. Nenhum token é exibido." /><ConnectorHealth /></>;
+  return <IntegracoesDemo />;
 }

@@ -23,3 +23,13 @@ grant usage on schema storage to anon, authenticated, service_role;
 grant select, insert, update, delete on storage.objects to authenticated;
 grant select on storage.buckets to authenticated;
 grant execute on function storage.foldername(text) to anon, authenticated;
+
+-- pg_cron / pg_net / vault: o Supabase fornece; aqui só o mínimo para a migration do agendador carregar.
+create schema if not exists cron;
+create table cron.job (jobid bigserial primary key, jobname text unique, schedule text, command text);
+create function cron.schedule(p_name text, p_schedule text, p_command text) returns bigint language sql as $$ insert into cron.job (jobname, schedule, command) values (p_name, p_schedule, p_command) returning jobid $$;
+create function cron.unschedule(p_name text) returns boolean language sql as $$ delete from cron.job where jobname = p_name returning true $$;
+create schema if not exists net;
+create function net.http_get(url text, headers jsonb default '{}', timeout_milliseconds int default 1000) returns bigint language sql as $$ select 1::bigint $$;
+create schema if not exists vault;
+create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
