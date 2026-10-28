@@ -29,7 +29,7 @@
 
 ## Percentual operacional comprovado
 - **Módulos (19 linhas acima):** 14 operacionais comprovados (74%), 1 com ressalva (cálculos), 4 bloqueados por terceiros ou termos (pagamentos, assinatura digital, DataJud, Jusbrasil/Previdenciarista). Agentes autônomos ficam fora da conta: o bloqueio é decisão de produto.
-- **71 capacidades da matriz de paridade:** as integrações de IA e WhatsApp mudaram de "bloqueado" para "operacional" ou "parcial", conforme `01-…csv`.
+- **71 capacidades da matriz de paridade** (`01-…csv`): 19 operacionais (27%), 32 operacionais sem validação jurídica (45%), 11 parciais (15%), 7 bloqueadas (10%), 2 não implementadas (3%). Funcionam com dados reais: **72%**. Sem nenhuma ressalva: **27%**.
 
 ## Parecer
 **Pronta para piloto comercial pago** em gestão jurídica, portal do cliente, white-label/PWA, atendimento por WhatsApp (depois de parear o número) e assistente de IA com revisão humana.

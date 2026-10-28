@@ -10,7 +10,7 @@ CJ-08,Bancários: revisão de empréstimos,CJ,/app/calculos/[id],OPERACIONAL_SEM
 CJ-09,"Penais: dosimetria, progressão, prescrição",CJ,/app/calculos/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
 CJ-10,"Importa CNIS, HISCRE, microfichas PASEP",CJ,/app/documentos/[id],PARCIAL,parte manual coberta pelos E2E reais,"Leitura automática de CNIS/HISCRE/PASEP depende de extração (IA/OCR) não contratada; entrada manual funciona"
 CJ-12,Petições geradas a partir dos cálculos,CJ,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Minuta gerada a partir do cálculo; exige revisão e aprovação de advogado(a)"
-CJ-13,"Assistentes de IA (extração, áudio para texto)",CJ,/app/ia/simulador,BLOQUEADO,—,IA não contratada
+CJ-13,"Assistentes de IA (extração, áudio para texto)",CJ,/app/ia/simulador,PARCIAL,parte manual coberta pelos E2E reais,"Assistente de IA (Gemini) resume texto colado; extração de documento e áudio ainda não"
 CJ-14,Banco de modelos de petição,CJ,/app/modelos,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
 CJ-15,"CRM, autocadastro, tarefas, finanças",CJ,/app/crm,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
 CJ-16,Monitoramento de processos e intimações,CJ,/app/publicacoes,PARCIAL,parte manual coberta pelos E2E reais,"Publicações e intimações cadastradas manualmente; captura automática depende de DataJud/diário (licença/parecer)"
@@ -27,7 +27,7 @@ TI-06,Notas CIF refeitas e comparadas com o INSS,TI,—,OPERACIONAL_SEM_VALIDACA
 TI-07,Cada nota ligada ao documento que a sustenta,TI,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Vínculo nota↔documento funciona; conclusão exige revisão"
 TI-08,"Renda per capita, reafirmação da DER, valor da causa",TI,/app/previdenciario/especializadas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
 TI-09,Plano de ação com prazos e resumo ao cliente,TI,/app/casos/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
-TI-10,Assistente que opera os módulos com permissões,TI,/app/ia,BLOQUEADO,—,IA não contratada
+TI-10,Assistente que opera os módulos com permissões,TI,/app/ia,BLOQUEADO,—,Agente que opera módulos sozinho está bloqueado por política (toda IA passa por revisão humana)
 TI-11,Lê intimação e cria tarefa com prazo,TI,/app/publicacoes,PARCIAL,parte manual coberta pelos E2E reais,"Tarefa com prazo é criada a partir de intimação registrada; leitura automática da intimação depende de IA"
 TI-12,Busca sentença no tribunal e resume,TI,/app/pesquisa,BLOQUEADO,—,Base de jurisprudência não licenciada
 TI-13,Redige inicial a partir do CNIS e indeferimento,TI,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Rascunho gerado por modelo de texto, sem IA; exige revisão"
@@ -46,7 +46,7 @@ PREV-04,Liquidação de sentença previdenciária,PREV,—,OPERACIONAL_SEM_VALID
 PREV-05,Extensão de navegador para o Meu INSS,PREV,—,NAO_IMPLEMENTADO,—,Extensão de navegador para Meu INSS não existe
 PREV-06,Petições preenchidas com dados do cliente,PREV,/app/minutas,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",Petição preenchida exige revisão e aprovação
 PREV-07,Registro de quem fez o quê,PREV,/admin/auditoria,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
-PREV-09,Chat de IA previdenciário,PREV,/app/ia/simulador,BLOQUEADO,—,IA não contratada
+PREV-09,Chat de IA previdenciário,PREV,/app/ia/simulador,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Assistente de IA (Gemini) com revisão humana; habilitação pelo titular"
 PREV-10,"Aponta lacunas, especiais, carência, inconsistências no CNIS",PREV,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
 PREV-11,Minuta lendo o processo administrativo,PREV,/app/minutas,PARCIAL,parte manual coberta pelos E2E reais,"Minuta a partir do processo administrativo depende de leitura do PDF (IA/OCR); hoje com dados informados"
 JUS-01,Área de trabalho por caso/cliente,JUS,/app/casos/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
@@ -54,7 +54,7 @@ JUS-06,Citações com fonte e status verificável,JUS,/app/minutas/[id],OPERACIO
 JUS-07,Bloqueio de citação sem origem,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
 JUS-09,Comparação de versões e revisão,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
 JUS-10,Exportação DOCX/PDF e anexação ao caso,JUS,/app/minutas/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
-JUS-12,Adaptadores de pesquisa e IA futuros,JUS,/admin/integracoes,BLOQUEADO,—,"Adaptadores existem como contrato; nenhum provedor de pesquisa/IA conectado"
+JUS-12,Adaptadores de pesquisa e IA futuros,JUS,/admin/integracoes,PARCIAL,parte manual coberta pelos E2E reais,"IA conectada (Gemini); pesquisa de jurisprudência sem base licenciada"
 JUS-14,Distinção API Jusbrasil Soluções × Jus IA,JUS,/admin/integracoes,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Distinção documentada; sem conector"
 INT-01,Upload/validação de CNIS em PDF,INT,/app/documentos,OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
 INT-02,Score de saúde do CNIS,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
@@ -63,10 +63,10 @@ INT-05,Linha do tempo de vínculos,INT,/app/previdenciario/analises/[id],OPERACI
 INT-06,RMI estimada e comparação de cenários,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
 INT-07,Relatório Word para cliente e advogado,INT,/app/minutas/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Relatório Word gerado; revisão obrigatória"
 INT-08,Documentação faltante e ações prioritárias,INT,/app/previdenciario/analises/[id],OPERACIONAL_SEM_VALIDACAO_JURIDICA,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Resultado demonstrativo até validação por advogado(a); fórmulas/índices oficiais não homologados"
-DJ-01,Metadados públicos de processos (capa e movimentos),DataJud,/admin/integracoes,BLOQUEADO,—,"DataJud: termos restringem uso comercial; parecer jurídico pendente"
+DJ-01,Metadados públicos de processos (capa e movimentos),DataJud,/admin/integracoes,BLOQUEADO,—,"DataJud responde (teste técnico), mas os termos do CNJ (3.3, 3.8) vedam uso comercial: exige autorização ou parecer"
 CRM-01,Follow-up ético com opt-out e horário,Cliente,/app/crm/leads/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Regras e opt-out gravados; contato é registrado manualmente (nada enviado)"
 CRM-02,Campanha → lead UTM → triagem → proposta → contrato → caso,Cliente,/app/crm,PARCIAL,parte manual coberta pelos E2E reais,"Funil lead→cliente→proposta→contrato→caso operacional; captura por campanha/UTM depende de anúncios conectados"
-CRM-03,Takeover humano pausa a IA,Cliente,/app/atendimento/[id],BLOQUEADO,—,WhatsApp (Evolution) não credenciado
+CRM-03,Takeover humano pausa a IA,Cliente,/app/atendimento/[id],OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br","Assumir pausa a IA; envio real pela Evolution só com IA pausada (WA-01)"
 CRM-04,Conexão Meta/Google Ads,Cliente,/admin/integracoes,BLOQUEADO,—,OAuth das contas Meta/Google não configurado
 FIN-01,SaaS × honorários separados,Cliente,/admin/faturamento,PARCIAL,parte manual coberta pelos E2E reais,"Separação contábil SaaS × honorários no banco; faturamento automático da assinatura não ativo"
 SEG-01,Estagiário não aprova/revisa,Cliente,—,OPERACIONAL,"org_records + RLS (tests/db); E2E real (real-erp, real-persistencia) em lexsion.com.br",
