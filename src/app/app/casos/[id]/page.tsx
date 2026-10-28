@@ -18,8 +18,8 @@ import { civilFromInstant, formatCivil, formatInstant, formatTime } from "@/lib/
 import { formatBRL } from "@/lib/money";
 import type { Case, CaseEvent, CourtProcess } from "@/domain/types";
 
-const TABS = ["geral", "processos", "documentos", "tarefas", "prazos", "agenda", "analises", "minutas", "financeiro"] as const;
-const TAB_LABEL: Record<(typeof TABS)[number], string> = { geral: "Visão geral", processos: "Processos e eventos", documentos: "Documentos", tarefas: "Tarefas", prazos: "Prazos", agenda: "Agenda", analises: "Análises", minutas: "Minutas", financeiro: "Financeiro" };
+const TABS = ["geral", "processos", "documentos", "tarefas", "prazos", "agenda", "analises", "calculos", "minutas", "financeiro"] as const;
+const TAB_LABEL: Record<(typeof TABS)[number], string> = { geral: "Visão geral", processos: "Processos e eventos", documentos: "Documentos", tarefas: "Tarefas", prazos: "Prazos", agenda: "Agenda", analises: "Análises", calculos: "Cálculos", minutas: "Minutas", financeiro: "Financeiro" };
 
 // Endereços públicos configurados por sistema (abrir fonte; não é acesso automatizado).
 const PUBLIC_SOURCE: Record<string, string> = { PJe: "https://pje1g.trf1.jus.br/consultapublica/ConsultaPublica/listView.seam", "Meu INSS": "https://meu.inss.gov.br/", "PJe-JT": "https://pje.trt5.jus.br/consultaprocessual/" };
@@ -38,6 +38,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
   const events = useCollection("events");
   const analyses = useCollection("pensionAnalyses");
   const drafts = useCollection("drafts");
+  const calcs = useCollection("calculations");
   const insts = useCollection("installments");
   const act = useAction("cases", "processes", "caseEvents");
   const [addProc, setAddProc] = useState(false);
@@ -56,6 +57,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
     events: (events.data ?? []).filter((e) => e.caseId === id).sort((a, b) => a.start.localeCompare(b.start)),
     analyses: (analyses.data ?? []).filter((a) => a.caseId === id),
     drafts: (drafts.data ?? []).filter((d) => d.caseId === id),
+    calcs: (calcs.data ?? []).filter((c) => c.caseId === id),
     insts: (insts.data ?? []).filter((i) => i.caseId === id),
   };
 
@@ -138,6 +140,7 @@ export default function CasoPage({ params }: PageProps<"/app/casos/[id]">) {
           {tab === "prazos" && <SimpleList empty="Sem prazos" items={my.deadlines.map((d) => ({ id: d.id, title: d.title, meta: `${d.days} dias ${d.counting} · vence ${formatCivil(d.confirmedEnd ?? d.proposedEnd)}`, right: <Badge tone={d.status === "proposto" ? "warning" : d.status === "confirmado" ? "info" : "success"}>{d.status === "proposto" ? "Aguarda confirmação" : d.status === "confirmado" ? "Confirmado" : "Cumprido"}</Badge>, href: `/app/prazos?id=${d.id}` }))} />}
           {tab === "agenda" && <SimpleList empty="Sem compromissos" items={my.events.map((e) => ({ id: e.id, title: e.title, meta: `${formatCivil(civilFromInstant(e.start))} ${formatTime(e.start)} · ${e.location}`, right: <Badge tone={EVENT_TYPE[e.type].tone}>{EVENT_TYPE[e.type].label}</Badge>, href: `/app/agenda?data=${civilFromInstant(e.start)}` }))} />}
           {tab === "analises" && <SimpleList empty="Sem análises" items={my.analyses.map((a) => ({ id: a.id, title: a.benefit, meta: a.regime, right: null, href: `/app/previdenciario/analises/${a.id}` }))} />}
+          {tab === "calculos" && <SimpleList empty="Sem cálculos vinculados" items={my.calcs.map((c) => ({ id: c.id, title: c.title, meta: `${c.area} · ${c.model}`, right: <Badge tone={c.status === "revisado" ? "success" : "warning"}>{c.status === "revisado" ? "Revisado" : c.status === "aguardando_revisao" ? "Aguardando revisão" : "Rascunho"}</Badge>, href: `/app/calculos/${c.id}` }))} />}
           {tab === "minutas" && <SimpleList empty="Sem minutas" items={my.drafts.map((d) => ({ id: d.id, title: d.title, meta: d.kind, right: <Badge>{d.status}</Badge>, href: `/app/minutas/${d.id}` }))} action={<Link href={`/app/minutas?novo=1&caso=${k.id}`} className="btn btn-secondary">Nova minuta</Link>} />}
           {tab === "financeiro" && <SimpleList empty="Sem parcelas" items={my.insts.map((i) => ({ id: i.id, title: i.label, meta: `vence ${formatCivil(i.due)}`, right: <span className="num">{formatBRL(i.amount - i.paid)}</span>, href: `/app/financeiro?parcela=${i.id}` }))} />}
         </div>

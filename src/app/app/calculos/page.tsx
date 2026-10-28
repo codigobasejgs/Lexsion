@@ -9,6 +9,7 @@ import { useCollection } from "@/components/providers";
 import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
 import { Feedback, useAction } from "@/modules/shared";
 import { createRow } from "@/services/mock/generic";
+import { CALC_MODELS, CALC_STATUS_LABEL } from "@/domain/calc-engine";
 
 // Catálogo por área. Só modelos com aritmética administrativa definida calculam; os demais são cadastro + revisão.
 const CALC_CATALOG: { area: string; models: { name: string; implemented: boolean; fields: string[] }[] }[] = [
@@ -19,9 +20,17 @@ const CALC_CATALOG: { area: string; models: { name: string; implemented: boolean
   { area: "Penal", models: [{ name: "Dosimetria/execução (referência)", implemented: false, fields: [] }] },
   { area: "Previdenciária", models: [{ name: "Análise CNIS e cenários", implemented: false, fields: [] }] },
 ];
+// Modelos da central (src/domain/calc-engine.ts): somados ao catálogo original, por área.
+for (const m of CALC_MODELS) {
+  const g = CALC_CATALOG.find((x) => x.area === m.area) ?? (CALC_CATALOG.push({ area: m.area, models: [] }), CALC_CATALOG[CALC_CATALOG.length - 1]);
+  g.models.push({ name: m.name, implemented: true, fields: m.fields.map((f) => f.key) });
+}
+const STATUS_OF = Object.fromEntries(CALC_MODELS.map((m) => [m.name, CALC_STATUS_LABEL[m.status]]));
 
 export default function CalculosPage() {
   const calcs = useCollection("calculations");
+  const cases = useCollection("cases");
+  const [caseId, setCaseId] = useState("");
   const router = useRouter();
   const act = useAction("calculations");
   const [model, setModel] = useState<{ area: string; name: string } | null>(null);
@@ -38,7 +47,7 @@ export default function CalculosPage() {
                 {g.models.map((m) => (
                   <li key={m.name} className="flex flex-wrap items-center gap-2">
                     <span className="min-w-0 flex-1 break-words">{m.name}</span>
-                    {m.implemented ? <Badge tone="success">Aritmética implementada</Badge> : <Badge tone="neutral">Cadastro e revisão</Badge>}
+                    {STATUS_OF[m.name] ? <Badge tone="warning">{STATUS_OF[m.name]}</Badge> : m.implemented ? <Badge tone="success">Aritmética implementada</Badge> : <Badge tone="neutral">Cadastro e revisão</Badge>}
                     <button className="btn btn-ghost min-h-8 px-2 text-xs" aria-label={`Novo cálculo: ${m.name}`} onClick={() => { setModel({ area: g.area, name: m.name }); setTitle(m.name); }}><Plus aria-hidden className="size-3.5" /></button>
                   </li>
                 ))}
@@ -51,7 +60,7 @@ export default function CalculosPage() {
           <ul className="panel divide-y divide-line">
             {calcs.data.map((c) => (
               <li key={c.id}><Link href={`/app/calculos/${c.id}`} className="flex flex-wrap items-center gap-3 p-3 text-sm hover:bg-surface-muted/50">
-                <span className="min-w-0 flex-1"><span className="block font-medium">{c.title}</span><span className="text-fg-muted">{c.area} · {c.model}</span></span>
+                <span className="min-w-0 flex-1"><span className="block font-medium">{c.title}</span><span className="text-fg-muted">{c.area} · {c.model}{c.caseId ? ` · ${cases.data?.find((k) => k.id === c.caseId)?.title ?? "caso"}` : ""}</span></span>
                 {c.resultsVersion !== null && c.resultsVersion !== c.inputsVersion && <Badge tone="danger">Resultado desatualizado</Badge>}
                 <Badge tone={c.status === "revisado" ? "success" : c.status === "aguardando_revisao" ? "warning" : "neutral"}>{{ rascunho: "Rascunho", aguardando_revisao: "Aguardando revisão", revisado: "Revisado" }[c.status]}</Badge>
               </Link></li>
@@ -61,9 +70,10 @@ export default function CalculosPage() {
       </div>
       <Dialog open={!!model} onClose={() => setModel(null)} title="Novo cálculo">
         <label className="block"><span className="label">Título</span><input className="field" value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+        <label className="mt-3 block"><span className="label">Vincular ao caso (opcional)</span><select className="field" value={caseId} onChange={(e) => setCaseId(e.target.value)}><option value="">Sem caso</option>{cases.data?.map((k) => <option key={k.id} value={k.id}>{k.title}</option>)}</select></label>
         <Feedback error={act.error} />
         <div className="mt-4 flex justify-end gap-2"><button className="btn btn-ghost" onClick={() => setModel(null)}>Cancelar</button>
-          <button className="btn btn-primary" disabled={!title.trim()} onClick={async () => { const r = await act.run((ctx) => createRow("calculations", { area: model!.area, model: model!.name, title: title.trim(), inputs: {}, status: "rascunho", inputsVersion: 1, resultsVersion: null }, ctx, "Cálculo criado")); if (r) router.push(`/app/calculos/${r.id}`); }}>Criar</button>
+          <button className="btn btn-primary" disabled={!title.trim()} onClick={async () => { const r = await act.run((ctx) => createRow("calculations", { area: model!.area, model: model!.name, title: title.trim(), ...(caseId ? { caseId } : {}), inputs: {}, status: "rascunho", inputsVersion: 1, resultsVersion: null }, ctx, "Cálculo criado")); if (r) router.push(`/app/calculos/${r.id}`); }}>Criar</button>
         </div>
       </Dialog>
     </Guard>

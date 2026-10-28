@@ -15,6 +15,7 @@ import { downloadText, toCsv } from "@/domain/csv";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { formatCivil } from "@/lib/dates";
 import type { Calculation } from "@/domain/types";
+import { CALC_STATUS_LABEL, findModel } from "@/domain/calc-engine";
 
 const FIELD_LABEL: Record<string, string> = { salario: "Salário base (R$)", horasExtrasMes: "Horas extras por mês", meses: "Meses no período", adicional: "Adicional (%)", total: "Total (R$)", entrada: "Entrada (R$)", parcelas: "Número de parcelas", valorOriginal: "Valor original (R$)", dataBase: "Data-base", indice: "Índice", valorFinanciado: "Valor financiado (R$)", taxaContratada: "Taxa contratada (% a.m.)", prazo: "Prazo (meses)" };
 const FIELDS: Record<string, string[]> = { "Rescisão e horas extras": ["salario", "horasExtrasMes", "meses", "adicional"], "Parcelamento administrativo": ["total", "entrada", "parcelas"], "Atualização de débito": ["valorOriginal", "dataBase", "indice"], "Revisão contratual": ["valorFinanciado", "taxaContratada", "prazo"] };
@@ -22,6 +23,11 @@ const FIELDS: Record<string, string[]> = { "Rescisão e horas extras": ["salario
 /** Só aritmética administrativa definida (centavos inteiros, arredondamento explícito). */
 function compute(c: Calculation): { result: { label: string; value: string }[]; memory: string[] } | string {
   const i = c.inputs;
+  const engine = findModel(c.model)?.run;
+  if (engine) {
+    const r = engine(i);
+    return "error" in r ? r.error : { result: r.result, memory: [...r.memory, ...r.assumptions.map((a) => `Premissa: ${a}`)] };
+  }
   if (c.model === "Rescisão e horas extras") {
     const sal = parseBRL(i.salario ?? "");
     const h = Number(i.horasExtrasMes);
@@ -56,12 +62,15 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
   const { id } = use(params);
   const { user } = useSession();
   const calcs = useCollection("calculations");
+  const cases = useCollection("cases");
   const act = useAction("calculations");
   const c = calcs.data?.find((x) => x.id === id);
   const [msg, setMsg] = useState<string | null>(null);
   if (calcs.isPending) return <LoadingBlock />;
   if (!c) return <EmptyState title="Cálculo não encontrado" text="" action={<Link href="/app/calculos" className="btn btn-secondary">Voltar</Link>} />;
-  const fields = FIELDS[c.model] ?? [];
+  const model = findModel(c.model);
+  const fields = model ? model.fields.map((f) => f.key) : FIELDS[c.model] ?? [];
+  const fieldDef = (k: string) => model?.fields.find((f) => f.key === k);
   const stale = c.resultsVersion !== null && c.resultsVersion !== c.inputsVersion;
 
   const setInput = (k: string, v: string) => act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, inputs: { ...x.inputs, [k]: v }, inputsVersion: x.inputsVersion + 1, status: "rascunho" })));
@@ -75,13 +84,17 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
   return (
     <Guard area="calculos">
       <div className="mx-auto max-w-[1100px]">
-        <PageHeader breadcrumb={[{ href: "/app/calculos", label: "Cálculos" }]} title={c.title} description={`${c.area} · ${c.model} · versão das regras ${c.rulesVersion ?? "—"} · data-base ${c.baseDate ? formatCivil(c.baseDate) : "—"}`} actions={<SimulatedBadge label="Cálculo demonstrativo" />} />
+        <PageHeader breadcrumb={[{ href: "/app/calculos", label: "Cálculos" }]} title={c.title} description={`${c.area} · ${c.model} · versão das regras ${c.rulesVersion ?? "—"} · data-base ${c.baseDate ? formatCivil(c.baseDate) : "—"}`} actions={<SimulatedBadge label={model ? CALC_STATUS_LABEL[model.status] : "Cálculo demonstrativo"} />} />
+        <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
+          <label className="block min-w-56 flex-1"><span className="label">Caso vinculado</span><select className="field" value={c.caseId ?? ""} onChange={(e) => act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, caseId: e.target.value || undefined }), e.target.value ? "Cálculo vinculado ao caso" : "Cálculo desvinculado do caso"))}><option value="">Sem caso</option>{cases.data?.map((k) => <option key={k.id} value={k.id}>{k.title}</option>)}</select></label>
+          {c.caseId && <Link className="btn btn-ghost" href={`/app/casos/${c.caseId}?aba=calculos`}>Abrir caso</Link>}
+        </div>
         <p className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-accent/60 p-3 text-sm text-accent"><AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" /> Exemplo demonstrativo — cálculo jurídico não validado. Revisão profissional obrigatória.</p>
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="panel space-y-3 p-4">
             <h2 className="font-semibold">Entradas</h2>
             {fields.length === 0 && <p className="text-sm text-fg-muted">Este modelo ainda não tem formulário de entradas.</p>}
-            {fields.map((f) => <Input key={`${f}-${c.inputs[f] ?? ""}`} label={FIELD_LABEL[f] ?? f} value={c.inputs[f] ?? ""} onSave={(v) => setInput(f, v)} />)}
+            {fields.map((f) => <Input key={`${f}-${c.inputs[f] ?? ""}`} label={fieldDef(f)?.label ?? FIELD_LABEL[f] ?? f} kind={fieldDef(f)?.kind} options={fieldDef(f)?.options} placeholder={fieldDef(f)?.placeholder} value={c.inputs[f] ?? ""} onSave={(v) => setInput(f, v)} />)}
             <button className="btn btn-primary" onClick={run} disabled={!fields.length}>Calcular</button>
             {msg && <p role="alert" className="text-sm text-warning">{msg}</p>}
           </section>
@@ -107,11 +120,14 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
   );
 }
 
-function Input({ label, value, onSave }: { label: string; value: string; onSave: (v: string) => void }) {
+function Input({ label, value, onSave, kind, options, placeholder }: { label: string; value: string; onSave: (v: string) => void; kind?: "text" | "textarea" | "select"; options?: string[]; placeholder?: string }) {
   const [v, setV] = useState(value);
+  const save = () => v !== value && onSave(v);
   return (
     <label className="block"><span className="label">{label}</span>
-      <input className="field num" value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} />
+      {kind === "textarea" ? <textarea rows={4} className="field num py-2" placeholder={placeholder} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} />
+        : kind === "select" ? <select className="field" value={v || options?.[0]} onChange={(e) => { setV(e.target.value); onSave(e.target.value); }}>{options?.map((o) => <option key={o}>{o}</option>)}</select>
+        : <input className="field num" placeholder={placeholder} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} />}
     </label>
   );
 }
