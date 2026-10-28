@@ -29,7 +29,7 @@ Legenda: ✅ atendido e testado localmente · ⏳ depende de autorização/propr
 - ✅ Sem credenciais no bundle, repositório ou documentos (varredura do histórico: 0).
 - ⏳ Credenciais expostas na conversa sinalizadas para rotação — **ação do proprietário** (`20-...`).
 - ✅ Supabase e integrações reais desligados; contratos preparados (`docs/BACKEND_FASE_2`).
-- ✅ Nenhuma alteração em Cloudflare/DNS/Resend/Vercel/produção nesta fase.
+- ✅ Nenhuma alteração em Cloudflare/DNS/Resend/Supabase; produção alterada só pelo push autorizado em 28/10/2026.
 
 ## Decisão
 **Frontend demonstrativo publicado** (28/10/2026, autorizado). Pendente do proprietário: rotação das credenciais. **NO-GO para uso com dados reais** até a fase de backend (autenticação e RLS).
