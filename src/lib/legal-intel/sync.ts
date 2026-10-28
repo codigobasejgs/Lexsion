@@ -39,7 +39,7 @@ export async function syncCamara(trigger: "cron" | "manual" | "teste", opts: { m
       if (r === "novo") stats.novo++;
       if (r === "alteracao") stats.changed++;
     }
-    stats.alerts = await createAlerts(run!.id);
+    stats.alerts = await createAlerts();
     await db.from("source_sync_cursors").upsert({ provider_id: PROVIDER, cursor: { lastDay: today, lastIds: ids.length }, updated_at: new Date().toISOString() });
     const status = errors.length && !stats.seen ? "erro" : errors.length ? "parcial" : "ok";
     await db.from("source_sync_runs").update({ finished_at: new Date().toISOString(), status, items_seen: stats.seen, items_new: stats.novo, items_changed: stats.changed, alerts_created: stats.alerts, latency_ms: Date.now() - t0, error: errors.slice(0, 5).join(" | ") || null }).eq("id", run!.id);
@@ -86,13 +86,17 @@ async function upsertDoc(d: NormalizedDoc): Promise<"novo" | "alteracao" | "igua
   return ex ? "alteracao" : "novo";
 }
 
-/** Alerta por escritório: área ou palavra-chave das preferências. Único por (escritório, atualização). */
-async function createAlerts(runId: number): Promise<number> {
+/**
+ * Alerta por escritório: área ou palavra-chave das preferências. Único por (escritório, atualização), então
+ * reprocessar não duplica. Janela: atualizações dos últimos 7 dias — o escritório que acabou de configurar
+ * preferências recebe o que é recente, e quem já recebeu não recebe de novo.
+ */
+const ALERT_WINDOW_MS = 7 * 86_400_000;
+async function createAlerts(): Promise<number> {
   const db = supabaseAdmin();
-  const { data: run } = await db.from("source_sync_runs").select("started_at").eq("id", runId).single();
   const [{ data: prefs }, { data: ups }] = await Promise.all([
     db.from("tenant_legal_preferences").select("organization_id,areas,keywords,include_projects,digest"),
-    db.from("legal_updates").select("id,areas,legal_documents(doc_kind,title,ementa)").gte("detected_at", run!.started_at),
+    db.from("legal_updates").select("id,areas,legal_documents(doc_kind,title,ementa)").gte("detected_at", new Date(Date.now() - ALERT_WINDOW_MS).toISOString()).limit(2000),
   ]);
   let n = 0;
   for (const p of prefs ?? []) {
