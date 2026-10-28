@@ -233,6 +233,9 @@ export interface Lead extends OrgEntity {
   history: { at: string; from?: StageKey; to: StageKey; actorId: ID; note?: string }[];
   createdAt: string;
   triage?: { area: string; answers: Record<string, string>; checklist: string[]; at: string; actorId: ID; routedTo: ID };
+  /** Opt-out de comunicações (definitivo até nova autorização) e tentativas de follow-up simuladas. */
+  optOutAt?: string;
+  followUps?: { at: string; sent: boolean; note: string }[];
 }
 
 export type DocType = "CNIS" | "CTPS" | "PPP" | "Laudo" | "Exame" | "HISCRE" | "Documento pessoal" | "Contrato" | "Comprovante" | "Carta de concessão" | "Peça" | "Outro";

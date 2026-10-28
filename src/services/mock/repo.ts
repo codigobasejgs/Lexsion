@@ -5,6 +5,7 @@ import type { Conversation, Installment, Message, Payment, PensionAnalysis, Task
 import { preparePayment, prepareReversal, recompute } from "@/domain/finance";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { nextOccurrence } from "@/domain/recurrence";
+import { scheduleWorkflow, WORKFLOW_TEMPLATES } from "@/domain/workflows";
 
 const cid = () => crypto.randomUUID().slice(0, 8);
 const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: cid() });
@@ -59,6 +60,30 @@ export const tasksService = {
     await writeAll("tasks", [...rows.map((r) => (r.id === id ? next : r)), ...(created ? [created] : [])]);
     if (created) await audit(ctx, "task.recurred", "Task", created.id, `Próxima ocorrência criada para ${created.due}`);
     return ok(next);
+  },
+  /**
+   * Aplica um modelo de workflow ao caso: uma tarefa por etapa, cada uma dependente da anterior, prazos em dias úteis
+   * com os feriados do escritório. Idempotente: ids determinísticos por caso+modelo (aplicar de novo não duplica).
+   */
+  applyWorkflow: async (templateId: string, caseId: string, assignees: Record<string, string>, ctx: RequestContext): Promise<Result<{ created: number; existing: number }>> => {
+    const t = WORKFLOW_TEMPLATES.find((x) => x.id === templateId);
+    if (!t) return fail("not_found", "Modelo de workflow não encontrado.");
+    const [rows, cases, settings] = await Promise.all([readAll("tasks"), readAll("cases"), readAll("settings")]);
+    const k = cases.find((c) => c.id === caseId && c.organizationId === ctx.organizationId);
+    if (!k) return fail("not_found", "Caso não encontrado neste escritório.");
+    const holidays = settings.find((s) => s.organizationId === ctx.organizationId)?.holidays ?? [];
+    const plan = scheduleWorkflow(t, DEMO_TODAY, holidays);
+    const ids = plan.map((_, i) => `wf-${caseId}-${t.id}-${i + 1}`);
+    const fresh: Task[] = plan.flatMap(({ step, due }, i) => rows.some((r) => r.id === ids[i]) ? [] : [{
+      id: ids[i], organizationId: ctx.organizationId, title: `${i + 1}/${plan.length} · ${step.title}`, caseId, clientId: k.clientId, assigneeId: assignees[step.role] ?? k.ownerId,
+      due, priority: "normal" as const, done: false, dependsOn: i ? [ids[i - 1]] : undefined, checklist: step.checklist?.map((c, j) => ({ id: `${ids[i]}-c${j}`, text: c, done: false })),
+      comments: [{ at: new Date().toISOString(), actorId: ctx.actorId, text: `Criada pelo workflow “${t.name}”` }],
+    }]);
+    if (fresh.length) {
+      await writeAll("tasks", [...rows, ...fresh]);
+      await audit(ctx, "workflow.applied", "Case", caseId, `${t.name}: ${fresh.length} tarefa(s)`);
+    }
+    return ok({ created: fresh.length, existing: plan.length - fresh.length });
   },
 };
 

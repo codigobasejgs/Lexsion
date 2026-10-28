@@ -278,11 +278,22 @@ export const commercialService = {
     await writeMany({ contracts: contracts.map((x) => (x.id === id ? next : x)) });
     return ok(next);
   },
+  /** Cancela o envio (simulação): registra motivo na trilha. Assinaturas já feitas ficam no histórico; nenhuma parcela é criada. */
+  cancel: async (id: string, reason: string, ctx: RequestContext): Promise<Result<Contract>> => {
+    if (reason.trim().length < 5) return fail("reason", "Informe o motivo do cancelamento (mínimo 5 caracteres).");
+    const [contracts, audit] = await Promise.all([readAll("contracts"), readAll("audit")]);
+    const c = contracts.find((x) => x.id === id && x.organizationId === ctx.organizationId);
+    if (!c) return fail("not_found", "Contrato não encontrado.");
+    if (c.status !== "enviado" && c.status !== "parcial") return fail("state", "Só é possível cancelar um envio em andamento.");
+    const next: Contract = { ...c, status: "cancelado", history: [...(c.history ?? []), { at: nowIso(), actorId: ctx.actorId, text: `Envio cancelado (simulação): ${reason.trim()}` }] };
+    await writeMany({ contracts: contracts.map((x) => (x.id === id ? next : x)), audit: [...audit, auditRow(ctx, "contract.cancelled", "Contract", id, reason.trim())] });
+    return ok(next);
+  },
   newVersion: async (id: string, ctx: RequestContext): Promise<Result<Contract>> => {
     const contracts = await readAll("contracts");
     const c = contracts.find((x) => x.id === id && x.organizationId === ctx.organizationId);
     if (!c) return fail("not_found", "Contrato não encontrado.");
-    if (c.status !== "recusado" && c.status !== "expirado") return fail("state", "Nova versão só após recusa ou expiração.");
+    if (c.status !== "recusado" && c.status !== "expirado" && c.status !== "cancelado") return fail("state", "Nova versão só após recusa, expiração ou cancelamento.");
     const v: Contract = { ...c, id: `ct-${cid()}`, status: "rascunho", version: (c.version ?? 1) + 1, previousVersionId: c.id, installmentsGenerated: false, signers: c.signers?.map((s) => ({ ...s, status: "pendente", signedAt: undefined })), history: [{ at: nowIso(), actorId: ctx.actorId, text: `Versão ${(c.version ?? 1) + 1} criada a partir da anterior (preservada)` }] };
     await writeMany({ contracts: [...contracts, v] });
     return ok(v);

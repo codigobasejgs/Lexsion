@@ -10,6 +10,7 @@ import { ClientForm } from "@/modules/clients/client-form";
 import { CaseForm } from "@/modules/cases/case-form";
 import { MoveStageDialog } from "@/modules/crm/lead-dialogs";
 import { TriagePanel } from "@/modules/crm/triage-panel";
+import { FollowUpPanel } from "@/modules/crm/followup-panel";
 import { crmService } from "@/services/mock/crm-repo";
 import { formatPhone, STAGE_LABEL, STAGES } from "@/domain/crm";
 import { formatInstant } from "@/lib/dates";
@@ -134,6 +135,7 @@ export default function LeadPage({ params }: PageProps<"/app/crm/leads/[id]">) {
               <p className="text-fg-muted">Contato autorizado: <strong className="text-fg">{l.consentContact ? "sim" : "não — sem follow-up automático"}</strong></p>
               {l.conversationId && <Link href={`/app/atendimento/${l.conversationId}`} className="btn btn-secondary w-full"><MessagesSquare aria-hidden className="size-4" /> Abrir conversa</Link>}
             </section>
+            <FollowUpPanel l={l} />
           </aside>
         </div>
       </div>

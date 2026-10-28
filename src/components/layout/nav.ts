@@ -1,7 +1,7 @@
 import {
   AlarmClock, Banknote, BarChart3, BookOpen, Bot, Briefcase, Building2, CalendarDays, Calculator, CreditCard, FileSignature, FileText, FolderOpen,
   GraduationCap, Home, KanbanSquare, Landmark, LayoutGrid, ListChecks, Megaphone, MessagesSquare, Newspaper, Palette, Plug, Scale, ScrollText,
-  Search, Settings, Upload, Users, UsersRound, Workflow,
+  Search, Settings, Upload, Users, UsersRound, Workflow, GitBranch,
 } from "lucide-react";
 import type { Area } from "@/domain/permissions";
 
@@ -45,6 +45,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/app/agenda", label: "Agenda", icon: CalendarDays, area: "agenda" },
       { href: "/app/tarefas", label: "Tarefas", icon: ListChecks, area: "tarefas" },
+      { href: "/app/workflows", label: "Workflows", icon: GitBranch, area: "tarefas" },
       { href: "/app/prazos", label: "Prazos e publicações", icon: AlarmClock, area: "prazos" },
     ],
   },

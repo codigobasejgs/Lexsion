@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { canFollowUp } from "@/domain/followup";
 import { applyStageChange, buildTouch, findClientMatches, formatPhone, isValidCnpj, isValidCpf, normalizePhone } from "@/domain/crm";
 import { clientSchema } from "@/domain/schemas";
 import type { Client, Lead } from "@/domain/types";
@@ -60,5 +61,18 @@ describe("duplicados", () => {
     const list = [c("a", "529.982.247-25", "(71) 90000-0001"), c("b", "000", "71 900000002")];
     expect(findClientMatches(list, { document: "52998224725" })).toEqual([{ client: list[0], by: "documento" }]);
     expect(findClientMatches(list, { phone: "(71) 90000-0002" })).toEqual([{ client: list[1], by: "telefone" }]);
+  });
+});
+
+describe("follow-up ético", () => {
+  const base = { consentContact: true, attempts: 0, maxAttempts: 2, hour: 10, window: [9, 18] as [number, number], replied: false, isClient: false };
+  it("libera só com consentimento, dentro do horário, abaixo do limite", () => {
+    expect(canFollowUp(base)).toEqual({ allowed: true });
+    expect(canFollowUp({ ...base, optOutAt: "2026-10-26T10:00:00Z" })).toMatchObject({ allowed: false, reason: expect.stringMatching(/opt-out/) });
+    expect(canFollowUp({ ...base, consentContact: false })).toMatchObject({ allowed: false });
+    expect(canFollowUp({ ...base, hour: 20 })).toMatchObject({ allowed: false, reason: expect.stringMatching(/Fora do horário/) });
+    expect(canFollowUp({ ...base, attempts: 2 })).toMatchObject({ allowed: false, reason: expect.stringMatching(/Limite/) });
+    expect(canFollowUp({ ...base, replied: true })).toMatchObject({ allowed: false });
+    expect(canFollowUp({ ...base, isClient: true })).toMatchObject({ allowed: false });
   });
 });

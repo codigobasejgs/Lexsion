@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nextOccurrence, upcomingBirthdays } from "@/domain/recurrence";
+import { scheduleWorkflow, WORKFLOW_TEMPLATES } from "@/domain/workflows";
 
 describe("F18 — tarefa recorrente", () => {
   it("semana, quinzena, mês e ano", () => {
@@ -32,5 +33,18 @@ describe("F18 — aniversariantes", () => {
   });
   it("29/02 em ano não bissexto cai em 28/02", () => {
     expect(upcomingBirthdays(people, "2027-02-20", 10).map((x) => x.date)).toEqual(["2027-02-28"]);
+  });
+});
+
+describe("workflows encadeados (dias úteis)", () => {
+  it("cada etapa começa quando a anterior vence e pula fim de semana e feriado", () => {
+    const t = { id: "x", area: "x", name: "x", steps: [{ title: "A", days: 2, role: "advogado" as const }, { title: "B", days: 1, role: "advogado" as const }] };
+    // seg 26/10/2026 + 2 úteis = qua 28/10; + 1 útil = qui 29/10 → com feriado em 29/10, vai a sex 30/10
+    expect(scheduleWorkflow(t, "2026-10-26", []).map((s) => s.due)).toEqual(["2026-10-28", "2026-10-29"]);
+    expect(scheduleWorkflow(t, "2026-10-26", [{ date: "2026-10-29", name: "Feriado local" }]).map((s) => s.due)).toEqual(["2026-10-28", "2026-10-30"]);
+  });
+  it("modelos são originais e têm 4+ etapas com prazo positivo", () => {
+    expect(WORKFLOW_TEMPLATES.length).toBeGreaterThanOrEqual(5);
+    expect(WORKFLOW_TEMPLATES.every((t) => t.steps.length >= 4 && t.steps.every((s) => s.days > 0))).toBe(true);
   });
 });
