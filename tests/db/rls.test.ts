@@ -155,6 +155,22 @@ describe("Exclusões (dados e LGPD)", () => {
   });
 });
 
+describe("Situação do escritório", () => {
+  it("titular não altera o próprio status/plano; só nome e marca", async () => {
+    expect(await denied(U.adminA, "update public.organizations set status = 'ativa', plan = 'enterprise' where id = $1", [orgA])).toMatch(/permission denied/);
+    expect((await as(U.adminA, "update public.organizations set name = 'Escritório A Renomeado' where id = $1 returning id", [orgA])).length).toBe(1);
+  });
+  it("suspensão exige motivo, corta equipe e portal, e reativação devolve o acesso com os dados intactos", async () => {
+    expect(await denied(U.superadmin, "select public.set_organization_status($1, 'suspensa', '')", [orgA])).toMatch(/motivo/);
+    expect(await denied(U.adminA, "select public.set_organization_status($1, 'ativa', 'x')", [orgA])).toMatch(/somente a plataforma/);
+    await as(U.superadmin, "select public.set_organization_status($1, 'suspensa', 'Inadimplência de teste')", [orgA]);
+    expect(await as(U.advA, "select id from public.cases")).toEqual([]);
+    expect(await as(U.clienteA, "select id from public.cases")).toEqual([]);
+    await as(U.superadmin, "select public.set_organization_status($1, 'ativa', null)", [orgA]);
+    expect((await as(U.advA, "select id from public.cases")).length).toBeGreaterThan(0);
+  });
+});
+
 describe("Plataforma", () => {
   it("só a plataforma cria escritório; endereço reservado é recusado", async () => {
     expect(await denied(U.adminA, "select public.create_organization('novo-x','Novo', $1)", [U.adminA])).toMatch(/somente a plataforma/);
