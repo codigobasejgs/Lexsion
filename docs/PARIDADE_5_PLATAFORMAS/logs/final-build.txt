@@ -1,0 +1,137 @@
+
+> siwiltec@0.1.0 build J:\AREA DE TRABALHO\Projetos\Siwiltec - Advogados\siwiltec
+> node scripts/stamp-sw.mjs && next build
+
+sw.js versão 20261028125236
+▲ Next.js 16.4.3 (Turbopack)
+✓ Running next.config.ts took 31ms
+- Experiments (use with caution):
+  ✓ useOffline
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1312ms
+  Running TypeScript ...
+  Finished TypeScript in 1882ms ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/123) ...
+  Generating static pages using 19 workers (30/123) 
+  Generating static pages using 19 workers (61/123) 
+  Generating static pages using 19 workers (92/123) 
+✓ Generating static pages using 19 workers (123/123) in 936ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin
+├ ƒ /admin/auditoria
+├ ƒ /admin/faturamento
+├ ƒ /admin/integracoes
+├ ƒ /admin/organizacoes
+├ ƒ /admin/planos
+├ ƒ /admin/suporte
+├ ƒ /app/academia
+├ ƒ /app/agenda
+├ ƒ /app/ajuda
+├ ƒ /app/ajuda/[slug]
+├ ƒ /app/assinaturas
+├ ƒ /app/atendimento
+├ ƒ /app/atendimento/[conversationId]
+├ ƒ /app/audiencias
+├ ƒ /app/automacoes
+├ ƒ /app/automacoes/[id]
+├ ƒ /app/automacoes/execucoes
+├ ƒ /app/boas-vindas
+├ ƒ /app/calculos
+├ ƒ /app/calculos/[id]
+├ ƒ /app/casos
+├ ƒ /app/casos/[id]
+├ ƒ /app/clientes
+├ ƒ /app/clientes/[id]
+├ ƒ /app/clientes/novo
+├ ƒ /app/configuracoes
+├ ƒ /app/configuracoes/branding
+├ ƒ /app/configuracoes/emails
+├ ƒ /app/contratos
+├ ƒ /app/contratos/[id]
+├ ƒ /app/crm
+├ ƒ /app/crm/captura
+├ ƒ /app/crm/leads/[id]
+├ ƒ /app/documentos
+├ ƒ /app/documentos/[id]
+├ ƒ /app/documentos/solicitacoes
+├ ƒ /app/equipe
+├ ƒ /app/financeiro
+├ ƒ /app/financeiro/caixa
+├ ƒ /app/financeiro/conciliacao
+├ ƒ /app/financeiro/pagar
+├ ƒ /app/financeiro/receber
+├ ƒ /app/financeiro/recibos
+├ ƒ /app/ia/agentes
+├ ƒ /app/ia/agentes/[id]
+├ ƒ /app/ia/execucoes
+├ ƒ /app/ia/objecoes
+├ ƒ /app/ia/simulador
+├ ƒ /app/importacoes
+├ ƒ /app/importacoes/[id]
+├ ƒ /app/inicio
+├ ƒ /app/integracoes
+├ ƒ /app/integracoes/[provider]
+├ ƒ /app/integracoes/eventos
+├ ƒ /app/jornal
+├ ƒ /app/jornal/[id]
+├ ƒ /app/jornal/alertas
+├ ƒ /app/marketing/campanhas
+├ ƒ /app/marketing/conteudos
+├ ƒ /app/marketing/paginas
+├ ƒ /app/minutas
+├ ƒ /app/minutas/[id]
+├ ƒ /app/modelos
+├ ƒ /app/pagamentos
+├ ƒ /app/pericias
+├ ƒ /app/pesquisa
+├ ƒ /app/prazos
+├ ƒ /app/previdenciario
+├ ƒ /app/previdenciario/analises/[id]
+├ ƒ /app/previdenciario/especializadas/[id]
+├ ƒ /app/previdenciario/planejamentos/[id]
+├ ƒ /app/processos
+├ ƒ /app/propostas
+├ ƒ /app/propostas/[id]
+├ ƒ /app/propostas/nova
+├ ƒ /app/publicacoes
+├ ƒ /app/relatorios
+├ ƒ /app/requisitorios
+├ ƒ /app/requisitorios/[id]
+├ ƒ /app/tarefas
+├ ƒ /app/workflows
+├ ƒ /boas-vindas
+├ ƒ /contato
+├ ƒ /demo/tenant/[slug]
+├ ƒ /demonstracao
+├ ƒ /design-system
+├ ƒ /entrar
+├ ƒ /funcionalidades
+├ ƒ /instalar
+├ ƒ /offline
+├ ƒ /planos
+├ ƒ /portal
+├ ƒ /portal/ajuda
+├ ƒ /portal/casos/[id]
+├ ƒ /portal/documentos
+├ ƒ /portal/pagamentos
+├ ƒ /privacidade
+├ ƒ /pwa/[key]/manifest.webmanifest
+├ ƒ /recuperar-acesso
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+├ ƒ /sobre
+├ ƒ /solucoes
+└ ƒ /termos
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
