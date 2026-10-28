@@ -1,6 +1,6 @@
 # 12 — Relatório de prontidão comercial (28/10/2026)
 
-**Versão em produção:** commit `544e413` · deploy Vercel `READY` nos aliases `lexsion.com.br` e `lexsion.vercel.app` (conferido pela API da Vercel).
+**Versão em produção:** commit `3b9f3d5` (atualizado) · deploy Vercel `READY` nos aliases `lexsion.com.br` e `lexsion.vercel.app` (conferido pela API da Vercel).
 **Prova em produção:** 17/17 testes reais em `lexsion.com.br`, com escritórios e pessoas sintéticos, apagados depois. Banco após a rodada: 0 escritórios, 0 registros, 0 arquivos, 0 instâncias de WhatsApp, 0 registros de uso de IA. Instâncias `lexsion-*` na Evolution: 0.
 
 ## Por módulo
@@ -24,11 +24,13 @@
 | Pagamentos (Asaas, InfinitePay, Mercado Pago) | — | bloqueado; baixa manual funciona | REAL-ERP-05 | — | **nenhuma credencial fornecida** | — |
 | Assinatura digital (ZapSign) | registro manual de assinatura | bloqueado | — | — | **token não fornecido** | — |
 | Cálculos jurídicos | gravam e reabrem | demonstrativos | unitários + E2E | — | validação por advogado(a); índices oficiais (licença) | `544e413` |
+| **Monitoramento jurídico (Câmara)** | coleta automática a cada 3 h, versões, alertas por área, Jornal real, saúde dos conectores | 150 proposições reais coletadas pelo agendador; sem duplicação; 27 alertas reais só no escritório interessado | INTEL-01/02 em produção | alerta não cobria escritório recém-configurado; retry em falha de rede | Senado, DOU, Planalto, LexML ver `13` | `3b9f3d5` |
+| **Privilégios do banco** | revogados privilégios padrão de anon e TRUNCATE | anônimo sem acesso a nenhuma tabela; hash do webhook ilegível | privilegios.real (4) | **grave**: tabelas novas vinham com ALL para anon (RLS protegia as linhas, mas TRUNCATE não passa por RLS) | — | `74390bf` |
 | DataJud (CNJ) | **não integrado** | a API pública responde (teste técnico só de contagem, sem dado de processo) | — | — | **os termos do CNJ (itens 3.3 e 3.8) proíbem uso comercial e exploração de informação derivada**: precisa de autorização do CNJ ou parecer jurídico antes de integrar num SaaS pago | — |
 | Jusbrasil, Previdenciarista | **não integrado** | — | — | — | não há API para conta de usuário; automatizar o login viola os termos. Precisa de contrato comercial de API | — |
 
 ## Percentual operacional comprovado
-- **Módulos (19 linhas acima):** 14 operacionais comprovados (74%), 1 com ressalva (cálculos), 4 bloqueados por terceiros ou termos (pagamentos, assinatura digital, DataJud, Jusbrasil/Previdenciarista). Agentes autônomos ficam fora da conta: o bloqueio é decisão de produto.
+- **Percentual por módulo:** não recalculado nesta rodada. As linhas acima agrupam funcionalidades com coberturas e pendências diferentes; não constituem uma amostra uniforme para calcular prontidão comercial.
 - **71 capacidades da matriz de paridade** (`01-…csv`): 19 operacionais (27%), 32 operacionais sem validação jurídica (45%), 11 parciais (15%), 7 bloqueadas (10%), 2 não implementadas (3%). Funcionam com dados reais: **72%**. Sem nenhuma ressalva: **27%**.
 
 ## Parecer
