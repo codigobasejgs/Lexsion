@@ -144,19 +144,19 @@ export function ConnectorHealth() {
   const provs = useProviders();
   const qc = useQueryClient();
   const runs = useQuery({ queryKey: ["intel", "runs"], queryFn: async () => (await sb().from("source_sync_runs").select("*").order("started_at", { ascending: false }).limit(15)).data ?? [] });
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const runNow = async () => {
-    setBusy(true);
+  const runNow = async (provider: string) => {
+    setBusy(provider);
     setMsg(null);
-    const r = await fetch("/api/admin/inteligencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: "camara-proposicoes", maxItems: 150 }) }).then((x) => x.json()).catch(() => null);
-    setBusy(false);
+    const r = await fetch("/api/admin/inteligencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider, maxItems: 150 }) }).then((x) => x.json()).catch(() => null);
+    setBusy(null);
     setMsg(r?.ok ? `Execução: ${r.data.status} · ${r.data.seen ?? 0} lidos · ${r.data.novo ?? 0} novos · ${r.data.changed ?? 0} alterados · ${r.data.alerts ?? 0} alertas` : r?.error?.message ?? "Falhou.");
     await qc.invalidateQueries({ queryKey: ["intel"] });
   };
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2"><button className="btn btn-primary" disabled={busy} onClick={runNow}><RefreshCw aria-hidden className="size-4" /> {busy ? "Sincronizando…" : "Sincronizar Câmara agora"}</button><span role="status" className="text-sm">{msg}</span></div>
+      <div className="flex flex-wrap items-center gap-2">{([["camara-proposicoes", "Câmara"], ["senado-materias", "Senado"]] as const).map(([id, label]) => <button key={id} className="btn btn-primary" disabled={!!busy} onClick={() => runNow(id)}><RefreshCw aria-hidden className="size-4" /> {busy === id ? "Sincronizando…" : `Sincronizar ${label} agora`}</button>)}<span role="status" className="text-sm">{msg}</span></div>
       <div className="panel overflow-x-auto" tabIndex={0} aria-label="Fontes (role horizontalmente)">
         <table className="w-full min-w-[900px] text-sm">
           <thead><tr className="text-left text-xs text-fg-muted"><th className="p-3">Fonte</th><th>Situação</th><th>Frequência</th><th>Última atualização confirmada</th><th>Próxima prevista</th><th>Erro</th></tr></thead>

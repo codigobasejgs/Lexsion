@@ -16,7 +16,8 @@ if (!token || !ref || !out) { console.error("uso: node scripts/backup-logico.mjs
 if (path.resolve(out).startsWith(path.resolve("."))) { console.error("Destino dentro do repositório: recusado (backup nunca vai para o Git)."); process.exit(2); }
 
 const TABLES = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
-  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs"];
+  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
+  "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts"];
 
 async function q(sql) {
   const r = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ query: sql }) });

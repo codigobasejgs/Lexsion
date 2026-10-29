@@ -13,7 +13,8 @@ const db = await PGlite.create({ extensions: { pgcrypto } });
 await db.exec("create extension if not exists pgcrypto");
 await db.exec(fs.readFileSync("supabase/tests/stub-supabase.sql", "utf8"));
 const migs = fs.readdirSync("supabase/migrations").sort();
-for (const f of migs) await db.exec(fs.readFileSync(path.join("supabase/migrations", f), "utf8"));
+// pg_cron/pg_net existem só no Supabase: o stub cria o mínimo e a linha "create extension" é ignorada aqui.
+for (const f of migs) await db.exec(fs.readFileSync(path.join("supabase/migrations", f), "utf8").replace(/^create extension if not exists (pg_cron|pg_net);.*$/gm, ""));
 const local = migs.map((f) => f.split("_")[0]);
 const missing = manifest.migrations.filter((v) => !local.includes(v));
 if (missing.length) throw new Error(`backup tem migrations que o repositório não tem: ${missing.join(",")}`);
@@ -23,18 +24,26 @@ const users = JSON.parse(fs.readFileSync(path.join(dir, "auth_users.json"), "utf
 if (users.length) await db.query("insert into auth.users (id, email) select (u->>'id')::uuid, u->>'email' from json_array_elements($1::json) u", [JSON.stringify(users)]);
 await db.exec("set session_replication_role = replica"); // sem triggers na carga (auditoria e guardas não reescrevem o histórico)
 const ORDER = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
-  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs"];
-await db.exec("delete from public.collection_policies"); // vem do backup (mesmo conteúdo da migration)
+  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
+  "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts"];
+// Catálogos que a migration já semeia vêm do backup (mesmo conteúdo): limpa antes para não duplicar.
+await db.exec("delete from public.collection_policies; delete from public.legal_source_providers");
+// Backup antigo (antes destas tabelas existirem) é aceito: a tabela ausente fica vazia e o relatório mostra "--".
+const present = (t) => fs.existsSync(path.join(dir, `${t}.json`));
 for (const t of ORDER) {
+  if (!present(t)) continue;
   const rows = JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), "utf8"));
   if (!rows.length) continue;
-  const over = t === "audit_logs" ? "overriding system value" : "";
-  await db.query(`insert into public.${t} ${over} select * from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
+  const over = ["audit_logs", "ai_usage", "source_sync_runs"].includes(t) ? "overriding system value" : "";
+  // Colunas geradas (ex.: índice de busca) são recalculadas pelo banco: ficam fora da lista do insert.
+  const cols = (await db.query(`select string_agg(quote_ident(column_name), ',' order by ordinal_position) c from information_schema.columns where table_schema='public' and table_name=$1 and is_generated='NEVER'`, [t])).rows[0].c;
+  await db.query(`insert into public.${t} (${cols}) ${over} select ${cols} from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
 }
 await db.exec("set session_replication_role = origin");
 
 let ok = true;
 for (const t of ORDER) {
+  if (!manifest.tables[t]) { console.log(`--  ${t}: não estava neste backup`); continue; }
   const back = (await db.query(`select coalesce(json_agg(t), '[]'::json) as rows from public.${t} t`)).rows[0].rows;
   const n = back.length, exp = manifest.tables[t].rows;
   const same = n === exp;

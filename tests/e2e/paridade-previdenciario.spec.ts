@@ -42,7 +42,8 @@ test("PAR-PREV-02 (E2E-06): BPC/LOAS — composição familiar, exclusão de ren
   await expect(page.getByText(/Revisado por Helena Prado \(v2\)/)).toBeVisible();
   await page.getByRole("button", { name: "Gerar minuta para revisão" }).click();
   await page.waitForURL(/\/app\/minutas\//);
-  await expect(page.getByRole("textbox").first()).toHaveValue(/Renda per capita apurada: R\$\s225,00/);
+  // Editor da minuta pelo rótulo (sob carga, o 1º textbox ainda podia ser o formulário do BPC durante a transição).
+  await expect(page.getByLabel("Texto da minuta")).toHaveValue(/Renda per capita apurada: R\$\s225,00/);
 });
 
 test("PAR-PREV-03 (E2E-08): PPP — pendências por período, quesitos selecionados e minuta revisável", async ({ page }) => {

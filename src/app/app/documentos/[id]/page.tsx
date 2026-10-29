@@ -7,7 +7,7 @@ import { CheckCircle2, Download, Lock, Trash2, Upload } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, Dialog, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
-import { Feedback, useAction, userName } from "@/modules/shared";
+import { Feedback, useAction, useLive, userName } from "@/modules/shared";
 import { DOC_STATUS } from "@/modules/cases/labels";
 import { UploadDialog } from "@/modules/documents/upload";
 import { docService } from "@/services/mock/ops-repo";
@@ -23,6 +23,7 @@ export default function DocumentoPage({ params }: PageProps<"/app/documentos/[id
   const { id } = use(params);
   const router = useRouter();
   const { user } = useSession();
+  const live = useLive();
   const docs = useCollection("documents");
   const clients = useCollection("clients");
   const act = useAction("documents", "files");
@@ -128,7 +129,7 @@ export default function DocumentoPage({ params }: PageProps<"/app/documentos/[id
         <div className="mt-4 flex justify-end gap-2"><button className="btn btn-ghost" onClick={() => setRejecting(false)}>Cancelar</button><button className="btn btn-danger" onClick={async () => { if (await act.run((ctx) => docService.setStatus(d.id, "rejeitado", ctx, reason))) setRejecting(false); }}>Rejeitar</button></div>
       </Dialog>
       <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Excluir documento?">
-        <p>“{d.name}” e seus arquivos locais serão removidos desta demonstração. Documentos validados não podem ser excluídos.</p>
+        <p>“{d.name}” e {live ? "seus arquivos no armazenamento do escritório serão removidos" : "seus arquivos locais serão removidos desta demonstração"}. Documentos validados não podem ser excluídos.</p>
         <div className="mt-4 flex justify-end gap-2"><button className="btn btn-ghost" autoFocus onClick={() => setConfirmDelete(false)}>Cancelar</button><button className="btn btn-danger" onClick={async () => { if (await act.run((ctx) => docService.remove(d.id, ctx))) router.push("/app/documentos"); else setConfirmDelete(false); }}>Excluir</button></div>
       </Dialog>
     </Guard>

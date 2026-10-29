@@ -18,7 +18,7 @@ export default function PropostasPage() {
   return (
     <Guard area="propostas">
       <div className="mx-auto max-w-[1200px]">
-        <PageHeader title="Propostas" description="Proposta → revisão → aprovação → envio (simulado) → aceite → contrato com dados congelados." actions={<Link href="/app/propostas/nova" className="btn btn-primary"><Plus aria-hidden className="size-4" /> Nova proposta</Link>} />
+        <PageHeader title="Propostas" description="Proposta → revisão → aprovação → envio → aceite → contrato com dados congelados." actions={<Link href="/app/propostas/nova" className="btn btn-primary"><Plus aria-hidden className="size-4" /> Nova proposta</Link>} />
         {props.isPending ? <LoadingBlock /> : !props.data?.length ? <EmptyState title="Sem propostas" text="Crie a partir de um lead em negociação." /> : (
           <ResponsiveList rows={props.data} rowKey={(p) => p.id} caption="Propostas" href={(p) => `/app/propostas/${p.id}`}
             columns={[

@@ -84,8 +84,9 @@ export function ProposalForm({ p, onSaved }: { p?: Proposal; onSaved: (p: Propos
           {schedule.length > 0 && (
             <ul className="mt-3 space-y-1.5">
               {schedule.map((s, i) => (
-                <li key={i} className="grid grid-cols-[1fr_9rem_8rem] items-center gap-2 text-sm">
-                  <span>{s.label}</span>
+                <li key={i} className="grid grid-cols-2 items-center gap-2 text-sm sm:grid-cols-[1fr_9rem_8rem]">
+                  {/* Celular (360px): rótulo na linha de cima, data e valor lado a lado; 17rem fixos estouravam a tela e cobriam o botão. */}
+                  <span className="col-span-2 sm:col-span-1">{s.label}</span>
                   <input type="date" aria-label={`Vencimento ${s.label}`} className="field min-h-9" value={s.due} onChange={(e) => { setSchedule(schedule.map((x, j) => (j === i ? { ...x, due: e.target.value } : x))); setDirty(true); }} />
                   <input aria-label={`Valor ${s.label}`} className="field num min-h-9 text-right" defaultValue={formatBRL(s.amount).replace(/R\$\s?/, "")} onBlur={(e) => { const v = parseBRL(e.target.value); if (v !== null) { setSchedule(schedule.map((x, j) => (j === i ? { ...x, amount: v } : x))); setDirty(true); } }} />
                 </li>

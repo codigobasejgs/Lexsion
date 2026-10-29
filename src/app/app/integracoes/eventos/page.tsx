@@ -3,12 +3,13 @@
 import { Guard } from "@/components/guard";
 import { useCollection } from "@/components/providers";
 import { Badge, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
-import { Feedback, useAction } from "@/modules/shared";
+import { Feedback, useAction, useLive } from "@/modules/shared";
 import { updateRow } from "@/services/mock/generic";
 import { formatInstant } from "@/lib/dates";
 import type { IntegrationEvent } from "@/domain/types";
 
 export default function EventosPage() {
+  const live = useLive();
   const events = useCollection("integrationEvents");
   const act = useAction("integrationEvents");
   const rows = [...(events.data ?? [])].reverse();
@@ -26,7 +27,7 @@ export default function EventosPage() {
                   <td className="num px-3 py-2">{formatInstant(e.at)}</td><td className="px-3 py-2">{e.provider}</td><td className="px-3 py-2 font-mono text-xs">{e.type}</td><td className="num px-3 py-2">{e.attempt}</td>
                   <td className="px-3 py-2"><Badge tone={e.status === "sucesso" || e.status === "reprocessado" ? "success" : e.status === "falha" ? "danger" : "warning"}>{e.status}</Badge></td>
                   <td className="px-3 py-2">{e.detail}</td><td className="px-3 py-2 font-mono text-xs">{e.correlationId}</td>
-                  <td className="px-3 py-2">{e.status === "falha" && <button className="btn btn-ghost min-h-8 text-xs" onClick={() => act.run((ctx) => updateRow("integrationEvents", e.id, ctx, (x: IntegrationEvent) => ({ ...x, attempt: x.attempt + 1, status: "reprocessado" })), "Reprocessado (simulação).")}>Reprocessar</button>}</td>
+                  <td className="px-3 py-2">{e.status === "falha" && !live && <button className="btn btn-ghost min-h-8 text-xs" onClick={() => act.run((ctx) => updateRow("integrationEvents", e.id, ctx, (x: IntegrationEvent) => ({ ...x, attempt: x.attempt + 1, status: "reprocessado" })), "Reprocessado (simulação).")}>Reprocessar</button>}</td>
                 </tr>
               ))}</tbody>
             </table>

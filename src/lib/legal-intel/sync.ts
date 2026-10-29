@@ -2,16 +2,26 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { classifyAreas } from "./classify";
 import { discoverUpdates, fetchDocument, type NormalizedDoc } from "./camara";
+import { collectSenado } from "./senado";
 
-// Motor de sincronização de UMA fonte. Idempotente: (fonte, id oficial) + hash do conteúdo.
+// Motor de sincronização de UMA fonte (Câmara ou Senado). Idempotente: (fonte, id oficial) + hash do conteúdo.
 // Novo documento ⇒ versão 1 + atualização "novo"; conteúdo mudou ⇒ nova versão + "alteracao"; igual ⇒ só confirma.
 // Trava por fonte, circuit breaker após falhas seguidas, cursor de período, registro de cada execução.
-const PROVIDER = "camara-proposicoes";
+export const SOURCES = ["camara-proposicoes", "senado-materias"] as const;
+export type SourceId = (typeof SOURCES)[number];
 const MAX_FAILS = 3;
 
 const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
 
-export async function syncCamara(trigger: "cron" | "manual" | "teste", opts: { maxItems?: number } = {}) {
+/** Lê da fonte os documentos do período. Câmara: lista ids e busca cada ficha; Senado: uma chamada já traz tudo. */
+async function* collect(provider: SourceId, from: string, today: string, maxItems: number, errors: string[]): AsyncGenerator<NormalizedDoc> {
+  if (provider === "senado-materias") { yield* await collectSenado(from, maxItems); return; }
+  for (const id of await discoverUpdates(from, today, maxItems)) {
+    try { yield await fetchDocument(id); } catch (e) { errors.push(`${id}: ${(e as Error).message}`); }
+  }
+}
+
+export async function syncSource(PROVIDER: SourceId, trigger: "cron" | "manual" | "teste", opts: { maxItems?: number } = {}) {
   const db = supabaseAdmin();
   const { data: prov } = await db.from("legal_source_providers").select("*").eq("id", PROVIDER).single();
   if (!prov?.enabled) return { status: "bloqueado" as const, reason: "fonte desabilitada" };
@@ -28,19 +38,16 @@ export async function syncCamara(trigger: "cron" | "manual" | "teste", opts: { m
     const last = (cur?.cursor as { lastDay?: string } | undefined)?.lastDay;
     const today = ymd(new Date());
     const from = last ? ymd(new Date(new Date(`${last}T12:00:00-03:00`).getTime() - 86_400_000)) : ymd(new Date(Date.now() - 86_400_000));
-    const ids = await discoverUpdates(from, today, opts.maxItems ?? 150);
     const errors: string[] = [];
-    for (const id of ids) {
+    for await (const doc of collect(PROVIDER, from, today, opts.maxItems ?? 150, errors)) {
       if (Date.now() - t0 > 200_000) { errors.push("tempo limite da execução; restante fica para a próxima"); break; }
-      let doc: NormalizedDoc;
-      try { doc = await fetchDocument(id); } catch (e) { errors.push(`${id}: ${(e as Error).message}`); continue; }
       stats.seen++;
-      const r = await upsertDoc(doc);
+      const r = await upsertDoc(PROVIDER, doc);
       if (r === "novo") stats.novo++;
       if (r === "alteracao") stats.changed++;
     }
     stats.alerts = await createAlerts();
-    await db.from("source_sync_cursors").upsert({ provider_id: PROVIDER, cursor: { lastDay: today, lastIds: ids.length }, updated_at: new Date().toISOString() });
+    await db.from("source_sync_cursors").upsert({ provider_id: PROVIDER, cursor: { lastDay: today, lastIds: stats.seen }, updated_at: new Date().toISOString() });
     const status = errors.length && !stats.seen ? "erro" : errors.length ? "parcial" : "ok";
     await db.from("source_sync_runs").update({ finished_at: new Date().toISOString(), status, items_seen: stats.seen, items_new: stats.novo, items_changed: stats.changed, alerts_created: stats.alerts, latency_ms: Date.now() - t0, error: errors.slice(0, 5).join(" | ") || null }).eq("id", run!.id);
     const now = new Date();
@@ -61,7 +68,7 @@ export async function syncCamara(trigger: "cron" | "manual" | "teste", opts: { m
   }
 }
 
-async function upsertDoc(d: NormalizedDoc): Promise<"novo" | "alteracao" | "igual"> {
+async function upsertDoc(PROVIDER: SourceId, d: NormalizedDoc): Promise<"novo" | "alteracao" | "igual"> {
   const db = supabaseAdmin();
   const areas = classifyAreas(`${d.ementa} ${d.title}`);
   const { data: ex } = await db.from("legal_documents").select("id,content_hash,current_version").eq("provider_id", PROVIDER).eq("external_id", d.externalId).maybeSingle();

@@ -13,6 +13,7 @@ import { formatBRL } from "@/lib/money";
 import { formatInstant, formatTime } from "@/lib/dates";
 import type { Conversation, Message } from "@/domain/types";
 import { people as users } from "@/components/people";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 const FILTERS = [
   { key: "todas", label: "Todas" },
@@ -232,7 +233,9 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
 
   const assignee = users.find((u) => u.id === conv.assigneeId);
   const ints = useCollection("integrations");
-  const disconnected = ints.data?.find((i) => i.provider === "evolution")?.status === "desconectado";
+  // Operação: estado REAL da instância do escritório (whatsapp_instances); demonstração: catálogo local.
+  const waState = useWaStatus(live);
+  const disconnected = live ? waState !== "operacional" : ints.data?.find((i) => i.provider === "evolution")?.status === "desconectado";
 
   return (
     <section aria-label={`Conversa com ${conv.contactName}`} className="flex min-w-0 flex-1 flex-col bg-canvas">
@@ -255,7 +258,7 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
 
       {disconnected && (
         <p role="alert" className="border-b border-danger/40 bg-danger-bg px-4 py-2 text-sm text-danger">
-          WhatsApp desconectado (simulação). Suas respostas ficam na fila e serão enviadas uma única vez quando a conexão voltar. <Link className="underline" href="/app/integracoes/evolution">Ver conexão</Link>
+          {live ? "WhatsApp do escritório não conectado." : "WhatsApp desconectado (simulação)."} Suas respostas ficam na fila e serão enviadas uma única vez quando a conexão voltar. <Link className="underline" href="/app/integracoes/evolution">Ver conexão</Link>
         </p>
       )}
       {/* Estado IA × humano sempre visível (A05) */}
@@ -333,6 +336,7 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
 }
 
 function Bubble({ m }: { m: Message }) {
+  const live = useSession().mode === "real";
   if (m.author === "nota") {
     const who = users.find((u) => u.id === m.authorId);
     return (
@@ -351,7 +355,7 @@ function Bubble({ m }: { m: Message }) {
         <p className="whitespace-pre-wrap text-[0.95rem] [overflow-wrap:anywhere]">{m.text}</p>
         <p className="mt-1 flex items-center justify-end gap-1 text-[0.7rem] text-fg-muted">
           <span className="num" title={formatInstant(m.at)}>{formatTime(m.at)}</span>
-          {m.status && (<>{m.status === "lida" ? <CheckCheck aria-hidden className="size-3.5 text-info" /> : m.status === "fila" ? <Clock aria-hidden className="size-3.5" /> : null}<span>{MSG_STATUS[m.status]}</span></>)}
+          {m.status && (<>{m.status === "lida" ? <CheckCheck aria-hidden className="size-3.5 text-info" /> : m.status === "fila" ? <Clock aria-hidden className="size-3.5" /> : null}<span>{live && m.status === "fila" ? "Na fila" : MSG_STATUS[m.status]}</span></>)}
         </p>
       </div>
     </div>
@@ -442,4 +446,18 @@ function ContextPanel({ conv, caseTitle, fees, onClose, visibility }: { conv: Co
       </div>
     </aside>
   );
+}
+
+/** Estado real do WhatsApp do escritório (somente leitura, RLS: só membros). "carregando" não mostra alerta. */
+function useWaStatus(live: boolean) {
+  const { ctx } = useSession();
+  const [st, setSt] = useState<string>("carregando");
+  useEffect(() => {
+    if (!live || !ctx) return;
+    (async () => {
+      const { data } = await supabaseBrowser().from("whatsapp_instances").select("status").eq("organization_id", ctx.organizationId).maybeSingle();
+      setSt((data as { status?: string } | null)?.status ?? "desconectado");
+    })();
+  }, [live, ctx]);
+  return st === "carregando" ? "operacional" : st;
 }
