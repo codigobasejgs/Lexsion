@@ -1,4 +1,6 @@
-# 09 — Parecer GO / NO-GO da operação (28/10/2026)
+# 09 — Parecer GO / NO-GO da operação (atualizado em 29/10/2026)
+
+**Revisão de 29/10 (versão `d65affd`):** mantém **GO condicionado** para os módulos centrais. Novas evidências: privilégios mínimos (13/13 em sessões reais), ciclo comercial completo (COM-01..07) passando em produção, Senado ativo. **NO-GO comercial pleno** (venda a terceiros em escala) enquanto B12 (rotação de credenciais), B14 (MFA) e B13 (PITR) não estiverem resolvidos, e enquanto cobrança e assinatura eletrônica (B2/B4) dependerem de baixa e registro manuais.
 
 > Atualizado pela auditoria final: ver `11-RELATORIO-FINAL-AUDITORIA.md` (tabela por módulo, percentual comprovado e prontidão comercial).
 

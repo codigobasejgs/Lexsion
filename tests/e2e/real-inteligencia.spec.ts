@@ -106,7 +106,7 @@ test("INTEL-01: preferências pela tela; nova coleta não duplica; alerta e noti
   await page.goto("/app/jornal");
   await expect(page.getByText(/Coleta automática de fontes oficiais/)).toBeVisible({ timeout: SLOW });
   await page.locator('main li a[href^="/app/jornal/"]').first().click();
-  await expect(page.getByRole("link", { name: "Ler na fonte oficial" })).toHaveAttribute("href", /^https:\/\/www\.camara\.leg\.br\//);
+  await expect(page.getByRole("link", { name: "Ler na fonte oficial" })).toHaveAttribute("href", /^https:\/\/(www\.camara\.leg\.br|www25\.senado\.leg\.br)\//);
   await expect(page.getByText(/Histórico de versões/)).toBeVisible();
 });
 
@@ -121,4 +121,25 @@ test("INTEL-02: escritório B não lê alertas nem preferências de A; ninguém 
   // Rota do cron sem segredo é recusada.
   const r = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL ? "https://lexsion.com.br" : ""}/api/cron/inteligencia`).catch(() => null);
   if (r) expect(r.status).toBe(401);
+});
+
+test("INTEL-03: Senado — execução manual pelo Super Admin repete sem duplicar e o item abre com link oficial do Senado", async ({ page }) => {
+  await login(page, people.sa, /\/admin/);
+  const run = async () => page.evaluate(async () => (await fetch("/api/admin/inteligencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: "senado-materias", maxItems: 150 }) })).json());
+  const senado = async () => (await admin.from("legal_documents").select("id", { count: "exact", head: true }).eq("provider_id", "senado-materias")).count ?? 0;
+  const before = await senado();
+  const r1 = await run();
+  expect(r1.ok).toBe(true);
+  expect(["ok", "parcial"]).toContain(r1.data.status);
+  expect(r1.data.seen).toBeGreaterThan(0); // coleta real (não passa vazio)
+  const mid = await senado();
+  expect(mid - before).toBe(r1.data.novo);
+  const r2 = await run();
+  expect(await senado()).toBe(mid + r2.data.novo);
+  const { data: u } = await admin.from("legal_updates").select("id,legal_documents!inner(provider_id)").eq("legal_documents.provider_id", "senado-materias").limit(1).single();
+  await login(page, people.a);
+  await page.goto(`/app/jornal/${u!.id}`);
+  await expect(page.getByRole("link", { name: "Ler na fonte oficial" })).toHaveAttribute("href", /^https:\/\/www25\.senado\.leg\.br\/web\/atividade\/materias\/-\/materia\/\d+$/, { timeout: SLOW });
+  await expect(page.getByText(/Senado Federal|Congresso Nacional/).first()).toBeVisible();
+  await expect(page.getByText("Norma em vigor", { exact: true })).toHaveCount(0);
 });

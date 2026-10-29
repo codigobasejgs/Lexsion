@@ -1,6 +1,6 @@
-# 13 — LexSion Intelligence: monitoramento jurídico (28/10/2026)
+# 13 — LexSion Intelligence: monitoramento jurídico (atualizado em 29/10/2026)
 
-**Versão em produção:** `3b9f3d5` (Vercel READY em `lexsion.com.br`).
+**Versão em produção:** `d65affd` (Vercel READY em `lexsion.com.br`). Fontes ativas: **Câmara** e **Senado**.
 **Agendador:** um único agendador, o Supabase Cron (`pg_cron`), job `lexsion-inteligencia`, expressão `7 */3 * * *` (UTC): a cada 3 horas, no minuto 7. Ele chama por HTTP (`pg_net`) a rota protegida `/api/cron/inteligencia`. O segredo da chamada fica no Vault do Supabase e na Vercel, nunca no Git. A coleta é periódica, **não é tempo real**.
 
 ## Auditoria do que existia antes
@@ -15,7 +15,7 @@
 | Fonte | Órgão | Informação coberta | Conector | Autorização | Estado | Frequência | Última coleta confirmada | Itens | Testes | Limitações / custo |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Câmara — Dados Abertos | Câmara dos Deputados | PL, PLP, PEC, PDL e MPV com tramitação recente: ementa, situação, último ato, data de apresentação, link oficial | API REST pública `/api/v2/proposicoes` | dados abertos públicos | **REAL_ATIVA** | 3 h | ver "Execuções" abaixo | 152 documentos, 153 versões | INTEL-01/02 em produção | até 150 proposições por execução; sem inteiro teor no índice (link oficial); custo zero |
-| Senado — Dados Abertos | Senado Federal | matérias atualizadas | — | dados abertos | PARCIAL | — | — | 0 | sondagem | a rede de teste recebeu HTTP 429; ativar após coleta comprovada a partir do servidor |
+| Senado — Dados Abertos | Senado Federal / Congresso | PL, PLP, PEC, PDL, MPV e PLN atualizados nos últimos dias: ementa, situação, norma gerada, data de apresentação, link oficial | serviço `/dadosabertos/processo?numdias=N` (substituto oficial de `materia/atualizadas`, descontinuado em 01/02/2026) | dados abertos públicos | **REAL_ATIVA** (desde 29/10) | 3 h (mesmo job) | 29/10 10:04 (Brasília), run 27 `ok` | 150 documentos | unit `senado.test.ts` (4) + INTEL-03 em produção | até 150 por execução; requerimento, aviso e ofício ficam de fora; custo zero |
 | Planalto — Legislação | Presidência | leis, decretos, MPs | — | público | INDISPONÍVEL | — | — | 0 | sondagem (sem resposta em 60 s) | não há API documentada; raspagem não é usada |
 | LexML | Rede LexML | normas (metadados) | — | público | INDISPONÍVEL | — | — | 0 | sondagem | o serviço exige verificação anti-robô |
 | DOU — INLABS | Imprensa Nacional | portarias, atos normativos | — | exige cadastro | AGUARDA_CREDENCIAL | — | — | 0 | sondagem (em manutenção) | precisa de login INLABS da LexSion |
@@ -36,11 +36,21 @@
 ## Execuções (painel Super Admin > Integrações)
 Em 28/10/2026 às **18:07:03, horário de Brasília** (21:07 UTC), o job disparou pelo relógio, sem acionamento manual. `cron.job_run_details` registrou `succeeded`; a execução `source_sync_runs.id = 17` terminou `ok` às 18:07:52, com **150 itens lidos, 0 novos, 0 alterações e 0 alertas**. Dados anteriores permaneceram preservados.
 
+## Senado — ativação comprovada (29/10/2026)
+- Sondagem a partir do servidor (pg_net): `materia/atualizadas` respondeu 200, mas os metadados apontam descontinuação; o substituto `/processo` ignora filtro de data (9 MB) e aceita `numdias`, que devolveu 152 matérias em uma chamada. O conector usa `numdias`.
+- Run 25 (agendador, `trigger_legal_sync` → rota): **150 lidos, 150 novos, status ok, 43 s**. Run 27 (repetição): **150 lidos, 0 novos, 0 alterações**. Duplicados por `external_id`: 0.
+- Qualidade: 0 itens sem ementa; 64 com área classificada; link oficial testado do servidor: HTTP 200.
+- INTEL-03 (produção, Super Admin): duas execuções manuais não duplicam; item abre no Jornal com link `www25.senado.leg.br/.../materia/<código>` e nunca como "Norma em vigor".
+- O status só passou para `REAL_ATIVA` depois dessas provas. Reversão: `update legal_source_providers set enabled=false where id='senado-materias'` (dados preservados).
+
+## Agendador (evidência)
+`cron.job_run_details` (job 1): `succeeded` em 29/10 às 03:07, 06:07 e 09:07 (Brasília). Câmara já tinha 7 execuções `cron` com status `ok` antes da inclusão do Senado.
+
 ## IA
 A IA (Gemini) **não gera notícia nem jurisprudência**. No Jornal não há resumo por IA nesta versão: a ementa oficial é exibida como veio da fonte. A classificação por área usa regras de palavras, sem IA. O resumo por IA sobre o texto oficial, com citação, fica para a próxima fase, junto com inteiro teor e RAG.
 
 ## Pendências
-1. Senado: ativar o conector depois de uma coleta comprovada a partir do servidor (limite de requisições).
+1. ~~Senado~~ ativo desde 29/10 (ver acima).
 2. DOU: credenciar o INLABS da LexSion; com ele entram os atos do Ministério da Previdência, INSS e CRPS.
 3. DataJud: autorização do CNJ ou parecer jurídico. Jurisprudência: contrato com fornecedor.
 4. E-mail diário (digest) e WhatsApp para alertas: o modelo de dados já guarda a preferência, mas o envio ainda não foi ativado. Hoje o alerta é só in-app.

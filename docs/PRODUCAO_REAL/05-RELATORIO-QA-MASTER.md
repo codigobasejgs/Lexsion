@@ -1,4 +1,20 @@
-# 05 — Relatório QA Master (28/10/2026)
+# 05 — Relatório QA Master (atualizado em 29/10/2026)
+
+## Rodada 3 (auditoria de produção, versão `d65affd`, 29/10/2026)
+| Suíte | Resultado |
+|---|---|
+| Lint e typecheck | 0 erros (3 avisos antigos) |
+| Unitários | **149 PASS** · 1 opcional (gera amostra .docx) |
+| Banco (PGlite, todas as migrations) | **48 PASS** |
+| Integração com Supabase real (`RUN_REAL=1`) | **24 PASS · 0 pulados** (inclui privilégios 13/13: catálogo + sessões reais de 5 papéis e 2 escritórios) |
+| E2E completo local (build de produção + Supabase real, 2 telas) | 10 workers: 332 PASS · 19 pulados (opcionais/só produção) · 4 falhas de tempo, diferentes a cada rodada; 5 workers: 334 · 2; 2 workers nas falhas: todas passam, salvo PWA-013, que passa isolado tanto no HEAD como nesta versão. **Não há falha determinística.** |
+| Regressões achadas pela suíte e corrigidas | rótulo "Na fila (simulada)" sumiu da demonstração (journeys 5); cronograma da proposta cobria "Criar proposta" em 360 px (COM-01 mobile) |
+| **Produção `lexsion.com.br`** (todos os `real-*`) | **26/26** (auth 1, comercial 7, erp 6, integrações 3, inteligência 3, persistência 6, recuperação 1), 0 pulados após o ajuste do link do Senado; resíduo sintético 0 |
+| Backup → restauração isolada (antes das migrations) | **RESTAURACAO_OK** (26 tabelas, RLS 0 vazamento, arquivos 2/2) |
+
+Novos cenários reais: COM-01 proposta → revisão → aprovação só por advogado(a) (trigger recusa financeiro) → envio e aceite registrados → contrato com dados congelados → 2 assinaturas registradas → 3 parcelas somando exatamente R$ 3.000,00 → baixa manual pelo financeiro, persistente após sair e entrar · COM-02 portal: estagiário grava rascunho, só advogada publica · COM-03 exclusão autorizada auditada; financeiro não exclui cliente · COM-04 suspensão e reativação pelo Super Admin com dados intactos · COM-05 lead perdido com motivo, arquivado e não apagado · COM-06 documento excluído some do banco **e** do Storage · COM-07 logotipo → PNG público no bucket `marcas`, troca do logotipo, manifesto PWA com ícone próprio, outro papel não sobrescreve · INTEL-03 Senado.
+
+Defeitos desta rodada: **PR-11 (P1)** trocar o logotipo pela 2ª vez falhava (upsert do Storage exige SELECT; migration `20261029100000`) · **PR-12 (P2)** cronograma da proposta sobrepunha o botão em 360 px · **PR-13 (P3)** textos "simulação" no modo real (proposta, inbox, exclusão de documento, eventos) · **PR-14 (P2)** privilégios excedentes (MAINTAIN, sequências, UPDATE/DELETE da auditoria) revogados em `20261029090000`.
 
 ## Rodada 2 (auditoria final, versão `0bc50bd`)
 | Suíte | Resultado |
