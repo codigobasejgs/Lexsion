@@ -2,6 +2,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { serverNow, totp } from "../shared/totp";
 
 // Teste de integração REAL contra o Supabase do projeto: usuários de Auth reais, JWT reais, RLS do Postgres real.
 // Cria escritórios e usuários de QA (domínio .invalid, nome "QA …") e REMOVE tudo no final.
@@ -15,6 +16,7 @@ const pw = () => `Qa${crypto.randomBytes(16).toString("base64url")}7`;
 
 let admin: SupabaseClient;
 const users: Record<string, { id: string; email: string; password: string; c?: SupabaseClient }> = {};
+let platNoMfaError = "";
 let orgA = "", orgB = "", clientA = "", caseA = "", draftA = "";
 
 async function mkUser(key: string) {
@@ -32,6 +34,13 @@ async function login(key: string) {
   return c;
 }
 const as = (k: string) => users[k].c!;
+// MFA da plataforma: cadastra TOTP e eleva a sessão a aal2 (mesmo fluxo da tela, sem navegador).
+async function elevateToAal2(c: SupabaseClient) {
+  const { data: e, error } = await c.auth.mfa.enroll({ factorType: "totp", friendlyName: `qa-${tag}` });
+  if (error) throw error;
+  const { error: ve } = await c.auth.mfa.challengeAndVerify({ factorId: e.id, code: totp(e.totp.secret, await serverNow(URL)) });
+  if (ve) throw ve;
+}
 
 describe.skipIf(!ON)("Supabase REAL — RLS e funções privilegiadas", () => {
   beforeAll(async () => {
@@ -41,6 +50,11 @@ describe.skipIf(!ON)("Supabase REAL — RLS e funções privilegiadas", () => {
     const { error: pe } = await admin.from("platform_members").insert({ user_id: users.plat.id, role: "platform_admin" });
     if (pe) throw pe;
     for (const k of Object.keys(users)) await login(k);
+    // Sem 2º fator a plataforma não cria escritório (is_platform exige aal2).
+    const sem = await as("plat").rpc("create_organization", { p_slug: `qa-sem-mfa-${tag}`, p_name: "QA sem MFA", p_owner: users.adminA.id });
+    if (!sem.error) throw new Error("plataforma sem MFA criou escritório");
+    platNoMfaError = sem.error.message;
+    await elevateToAal2(as("plat"));
     const { data: a, error: ea } = await as("plat").rpc("create_organization", { p_slug: `qa-a-${tag}`, p_name: `QA Escritório A ${tag}`, p_owner: users.adminA.id });
     if (ea) throw ea;
     const { data: b, error: eb } = await as("plat").rpc("create_organization", { p_slug: `qa-b-${tag}`, p_name: `QA Escritório B ${tag}`, p_owner: users.adminB.id });
@@ -61,6 +75,12 @@ describe.skipIf(!ON)("Supabase REAL — RLS e funções privilegiadas", () => {
     for (const u of Object.values(users)) await admin.auth.admin.deleteUser(u.id);
   }, 120_000);
 
+  it("plataforma sem 2º fator (aal1) é recusada pelo banco; com TOTP (aal2) opera", async () => {
+    expect(platNoMfaError).toMatch(/plataforma/i);
+    const { data } = await as("plat").auth.mfa.getAuthenticatorAssuranceLevel();
+    expect(data?.currentLevel).toBe("aal2");
+    expect(orgA).not.toBe("");
+  });
   it("escritório B não lê nem altera dados do A", async () => {
     expect((await as("adminB").from("clients").select("id")).data).toEqual([]);
     expect((await as("adminB").from("cases").select("id")).data).toEqual([]);

@@ -22,6 +22,8 @@ let orgA = "", orgB = "";
 async function as<T = Record<string, unknown>>(user: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
   await db.exec("reset role");
   await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user ?? ""]);
+  // Sessão com 2º fator (aal2): a plataforma exige MFA (20261029120000). O teste de aal1 está em rls.test.ts.
+  await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub: user ?? "", aal: "aal2" })]);
   await db.exec(user ? "set role authenticated" : "set role anon");
   try {
     return (await db.query<T>(sql, params)).rows;

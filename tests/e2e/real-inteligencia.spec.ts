@@ -2,6 +2,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { passMfa } from "./totp";
 
 // Monitoramento jurídico REAL: dados da API pública da Câmara já coletados pelo agendador.
 // Prova: repetir a coleta não duplica documento, versão, atualização nem alerta; o escritório com preferência
@@ -15,6 +16,7 @@ type U = { id: string; email: string; password: string };
 let admin: SupabaseClient;
 const orgs: string[] = [];
 const people: Record<string, U> = {};
+let saSecret: string | undefined; // TOTP do Super Admin sintético (MFA obrigatório na plataforma)
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
 test.skip(!ON, "Supabase não configurado neste ambiente");
@@ -77,6 +79,7 @@ test("INTEL-01: preferências pela tela; nova coleta não duplica; alerta e noti
   const ctx = await page.context().browser()!.newContext();
   const p2 = await ctx.newPage();
   await login(p2, people.sa, /\/admin/);
+  saSecret = await passMfa(p2, saSecret);
   const r1 = await p2.evaluate(async () => (await fetch("/api/admin/inteligencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: "camara-proposicoes", maxItems: 150 }) })).json());
   expect(r1.ok).toBe(true);
   expect(["ok", "parcial"]).toContain(r1.data.status);
@@ -125,6 +128,7 @@ test("INTEL-02: escritório B não lê alertas nem preferências de A; ninguém 
 
 test("INTEL-03: Senado — execução manual pelo Super Admin repete sem duplicar e o item abre com link oficial do Senado", async ({ page }) => {
   await login(page, people.sa, /\/admin/);
+  saSecret = await passMfa(page, saSecret);
   const run = async () => page.evaluate(async () => (await fetch("/api/admin/inteligencia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: "senado-materias", maxItems: 150 }) })).json());
   const senado = async () => (await admin.from("legal_documents").select("id", { count: "exact", head: true }).eq("provider_id", "senado-materias")).count ?? 0;
   const before = await senado();

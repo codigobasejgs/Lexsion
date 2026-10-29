@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
   const sb = await supabaseServer();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return err(401, "unauthenticated", "Sessão expirada. Entre novamente.");
-  const { data: plat } = await sb.from("platform_members").select("role").eq("user_id", auth.user.id).maybeSingle();
-  if (!plat || !["superadmin", "platform_admin"].includes(plat.role)) return err(403, "forbidden", "Somente a plataforma cria escritórios.");
+  // Mesma regra do banco: vínculo de plataforma E sessão com 2º fator (aal2). Sem MFA, 403.
+  const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
+  if (isPlat !== true) return err(403, "forbidden", "Somente a plataforma, com verificação em duas etapas, cria escritórios.");
   const { data: taken } = await sb.from("organizations").select("id").eq("slug", slug).maybeSingle();
   if (taken) return err(409, "slug_taken", "Endereço já em uso por outro escritório.");
 

@@ -8,8 +8,11 @@ async function signIn(page: Page, who: RegExp, url = /\/app\//) {
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(url);
+  await page.waitForLoadState("networkidle"); // WebKit: idem journeys.signIn
 }
-const serious = async (page: Page) => (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
+// Movimento reduzido antes da análise: as cores dos botões têm transição de 150 ms e, ao trocar o tema do escritório,
+// o WebKit era medido no meio da transição (contraste "intermediário" falso). O contraste final é o que importa.
+const serious = async (page: Page) => (await page.emulateMedia({ reducedMotion: "reduce" }), await page.waitForTimeout(250), await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
 
 test("DATA-02: sair e entrar de novo NÃO apaga cadastro feito na demo", async ({ page }) => {
   await signIn(page, /Helena Prado/);
@@ -79,6 +82,10 @@ test("QA-115/120: Super Admin cria escritório, suspende com motivo, ERP bloquei
   await office.goto("/demo/tenant/atlas-juridico");
   await expect(office.getByRole("heading", { name: "Acesso suspenso" })).toBeVisible();
   await expect(office.getByText("Rita de Cássia Exemplar")).toHaveCount(0);
+  // Demonstração: as duas abas compartilham o mesmo IndexedDB e a gravação é "ler-modificar-gravar" da coleção.
+  // No Safari a aba do escritório ainda gravava ao carregar e sobrescrevia o evento da outra. Fecha antes de reativar.
+  // (A operação real grava no banco por linha, sem essa corrida.)
+  await office.close();
 
   await atlas.getByRole("button", { name: "Reativar" }).click();
   await expect(atlas.getByText("Ativa")).toBeVisible();

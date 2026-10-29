@@ -8,6 +8,7 @@ import { lastWasDemo, useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
 import { useTour } from "@/tours/runner";
+import { PlatformMfaGate, usePlatformMfa } from "@/components/platform-mfa";
 
 const NAV = [
   { href: "/admin", label: "Painel geral", icon: BarChart3 },
@@ -26,6 +27,8 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const tour = useTour();
+  // Operação real: plataforma só entra com 2º fator (o banco também exige aal2 em is_platform).
+  const mfa = usePlatformMfa(ready && mode === "real" && isPlatformRole(user?.role));
   useEffect(() => {
     if (ready && !isPlatformRole(user?.role)) router.replace(mode === "real" || (!user && !lastWasDemo()) ? "/entrar" : "/demonstracao");
   }, [ready, mode, user, router]);
@@ -38,6 +41,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
     return () => removeEventListener("keydown", onKey);
   }, [open]);
   if (!ready || !isPlatformRole(user?.role)) return <div className="min-h-dvh bg-canvas" aria-busy="true" />;
+  if (mode === "real" && mfa.st.phase !== "ok") return <PlatformMfaGate st={mfa.st} onDone={() => location.reload()} />;
   const active = (href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));
   const nav = (
     <nav aria-label="Super Admin" className="space-y-0.5">

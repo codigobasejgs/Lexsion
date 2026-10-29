@@ -4,6 +4,7 @@ import { Badge, PageHeader } from "@/components/ui";
 import { ALL_PROVIDERS } from "@/services/adapters";
 import { INTEGRATION_STATUS_LABEL } from "@/domain/saas";
 import { ConnectorHealth } from "@/modules/news/real-intel";
+import { PlatformHealth } from "@/modules/admin/platform-health";
 import { useSession } from "@/components/providers";
 
 const CATEGORY: Record<string, string> = { dados: "Dados e login", mensagens: "Mensagens", email: "E-mail", pagamentos: "Pagamentos", assinatura: "Assinatura", armazenamento: "Arquivos", juridico: "Fontes jurídicas", ia: "Inteligência artificial", indices: "Índices de correção", anuncios: "Anúncios" };
@@ -31,6 +32,6 @@ function IntegracoesDemo() {
 /** Operação: dados reais coletados de fontes oficiais. Demonstração: amostras. */
 export default function IntegracoesGlobaisPage() {
   const { mode } = useSession();
-  if (mode === "real") return <><PageHeader title="Saúde dos conectores jurídicos" description="Fontes oficiais e provedores: estado verdadeiro, última atualização confirmada, próxima execução e erros. Nenhum token é exibido." /><ConnectorHealth /></>;
+  if (mode === "real") return <><PageHeader title="Saúde dos conectores jurídicos" description="Fontes oficiais e provedores: estado verdadeiro, última atualização confirmada, próxima execução e erros. Nenhum token é exibido." /><div className="space-y-8"><PlatformHealth /><ConnectorHealth /></div></>;
   return <IntegracoesDemo />;
 }

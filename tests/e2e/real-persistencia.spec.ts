@@ -2,6 +2,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { passMfa } from "./totp";
 
 // Persistência REAL por módulo: grava pela tela → sai → entra de novo → confere na tela E no banco.
 // Também: Super Admin cria escritório de verdade, white-label e manifesto PWA do escritório real.
@@ -15,6 +16,7 @@ type U = { id: string; email: string; password: string };
 let admin: SupabaseClient;
 let org = "";
 const people: Record<string, U> = {};
+let saSecret: string | undefined; // TOTP do Super Admin sintético (MFA obrigatório na plataforma)
 const createdOrgs: string[] = [];
 
 test.describe.configure({ mode: "serial", timeout: 4 * SLOW + 60_000 });
@@ -177,6 +179,7 @@ test("SA-01: Super Admin cria escritório real (convite ao titular) e o escritó
   people.sa = await mkUser("psa", "QA Super Admin");
   await admin.from("platform_members").insert({ user_id: people.sa.id, role: "platform_admin" }).throwOnError();
   await login(page, people.sa, /\/admin/);
+  saSecret = await passMfa(page, saSecret);
   await page.goto("/admin/organizacoes");
   await page.getByRole("button", { name: "Novo escritório" }).click();
   const d = page.getByRole("dialog", { name: "Novo escritório" });

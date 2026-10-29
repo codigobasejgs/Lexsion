@@ -7,6 +7,8 @@ async function signIn(page: Page, who: RegExp) {
   await page.getByRole("radio", { name: who }).check();
   await page.getByRole("button", { name: /^Entrar como/ }).click();
   await page.waitForURL(/\/(app|portal|admin)(\/|$)/);
+  // WebKit: navegar antes dos prefetches assentarem aborta o fetch do App Router (o Next mostra a tela de erro).
+  await page.waitForLoadState("networkidle");
 }
 const visible = (page: Page, text: string | RegExp) => page.getByText(text).locator("visible=true").first();
 async function seriousAxe(page: Page) {

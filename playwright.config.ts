@@ -16,6 +16,14 @@ export default defineConfig({
     // shots.spec = capturas de revisão visual, só com SHOTS=1.
     { name: "mobile-360", testIgnore: process.env.SHOTS ? /pwa-update/ : /pwa-update|shots/, use: { ...devices["Pixel 7"], viewport: { width: 360, height: 800 } } },
     { name: "desktop-1440", testIgnore: process.env.SHOTS ? /pwa-update/ : /pwa-update|shots/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    // Entre navegadores (Gecko e WebKit/Safari): fundação, PWA, jornadas e responsividade. Só com CROSS=1 (instalar com
+    // `npx playwright install firefox webkit`); a suíte inteira já roda em Chromium nos dois tamanhos de tela.
+    ...(process.env.CROSS
+      ? [
+          { name: "firefox", testMatch: /(foundation|journeys|qa-responsivo|lexsion-saas)\.spec\.ts/, use: { ...devices["Desktop Firefox"], viewport: { width: 1280, height: 800 } } },
+          { name: "webkit-iphone", testMatch: /(foundation|journeys|qa-responsivo|lexsion-saas)\.spec\.ts/, use: { ...devices["iPhone 13"] } },
+        ]
+      : []),
     // Altera public/sw.js em disco: roda sozinho, depois dos demais.
     { name: "pwa-update", testMatch: /pwa-update/, dependencies: ["mobile-360", "desktop-1440"], use: { ...devices["Desktop Chrome"] } },
     // Prints da ajuda (pnpm capture:help): só rodam com CAPTURE=1.

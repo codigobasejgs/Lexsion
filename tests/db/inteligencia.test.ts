@@ -11,6 +11,8 @@ let orgA = "", orgB = "";
 async function as<T = Record<string, unknown>>(user: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
   await db.exec("reset role");
   await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user ?? ""]);
+  // Sessão com 2º fator (aal2): a plataforma exige MFA (20261029120000). O teste de aal1 está em rls.test.ts.
+  await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub: user ?? "", aal: "aal2" })]);
   await db.exec(user ? "set role authenticated" : "set role anon");
   try { return (await db.query<T>(sql, params)).rows; } finally { await db.exec("reset role"); }
 }
@@ -65,9 +67,14 @@ describe("Inteligência jurídica — RLS", () => {
 });
 
 describe("Agendador", () => {
-  it("job único a cada 3 horas; função de disparo não é chamável pelo navegador", async () => {
-    const j = (await db.query<{ jobname: string; schedule: string }>("select jobname, schedule from cron.job")).rows;
-    expect(j).toEqual([{ jobname: "lexsion-inteligencia", schedule: "7 */3 * * *" }]);
+  it("jobs exatos: coleta a cada 3 h, backup diário, limpeza semanal; disparos não são chamáveis pelo navegador", async () => {
+    const j = (await db.query<{ jobname: string; schedule: string }>("select jobname, schedule from cron.job order by jobname")).rows;
+    expect(j).toEqual([
+      { jobname: "lexsion-backup", schedule: "17 6 * * *" },
+      { jobname: "lexsion-inteligencia", schedule: "7 */3 * * *" },
+      { jobname: "lexsion-limpeza-cron", schedule: "41 5 * * 0" },
+    ]);
     expect(await denied(U.superadmin, "select public.trigger_legal_sync()")).toMatch(/permission denied/);
+    expect(await denied(U.superadmin, "select public.trigger_backup()")).toMatch(/permission denied/);
   });
 });

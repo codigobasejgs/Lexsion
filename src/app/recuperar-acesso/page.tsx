@@ -15,10 +15,12 @@ export default function RecuperarAcessoPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setResult(null);
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError("Informe um e-mail válido.");
+    // Lê o campo do formulário (não só o estado): texto digitado/colado antes da hidratação (Safari lento) não se perde.
+    const value = String(new FormData(e.currentTarget as HTMLFormElement).get("email") ?? email).trim();
+    if (!/^\S+@\S+\.\S+$/.test(value)) return setError("Informe um e-mail válido.");
     setError(null);
     setBusy(true);
-    const r = await authRepository.requestPasswordReset({ email: email.trim() });
+    const r = await authRepository.requestPasswordReset({ email: value });
     setBusy(false);
     setResult(r.ok ? "Se houver uma conta com esse e-mail, as instruções chegarão em alguns minutos." : r.error.message);
   };
@@ -30,7 +32,7 @@ export default function RecuperarAcessoPage() {
       <form className="mt-6 space-y-4" noValidate onSubmit={submit}>
         <div>
           <label htmlFor="rec-email" className="label">E-mail</label>
-          <input id="rec-email" type="email" autoComplete="email" className="field" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!error} aria-describedby={error ? "rec-erro" : undefined} />
+          <input id="rec-email" name="email" type="email" autoComplete="email" className="field" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!error} aria-describedby={error ? "rec-erro" : undefined} />
           {error && <p id="rec-erro" className="mt-1 text-sm text-danger">{error}</p>}
         </div>
         <button type="submit" className="btn btn-primary min-h-12 w-full" disabled={busy}>{busy ? <><Loader2 aria-hidden className="size-4 animate-spin" /> Enviando…</> : "Enviar link"}</button>

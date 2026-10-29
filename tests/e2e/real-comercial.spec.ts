@@ -2,6 +2,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { passMfa } from "./totp";
 
 // Fluxo comercial e operacional REAL, de ponta a ponta, com escritório e pessoas sintéticos (qa-…@lexsion-qa.invalid):
 // proposta → revisão → aprovação por advogado(a) → envio registrado → aceite registrado → contrato → assinaturas
@@ -16,6 +17,7 @@ type U = { id: string; email: string; password: string };
 let admin: SupabaseClient;
 let org = "";
 const people: Record<string, U> = {};
+let saSecret: string | undefined; // TOTP do Super Admin sintético (MFA obrigatório na plataforma)
 
 test.describe.configure({ mode: "serial", timeout: 8 * SLOW + 60_000 });
 test.skip(!ON, "Supabase não configurado neste ambiente");
@@ -173,6 +175,7 @@ test("COM-03: exclusão autorizada — advogada exclui tarefa; financeiro não e
 test("COM-04: Super Admin suspende e reativa; equipe perde e recupera o acesso com os dados intactos", async ({ page }) => {
   const before = (await rows("clients")).length;
   await login(page, people.sa, /\/admin/);
+  saSecret = await passMfa(page, saSecret);
   await page.goto("/admin/organizacoes");
   await page.getByTestId(`tenant-qa-com-${tag}`).getByRole("button", { name: "Suspender" }).click();
   await page.getByLabel("Motivo (registrado na auditoria)").fill("Teste QA de suspensão");
