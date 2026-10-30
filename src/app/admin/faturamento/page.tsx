@@ -11,6 +11,7 @@ import { formatCivil, formatInstant } from "@/lib/dates";
 import { applyInvoiceEvent, INTEGRATION_STATUS_LABEL, INVOICE_STATUS_LABEL, type SaasInvoice } from "@/domain/saas";
 import { PLAN_LABEL } from "@/domain/tenancy";
 import { useLive } from "@/modules/shared";
+import { CommercialOrders } from "@/modules/admin/commercial";
 
 type Ev = Parameters<typeof applyInvoiceEvent>[1]["type"];
 
@@ -18,7 +19,7 @@ export default function FaturamentoPage() {
   const live = useLive();
   const { user } = useSession();
   const qc = useQueryClient();
-  const data = useQuery({ queryKey: ["saasInvoices"], queryFn: async () => ({ inv: await readAll("saasInvoices"), tenants: await readAll("tenants"), providers: await readAll("platformProviders") }) });
+  const data = useQuery({ queryKey: ["saasInvoices"], enabled: !live, queryFn: async () => ({ inv: await readAll("saasInvoices"), tenants: await readAll("tenants"), providers: await readAll("platformProviders") }) });
   const [log, setLog] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<Record<string, string>>({});
   const name = (id: string) => data.data?.tenants.find((t) => t.id === id)?.name ?? id;
@@ -37,10 +38,11 @@ export default function FaturamentoPage() {
     await qc.invalidateQueries({ queryKey: ["admin-metrics"] });
   };
 
+  // Operação real: pedidos e assinaturas da InfinitePay, conferidos no payment_check (nada simulado).
+  if (live) return <><PageHeader title="Financeiro da plataforma" description="Contratações e renovações pagas pela InfinitePay (conta $marco-boggian). Separado dos honorários dos escritórios." /><CommercialOrders /></>;
   return (
     <>
       <PageHeader title="Financeiro da plataforma" description="Faturas da assinatura LexSion cobradas dos escritórios. Separado dos honorários que cada escritório cobra dos clientes dele." />
-      {live && !data.data?.inv.length && <p className="mb-4 rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning">Faturamento automático da assinatura ainda não está ativo: nenhum provedor de pagamento da plataforma foi credenciado. Nenhuma fatura é emitida nem cobrada.</p>}
       <div aria-live="polite">{log && <p role="status" className="mb-4 rounded border border-info/30 bg-info-bg p-3 text-sm text-info" data-testid="webhook-log">{log}</p>}</div>
       <section className="panel mb-6 overflow-x-auto" tabIndex={0} aria-label="Faturas SaaS (role horizontalmente)" data-tour="sa-faturas">
         <table className="w-full min-w-[760px] text-sm">

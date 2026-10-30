@@ -1,5 +1,10 @@
 // Cobrança da PLATAFORMA (LexSion → escritório). Totalmente separada dos honorários (escritório → cliente final).
 import type { Cents } from "@/lib/money";
+
+/** Plano comercial real (tabela saas_plans). Valores em centavos. */
+export type PublicPlan = { id: string; label: string; description: string; price_monthly: Cents; price_yearly: Cents | null; max_users: number; trial_days: number; features: { label: string; ok: boolean }[]; approved: boolean; version: number; visible?: boolean; sort?: number };
+/** Versão dos termos de contratação aceita no cadastro (muda quando o texto de /termos#contratacao mudar). */
+export const CONTRACT_VERSION = "2026-10-30";
 import type { BillingCycle, PlanId, PlanQuotas } from "./tenancy";
 
 export type ProviderId = "asaas" | "infinitepay" | "mercadopago";

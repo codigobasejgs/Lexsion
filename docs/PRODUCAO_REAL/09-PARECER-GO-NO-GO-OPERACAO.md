@@ -1,5 +1,10 @@
 # 09 — Parecer GO / NO-GO da operação (atualizado em 29/10/2026)
 
+**Revisão comercial de 30/10 (tarde):**
+- **Backup integral:** **GO**. Banco e arquivos do Storage têm restauração isolada comprovada (ver `15`).
+- **Contratação self-service:** **NO-GO para venda**. Está implementada e testada até onde é possível sem dinheiro real, mas falta comprovar o pagamento real confirmado e a ativação do escritório. Também faltam os preços aprovados, a revisão jurídica dos termos e a confirmação do CNPJ da conta recebedora (ver `16`).
+- **Operação dos escritórios já criados pela plataforma:** segue **GO condicionado**.
+
 **Revisão de 30/10 (versões `3493086` e `f4738c4`):** **GO condicionado** mantido. Resolvidos desde a revisão anterior: MFA do Super Admin exigido no banco (B14), governança por escritório (restrições por perfil e por pessoa, aplicadas na RLS) e QA-115 (auditoria só-acréscimo; ver `14`). Seguem **sem solução no plano Free**: PITR (B13, mitigado por backup diário no R2) e arquivos do Storage fora do backup (B16). **NO-GO comercial pleno** enquanto B12 (rotação de credenciais) e B17 (contratação/cobrança) estiverem abertos.
 
 **Revisão de 29/10 (versão `d65affd`):** mantém **GO condicionado** para os módulos centrais. Novas evidências: privilégios mínimos (13/13 em sessões reais), ciclo comercial completo (COM-01..07) passando em produção, Senado ativo. **NO-GO comercial pleno** (venda a terceiros em escala) enquanto B12 (rotação de credenciais), B14 (MFA) e B13 (PITR) não estiverem resolvidos, e enquanto cobrança e assinatura eletrônica (B2/B4) dependerem de baixa e registro manuais.

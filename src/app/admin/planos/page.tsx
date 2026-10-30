@@ -9,11 +9,16 @@ import { auditRow } from "@/services/mock/generic";
 import { formatBRL, parseBRL } from "@/lib/money";
 import { UNLIMITED, QUOTA_LABEL, type BillingCycle, type PlanQuotas } from "@/domain/tenancy";
 import { prorata, type PlanConfig } from "@/domain/saas";
+import { useLive } from "@/modules/shared";
+import { CommercialPlans } from "@/modules/admin/commercial";
 
 const CYCLES: BillingCycle[] = ["mensal", "trimestral", "anual"];
 
 export default function PlanosPage() {
-  const plans = useQuery({ queryKey: ["plans"], queryFn: () => readAll("plans") });
+  const live = useLive();
+  const plans = useQuery({ queryKey: ["plans"], queryFn: () => readAll("plans"), enabled: !live });
+  // Operação real: planos comerciais do banco (preço, limite, visibilidade e aprovação), sem editar código.
+  if (live) return <><PageHeader title="Planos e assinaturas" description="Planos comerciais reais. O site e a contratação leem daqui." /><CommercialPlans /></>;
   return (
     <>
       <PageHeader title="Planos e assinaturas" description="Preços, limites e períodos de teste DEMONSTRATIVOS. Não são valores publicados; edite antes da oferta real." />

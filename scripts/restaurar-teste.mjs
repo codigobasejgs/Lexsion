@@ -3,6 +3,7 @@
 // Uso: node scripts/restaurar-teste.mjs <pasta-do-backup>
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 
@@ -25,16 +26,18 @@ if (users.length) await db.query("insert into auth.users (id, email) select (u->
 await db.exec("set session_replication_role = replica"); // sem triggers na carga (auditoria e guardas não reescrevem o histórico)
 const ORDER = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
   "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
-  "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts"];
-// Catálogos que a migration já semeia vêm do backup (mesmo conteúdo): limpa antes para não duplicar.
-await db.exec("delete from public.collection_policies; delete from public.legal_source_providers");
+  "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts",
+  "org_role_restrictions", "org_member_restrictions", "saas_plans", "saas_orders", "saas_subscriptions", "saas_webhook_events"];
 // Backup antigo (antes destas tabelas existirem) é aceito: a tabela ausente fica vazia e o relatório mostra "--".
 const present = (t) => fs.existsSync(path.join(dir, `${t}.json`));
+// Catálogos que a migration já semeia vêm do backup (mesmo conteúdo): limpa antes para não duplicar.
+await db.exec("delete from public.collection_policies; delete from public.legal_source_providers");
+if (present("saas_plans")) await db.exec("delete from public.saas_plans");
 for (const t of ORDER) {
   if (!present(t)) continue;
   const rows = JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), "utf8"));
   if (!rows.length) continue;
-  const over = ["audit_logs", "ai_usage", "source_sync_runs"].includes(t) ? "overriding system value" : "";
+  const over = ["audit_logs", "ai_usage", "source_sync_runs", "saas_webhook_events"].includes(t) ? "overriding system value" : "";
   // Colunas geradas (ex.: índice de busca) são recalculadas pelo banco: ficam fora da lista do insert.
   const cols = (await db.query(`select string_agg(quote_ident(column_name), ',' order by ordinal_position) c from information_schema.columns where table_schema='public' and table_name=$1 and is_generated='NEVER'`, [t])).rows[0].c;
   await db.query(`insert into public.${t} (${cols}) ${over} select ${cols} from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
@@ -62,10 +65,20 @@ if (pair) {
 } else console.log("--  RLS: backup sem par de escritórios para conferir isolamento");
 const files = manifest.storage ?? [];
 const sdir = path.join(dir, "storage");
+const fileAt = (name) => path.join(sdir, ...name.split("/"));
 if (files.length && fs.existsSync(sdir)) {
-  const present = files.filter((o) => fs.existsSync(path.join(sdir, ...o.name.split("/"))) && fs.statSync(path.join(sdir, ...o.name.split("/"))).size === Number(o.size)).length;
-  console.log(`${present === files.length ? "OK " : "ERRO"} arquivos do Storage: ${present}/${files.length} com tamanho conferido`);
-  if (present !== files.length) ok = false;
+  // Tamanho e, quando o manifesto tem, SHA-256 de cada arquivo restaurado.
+  const good = files.filter((o) => fs.existsSync(fileAt(o.name)) && fs.statSync(fileAt(o.name)).size === Number(o.size)
+    && (!o.sha256 || crypto.createHash("sha256").update(fs.readFileSync(fileAt(o.name))).digest("hex") === o.sha256)).length;
+  console.log(`${good === files.length ? "OK " : "ERRO"} arquivos do Storage: ${good}/${files.length} com tamanho${files[0]?.sha256 ? " e SHA-256" : ""} conferidos`);
+  if (good !== files.length) ok = false;
 } else console.log(`--  arquivos do Storage: ${files.length} no manifesto${files.length ? " (backup sem --with-files)" : ""}`);
+// Correspondência banco ⇄ arquivos: todo documento/arquivo registrado no banco tem o arquivo restaurado.
+const refs = (await db.query(`select 'documentos/' || storage_path p from public.documents where storage_path is not null
+  union select 'documentos/' || (data->>'path') from public.org_records where collection = 'files' and data->>'path' is not null`)).rows.map((r) => r.p);
+const have = new Set(files.map((o) => o.name));
+const orphan = refs.filter((p) => !have.has(p) || !fs.existsSync(fileAt(p))).length;
+console.log(`${orphan ? "ERRO" : "OK "} banco ⇄ arquivos: ${refs.length - orphan}/${refs.length} registro(s) de documento com arquivo restaurado`);
+if (orphan) ok = false;
 console.log(ok ? "RESTAURACAO_OK" : "RESTAURACAO_FALHOU");
 process.exit(ok ? 0 : 1);

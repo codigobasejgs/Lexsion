@@ -19,6 +19,7 @@ import { INVOICE_STATUS_LABEL } from "@/domain/saas";
 import { PLAN_LABEL, PLAN_QUOTAS, QUOTA_LABEL, STATUS_LABEL, UNLIMITED } from "@/domain/tenancy";
 import { formatBRL } from "@/lib/money";
 import { tenantRepo } from "@/services/mock/tenant-repo";
+import { OwnerSubscription } from "@/modules/settings/owner-subscription";
 
 type Theme = "dark" | "light" | "system";
 const TABS = [["aparencia", "Aparência"], ["escritorio", "Escritório"], ["assinatura", "Assinatura LexSion"], ["calendario", "Feriados e calendário"], ["notificacoes", "Notificações"], ["dados", "Dados e LGPD"], ["dispositivo", "Dispositivo"]] as const;
@@ -109,12 +110,13 @@ function Office({ s }: { s: OrgSettings }) {
 
 // Somente leitura: o escritório vê o próprio plano, consumo e faturas da assinatura. Alterações ficam com a plataforma.
 function Subscription() {
-  const { org, tenant } = useSession();
+  const { org, tenant, mode } = useSession();
   const q = useQuery({
     queryKey: ["minha-assinatura", org?.id],
-    enabled: !!org,
+    enabled: !!org && mode !== "real",
     queryFn: async () => ({ usage: await tenantRepo.getUsage(org!.id), invoices: (await readAll("saasInvoices")).filter((i) => i.organizationId === org!.id).sort((a, b) => b.due.localeCompare(a.due)) }),
   });
+  if (mode === "real" && org) return <OwnerSubscription organizationId={org.id} />;
   if (!tenant) return <p className="text-sm text-fg-muted">Assinatura indisponível para este escritório na demonstração.</p>;
   const quotas = PLAN_QUOTAS[tenant.plan];
   return (

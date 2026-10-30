@@ -1,40 +1,48 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { connection } from "next/server";
+import { Check, Minus } from "lucide-react";
 import { SiteShell } from "@/components/marketing/site-shell";
+import { formatBRL } from "@/lib/money";
+import { checkoutEnabled, publicPlans } from "@/lib/saas-catalog";
 
 export const metadata: Metadata = {
   title: { absolute: "Planos — LexSion" },
-  description: "Planos da LexSion para advocacia individual, escritórios em crescimento e operações maiores. Condições apresentadas no contato comercial.",
+  description: "Planos da LexSion para advocacia individual, escritórios com equipe e operações maiores.",
   alternates: { canonical: "/planos" }, robots: { index: true, follow: true },
 };
 
-// Sem valores: preços ainda não aprovados pelo proprietário. Recursos listados existem na demonstração.
-const PLANS = [
-  { name: "Essencial", for: "Advocacia individual e escritórios pequenos", items: ["Atendimento, clientes e casos", "Agenda, prazos e tarefas", "Honorários, parcelas e recibos", "Portal do cliente", "Aplicativo no celular"] },
-  { name: "Profissional", for: "Escritórios com equipe", highlight: true, items: ["Tudo do Essencial", "Funções e permissões por pessoa", "Minutas com aprovação e exportação Word", "Previdenciário e cálculos", "Relatórios e automações", "Marca própria do escritório"] },
-  { name: "Avançado", for: "Operações com várias equipes", items: ["Tudo do Profissional", "Marketing e campanhas", "Integrações (na implantação)", "Mais usuários e armazenamento"] },
-  { name: "Enterprise", for: "Necessidades específicas", items: ["Domínio próprio", "Implantação e migração assistidas", "Condições sob medida"] },
-];
-
-export default function PlanosPage() {
+// Planos, preços e recursos vêm do banco (o Super Admin edita sem código). Preço só aparece com aprovação do dono;
+// "Contratar" só aparece com a contratação online liberada. Recurso sem integração ativa aparece como "em breve".
+export default async function PlanosPage() {
+  await connection();
+  const plans = await publicPlans();
+  const selling = checkoutEnabled();
   return (
     <SiteShell>
       <section className="mx-auto max-w-6xl px-5 py-12">
         <h1 className="text-3xl font-semibold sm:text-4xl">Planos</h1>
-        <p className="mt-3 max-w-2xl text-fg-muted">Contratação mensal, trimestral ou anual. Valores, período de teste e condições são apresentados na conversa comercial, de acordo com o tamanho da equipe.</p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((p) => (
-            <section key={p.name} aria-labelledby={`p-${p.name}`} className={`panel flex flex-col p-5 ${p.highlight ? "border-brand" : ""}`}>
-              <h2 id={`p-${p.name}`} className="text-xl font-semibold">{p.name}</h2>
-              <p className="mt-1 text-sm text-fg-muted">{p.for}</p>
-              <p className="mt-4 text-lg font-semibold">Consulte condições</p>
-              <ul className="mt-4 flex-1 space-y-2 text-sm">{p.items.map((i) => <li key={i} className="flex gap-2"><Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />{i}</li>)}</ul>
-              <Link href={`/contato?plano=${encodeURIComponent(p.name)}`} className={`btn mt-5 ${p.highlight ? "btn-primary" : "btn-secondary"}`}>Solicitar proposta</Link>
+        <p className="mt-3 max-w-2xl text-fg-muted">Escolha pelo tamanho da equipe. Todos os planos incluem o sistema completo do escritório, portal do cliente e aplicativo com a sua marca.</p>
+        {!plans.length && <p className="mt-8 text-fg-muted">Os planos serão publicados em breve. <Link href="/contato" className="text-accent underline underline-offset-2">Fale com a LexSion</Link>.</p>}
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {plans.map((p, i) => (
+            <section key={p.id} aria-labelledby={`p-${p.id}`} data-testid={`plano-${p.id}`} className={`panel flex flex-col p-5 ${i === 1 ? "border-brand" : ""}`}>
+              <h2 id={`p-${p.id}`} className="text-xl font-semibold">{p.label}</h2>
+              <p className="mt-1 text-sm text-fg-muted">{p.description} · até {p.max_users} {p.max_users === 1 ? "usuário" : "usuários"}</p>
+              {p.approved
+                ? <p className="mt-4"><span className="text-2xl font-semibold">{formatBRL(p.price_monthly)}</span><span className="text-sm text-fg-muted"> /mês</span>{p.price_yearly ? <span className="block text-sm text-fg-muted">ou {formatBRL(p.price_yearly)} por ano</span> : null}</p>
+                : <p className="mt-4 text-lg font-semibold">Valores em breve</p>}
+              {p.trial_days > 0 && p.approved && <p className="mt-1 text-sm text-success">{p.trial_days} dias para experimentar</p>}
+              <ul className="mt-4 flex-1 space-y-2 text-sm">
+                {p.features.map((f) => <li key={f.label} className={`flex gap-2 ${f.ok ? "" : "text-fg-muted"}`}>{f.ok ? <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" /> : <Minus aria-hidden className="mt-0.5 size-4 shrink-0" />}{f.label}{f.ok ? "" : " (em breve)"}</li>)}
+              </ul>
+              {selling && p.approved
+                ? <Link href={`/contratar?plano=${p.id}`} className={`btn mt-5 ${i === 1 ? "btn-primary" : "btn-secondary"}`}>Contratar {p.label}</Link>
+                : <Link href={`/contato?plano=${encodeURIComponent(p.label)}`} className={`btn mt-5 ${i === 1 ? "btn-primary" : "btn-secondary"}`}>Falar com a LexSion</Link>}
             </section>
           ))}
         </div>
-        <p className="mt-6 text-sm text-fg-muted">Quer ver antes? <Link href="/demonstracao" className="text-accent underline underline-offset-2">Explore a demonstração</Link> com perfis fictícios.</p>
+        <p className="mt-6 text-sm text-fg-muted">Quer ver antes? <Link href="/demonstracao" className="text-accent underline underline-offset-2">Explore a demonstração</Link> com perfis fictícios. Pagamento por Pix ou cartão pela InfinitePay; renovação por cobrança enviada a cada período.</p>
       </section>
     </SiteShell>
   );

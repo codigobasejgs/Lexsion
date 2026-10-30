@@ -104,6 +104,7 @@ export default function DemonstracaoPage() {
             <p className="text-xs text-fg-muted">Permissões desta demonstração são apenas visuais; na versão em produção, o acesso será controlado no servidor.</p>
           </aside>
         </div>
+        <p className="mt-8 text-sm text-fg-muted">Gostou? Para usar com os dados reais do seu escritório, <Link href="/planos" className="text-accent underline underline-offset-2">veja os planos e contrate</Link>. A conta real é criada à parte; nada desta demonstração vai para ela.</p>
       </main>
     </div>
   );

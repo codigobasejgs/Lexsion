@@ -67,10 +67,11 @@ describe("Inteligência jurídica — RLS", () => {
 });
 
 describe("Agendador", () => {
-  it("jobs exatos: coleta a cada 3 h, backup diário, limpeza semanal; disparos não são chamáveis pelo navegador", async () => {
+  it("jobs exatos: coleta a cada 3 h, backup e cobrança diários, limpeza semanal; disparos não são chamáveis pelo navegador", async () => {
     const j = (await db.query<{ jobname: string; schedule: string }>("select jobname, schedule from cron.job order by jobname")).rows;
     expect(j).toEqual([
       { jobname: "lexsion-backup", schedule: "17 6 * * *" },
+      { jobname: "lexsion-cobranca", schedule: "23 9 * * *" },
       { jobname: "lexsion-inteligencia", schedule: "7 */3 * * *" },
       { jobname: "lexsion-limpeza-cron", schedule: "41 5 * * 0" },
     ]);

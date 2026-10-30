@@ -41,14 +41,20 @@ export async function r2Request(method: "GET" | "PUT" | "DELETE" | "HEAD", key: 
   return fetch(`${c.endpoint}${path}${qs ? `?${qs}` : ""}`, { method, headers: { ...send, Authorization: auth }, body: method === "PUT" ? Buffer.from(body) : undefined, signal: AbortSignal.timeout(120_000) });
 }
 
-/** Lista objetos sob um prefixo (até 1000). */
+/** Lista TODOS os objetos sob um prefixo (pagina de 1000 em 1000). */
 export async function r2List(prefix: string) {
-  const r = await r2Request("GET", "", { query: { "list-type": "2", prefix, "max-keys": "1000" } });
-  if (!r.ok) throw new Error(`R2 respondeu HTTP ${r.status} ao listar`);
-  const xml = await r.text();
-  return [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map((m) => ({
-    key: /<Key>([^<]+)<\/Key>/.exec(m[1])![1],
-    size: Number(/<Size>(\d+)<\/Size>/.exec(m[1])?.[1] ?? 0),
-    lastModified: /<LastModified>([^<]+)<\/LastModified>/.exec(m[1])?.[1] ?? "",
-  }));
+  const out: { key: string; size: number; lastModified: string }[] = [];
+  let token = "";
+  do {
+    const r = await r2Request("GET", "", { query: { "list-type": "2", prefix, "max-keys": "1000", ...(token ? { "continuation-token": token } : {}) } });
+    if (!r.ok) throw new Error(`R2 respondeu HTTP ${r.status} ao listar`);
+    const xml = await r.text();
+    for (const m of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) out.push({
+      key: /<Key>([^<]+)<\/Key>/.exec(m[1])![1].replace(/&amp;/g, "&"),
+      size: Number(/<Size>(\d+)<\/Size>/.exec(m[1])?.[1] ?? 0),
+      lastModified: /<LastModified>([^<]+)<\/LastModified>/.exec(m[1])?.[1] ?? "",
+    });
+    token = /<IsTruncated>true<\/IsTruncated>/.test(xml) ? (/<NextContinuationToken>([^<]+)</.exec(xml)?.[1] ?? "") : "";
+  } while (token);
+  return out;
 }
