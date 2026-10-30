@@ -1,5 +1,7 @@
 # 09 — Parecer GO / NO-GO da operação (atualizado em 29/10/2026)
 
+**Contrato SaaS obrigatório (30/10, versão `877a1b9`):** toda contratação passa a exigir leitura do contrato completo e aceite comprovado (código por e-mail + hash). **A venda fica fechada até o(a) advogado(a) aprovar e publicar a minuta** em Super Admin → Contratos SaaS (decisão do dono). Ver `17`.
+
 **Liberação comercial de 30/10 (versão `376a89a`):** o dono aprovou os preços e autorizou a liberação da contratação, que está **aberta ao público** com teste grátis de 30 dias. Ressalvas que seguem abertas:
 1. O ciclo pagamento real → ativação ainda não foi provado com dinheiro real; acontece na 1ª mensalidade de um cliente.
 2. A titularidade do CNPJ da conta InfinitePay não está confirmada.

@@ -5,6 +5,16 @@ A jornada (plano → dados → contrato → aceite → pagamento/teste) está **
 
 > Efeito colateral importante: com o contrato obrigatório, **ninguém contrata pelo site até a versão ser publicada**. O teste grátis liberado antes também passa a exigir o aceite. Isso segue a regra “não coletar aceite vinculante de texto não aprovado”.
 
+## Publicação (30/10/2026)
+- **Commit `877a1b9`** (mais `aa22ef8`, só testes): CI do GitHub **success**, Vercel em produção **READY** em `lexsion.com.br`.
+- **Migrations aplicadas em produção** (com teste sem gravar e backup antes): `20261030140000_contrato_saas` e `20261030150000_backup_contratos`.
+- **Testes contra a produção:**
+  - contrato, contratação e site: 40 passaram. A única falha era de teste: em produção, a rota removida devolve a página HTML em vez de 404. Corrigida no `aa22ef8` e repetida: 2/2;
+  - smoke: 4/4.
+- **Backup em produção:** `verified: true`, 38 tabelas, 1.928 linhas, incluindo as tabelas do contrato.
+- **Limpeza:** uma rodada de testes interrompida por falta de memória tinha deixado 6 escritórios e 17 usuários sintéticos (`@lexsion-qa.invalid`); todos foram removidos. Produção: 0 escritórios, 0 contratos. Resta só o usuário fixo `qa-sem-vinculo`.
+- **Modelo `2026.10-1`:** continua em **REVISAO_JURIDICA**. Por decisão do dono (30/10), quem aprova e publica é o(a) advogado(a), pela tela **Super Admin → Contratos SaaS**. Ao publicar, o aceite e a venda abrem sozinhos; não é preciso novo deploy.
+
 ## 1. Auditoria: o que existia e o que foi feito
 | Requisito | Antes | Agora | Arquivo |
 |---|---|---|---|
