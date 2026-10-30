@@ -25,7 +25,9 @@ test("CONTR-02: cadastro inválido é recusado pelo servidor ANTES de criar cont
   expect(r.status()).toBe(400);
   expect(Object.keys((await r.json()).error.fields)).toEqual(expect.arrayContaining(["cpf", "email", "phone", "address.cep", "address.uf", "slug"]));
   expect((await request.post("/api/contrato", { data: { action: "save", plan: "inexistente", party } })).status()).toBe(409);
-  expect((await request.post("/api/contratar", { data: {} })).status()).toBe(404); // rota antiga (pedido sem contrato) não existe mais
+  // Rota antiga (pedido sem contrato) não existe mais: nenhuma resposta JSON de API (local 404; produção pode servir a página HTML).
+  const old = await request.post("/api/contratar", { data: {} });
+  expect(old.headers()["content-type"] ?? "").not.toContain("application/json");
 });
 
 test("CONTR-03: retorno do checkout com parâmetros forjados não confirma nada", async ({ page, request }) => {
