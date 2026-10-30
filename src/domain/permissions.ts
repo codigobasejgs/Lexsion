@@ -23,6 +23,8 @@ const ACCESS: Record<Role, readonly Area[]> = {
   superadmin: ["admin", "ajuda"],
   platform_admin: ["admin", "ajuda"],
   platform_support: ["admin", "ajuda"],
+  platform_finance: ["admin", "ajuda"],
+  platform_auditor: ["admin", "ajuda"],
   admin: ALL_OFFICE,
   // Gestor operacional: tudo do escritório, exceto marca, integrações e assinatura (ficam com o titular).
   tenant_admin: ALL_OFFICE.filter((a) => a !== "integracoes"),
@@ -41,6 +43,8 @@ const ACTIONS: Record<Role, readonly Action[]> = {
   superadmin: ["operar_plataforma", "gerir_assinatura_saas", "exportar"],
   platform_admin: ["operar_plataforma", "gerir_assinatura_saas"],
   platform_support: [], // lê dados agregados; acesso assistido a escritório exige consentimento (fase backend)
+  platform_finance: [], // lê finanças SaaS (assinaturas, pedidos); não altera escritórios
+  platform_auditor: [], // somente leitura, inclusive auditoria
   admin: ["aprovar_peca", "publicar_portal", "aprovar_proposta", "exportar", "gerir_equipe", "gerir_marca", "ver_honorarios", "ver_casos_sigilosos"],
   tenant_admin: ["exportar", "gerir_equipe", "ver_honorarios"],
   advogado: ["aprovar_peca", "publicar_portal", "aprovar_proposta", "exportar", "ver_honorarios", "ver_casos_sigilosos"],
@@ -63,6 +67,8 @@ export const ROLE_LABEL: Record<Role, string> = {
   superadmin: "Superadmin SaaS",
   platform_admin: "Administrador da plataforma",
   platform_support: "Suporte da plataforma",
+  platform_finance: "Financeiro SaaS",
+  platform_auditor: "Auditor (somente leitura)",
   admin: "Administrador do escritório",
   tenant_admin: "Gestor(a) operacional",
   advogado: "Advogado(a)",
@@ -76,12 +82,12 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 /** Correspondência com os 12 papéis da especificação do produto (nome técnico futuro no backend). */
 export const ROLE_PRODUCT: Record<Role, string> = {
-  superadmin: "platform_owner", platform_admin: "platform_admin", platform_support: "platform_support",
+  superadmin: "platform_owner", platform_admin: "platform_admin", platform_support: "platform_support", platform_finance: "platform_finance", platform_auditor: "platform_auditor",
   admin: "tenant_owner", tenant_admin: "tenant_admin", advogado: "lawyer", controladoria: "controller", financeiro: "finance",
   atendimento: "assistant", estagiario: "intern", cliente: "tenant_client", external_collaborator: "external_collaborator",
 };
 
-export const PLATFORM_ROLES: Role[] = ["superadmin", "platform_admin", "platform_support"];
+export const PLATFORM_ROLES: Role[] = ["superadmin", "platform_admin", "platform_support", "platform_finance", "platform_auditor"];
 export const isPlatformRole = (r: Role | undefined) => !!r && PLATFORM_ROLES.includes(r);
 export const ALL_ROLES = Object.keys(ROLE_LABEL) as Role[];
 export const ACTION_LABEL: Record<Action, string> = {

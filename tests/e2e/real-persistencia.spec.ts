@@ -181,7 +181,7 @@ test("SA-01: Super Admin cria escritório real (convite ao titular) e o escritó
   await login(page, people.sa, /\/admin/);
   saSecret = await passMfa(page, saSecret);
   await page.goto("/admin/organizacoes");
-  await page.getByRole("button", { name: "Novo escritório" }).click();
+  await page.getByRole("link", { name: "Novo escritório" }).click();
   const d = page.getByRole("dialog", { name: "Novo escritório" });
   await d.getByLabel("Nome do escritório").fill(`QA Criado ${tag}`);
   await d.getByLabel("Endereço (slug)").fill(`qa-criado-${tag}`);
@@ -190,7 +190,7 @@ test("SA-01: Super Admin cria escritório real (convite ao titular) e o escritó
   await d.getByLabel("E-mail do responsável").fill(`qa-novotit-${tag}@lexsion-qa.invalid`);
   for (let i = 0; i < 3; i++) await d.getByRole("button", { name: "Continuar" }).click();
   await d.getByRole("button", { name: "Criar escritório" }).click();
-  await expect(page.getByText(/criado\. Convite enviado/)).toBeVisible({ timeout: SLOW });
+  await expect(page.getByText(/criado\. Convite enviado/).first()).toBeVisible({ timeout: SLOW });
   const { data: o } = await admin.from("organizations").select("id,status,plan,meta").eq("slug", `qa-criado-${tag}`).single();
   createdOrgs.push(o!.id);
   expect(o!.status).toBe("trial");
@@ -199,13 +199,15 @@ test("SA-01: Super Admin cria escritório real (convite ao titular) e o escritó
   expect(m?.map((x) => x.role)).toEqual(["admin"]);
   const { count } = await admin.from("org_records").select("id", { count: "exact", head: true }).eq("organization_id", o!.id);
   expect(count).toBe(0); // nenhum dado de demonstração entra em escritório real
-  // Plano e suspensão pela tela, com motivo e auditoria
-  await page.getByTestId(`tenant-qa-criado-${tag}`).getByRole("button", { name: "Suspender" }).click();
-  await page.getByLabel("Motivo (registrado na auditoria)").fill("Teste QA de suspensão");
-  await page.getByRole("dialog").getByRole("button", { name: "Suspender" }).click();
+  // Suspensão pela ficha 360º, com motivo e auditoria (antes/depois)
+  await page.goto(`/admin/organizacoes/${o!.id}`);
+  await page.getByRole("button", { name: /Suspender/ }).click();
+  const s = page.getByRole("dialog");
+  await s.getByLabel(/Motivo/).fill("Teste QA de suspensão");
+  await s.getByRole("button", { name: "Confirmar" }).click();
   await expect.poll(async () => (await admin.from("organizations").select("status").eq("id", o!.id).single()).data?.status, { timeout: SLOW }).toBe("suspensa");
-  const { data: au } = await admin.from("audit_logs").select("detail").eq("organization_id", o!.id).eq("action", "status");
-  expect(au?.[0]?.detail).toMatch(/Teste QA de suspensão/);
+  const { data: au } = await admin.from("audit_logs").select("reason").eq("organization_id", o!.id).eq("action", "status");
+  expect(au?.some((a) => a.reason === "Teste QA de suspensão")).toBe(true);
 });
 
 test("WL-01: titular muda a marca; outro escritório não é afetado; manifesto PWA do escritório real reflete a marca", async ({ page, request }) => {

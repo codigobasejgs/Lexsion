@@ -6,7 +6,7 @@ export type ID = string;
 
 // 12 papéis do produto (ver ROLE_PRODUCT em permissions.ts). Identificadores legados preservados para não migrar dados.
 export type Role =
-  | "superadmin" | "platform_admin" | "platform_support" // plataforma LexSion
+  | "superadmin" | "platform_admin" | "platform_support" | "platform_finance" | "platform_auditor" // plataforma LexSion
   | "admin" | "tenant_admin" | "advogado" | "controladoria" | "financeiro" | "atendimento" | "estagiario" // escritório
   | "cliente" | "external_collaborator"; // externos ao escritório
 

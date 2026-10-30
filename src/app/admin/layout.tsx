@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Building2, Compass, CreditCard, FileSignature, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
+import { BarChart3, Building2, Compass, CreditCard, Database, FileSignature, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, X } from "lucide-react";
 import { lastWasDemo, useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
@@ -63,7 +63,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <button onClick={signOut} className="mt-auto flex min-h-11 items-center gap-2 rounded px-3 text-sm text-danger hover:bg-danger-bg"><LogOut aria-hidden className="size-4" /> Sair</button>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        {mode === "demo" && <div className="flex items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo — dados fictícios. Nenhuma cobrança real.</div>}
+        {mode === "demo"
+          ? <div className="flex flex-wrap items-center justify-center gap-2 bg-ai-bg px-4 py-1 text-xs text-ai" data-testid="faixa-ambiente"><FlaskConical aria-hidden className="size-3.5" /> Ambiente demonstrativo · Dados fictícios. Nenhuma cobrança real. <Link href="/entrar" className="underline">Entrar no Super Admin real</Link></div>
+          : <div className="flex items-center justify-center gap-2 bg-success-bg px-4 py-1 text-xs text-success" data-testid="faixa-ambiente"><Database aria-hidden className="size-3.5" /> Administração da plataforma · Dados reais{user?.role ? ` · ${user.role}` : ""}</div>}
         <header className="flex h-14 items-center gap-3 border-b border-line px-4 lg:hidden">
           <button className="btn btn-ghost px-2" aria-label="Abrir menu" aria-expanded={open} aria-controls="admin-drawer" onClick={() => setOpen(true)}><Menu aria-hidden className="size-5" /></button>
           <LexSionLogo className="h-7" />

@@ -10,7 +10,8 @@ import { DRAFT_BANNER, renderContract, validateParty, type Party, type Supplier,
 // Jornada: Plano → Dados do contratante → Revisar contrato → Aceite (código por e-mail) → Pagamento ou teste grátis.
 // A prévia ao vivo é só conforto: o TEXTO que vale (e o hash) vem do servidor no passo “Revisar”.
 // Rascunho local (sessionStorage) para não perder o preenchimento ao voltar; nada de CPF em URL.
-const STEPS = ["Plano", "Seus dados", "Contrato", "Aceite", "Pagamento"] as const;
+// Última etapa muda conforme o plano: com teste grátis não há pagamento agora (ativação gratuita).
+const stepsFor = (trial: boolean) => ["Plano", "Seus dados", "Contrato", "Aceite", trial ? "Ativação gratuita" : "Pagamento"];
 const slugify = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 const EMPTY_ADDR = { cep: "", street: "", number: "", complement: "", district: "", city: "", uf: "" };
 type Form = { plan: string; cycle: "mensal" | "anual"; kind: "PF" | "PJ"; slug: string; marketing: boolean;
@@ -109,7 +110,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
     <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0 space-y-5">
         <ol className="flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Etapas da contratação">
-          {STEPS.map((s, i) => <li key={s} aria-current={i === step ? "step" : undefined} className={`flex items-center gap-1.5 ${i === step ? "font-semibold text-accent" : i < step ? "text-fg" : "text-fg-muted"}`}><span className={`grid size-6 place-items-center rounded-full border text-xs ${i < step ? "border-success bg-success-bg text-success" : i === step ? "border-brand" : "border-line"}`}>{i < step ? <Check aria-hidden className="size-3.5" /> : i + 1}</span>{s}</li>)}
+          {stepsFor(plan.trial_days > 0).map((s, i) => <li key={s} aria-current={i === step ? "step" : undefined} className={`flex items-center gap-1.5 ${i === step ? "font-semibold text-accent" : i < step ? "text-fg" : "text-fg-muted"}`}><span className={`grid size-6 place-items-center rounded-full border text-xs ${i < step ? "border-success bg-success-bg text-success" : i === step ? "border-brand" : "border-line"}`}>{i < step ? <Check aria-hidden className="size-3.5" /> : i + 1}</span>{s}</li>)}
         </ol>
         <div className="h-1 overflow-hidden rounded-full bg-surface-muted" role="progressbar" aria-label="Progresso da contratação" aria-valuemin={1} aria-valuemax={5} aria-valuenow={step + 1}><div className="h-full bg-brand transition-all" style={{ width: `${((step + 1) / 5) * 100}%` }} /></div>
         <h2 ref={head} tabIndex={-1} className="text-xl font-semibold outline-none">{["Escolha o plano", "Dados do contratante", "Revise o contrato", "Aceite eletrônico", "Concluir"][step]}</h2>
@@ -182,14 +183,15 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
 
         {step === 2 && srv && (
           <section className="space-y-4">
-            {!srv.binding && <p role="status" className="rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning"><strong>Pendente de aprovação jurídica.</strong> Esta é uma minuta para leitura; o aceite será liberado quando a versão final for aprovada por advogado(a). Nenhum valor é cobrado e nenhum aceite é registrado agora.</p>}
+            {!srv.binding && <p role="status" className="rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning"><strong>Contratação online em preparação.</strong> O contrato está em revisão jurídica final. Você pode ler esta prévia e pedir para ser avisado(a) assim que a contratação abrir. Nada é cobrado e nenhum compromisso é registrado agora.</p>}
             <ContractPaper text={srv.text} number={srv.number} hash={srv.hash} big />
             <div className="flex flex-wrap gap-2">
               <button className="btn btn-ghost" onClick={() => setStep(1)}><ArrowLeft aria-hidden className="size-4" /> Corrigir dados</button>
-              <a className="btn btn-secondary" href="#" onClick={(e) => { e.preventDefault(); void downloadPdf(token); }}><Download aria-hidden className="size-4" /> Baixar {srv.binding ? "PDF" : "minuta em PDF"}</a>
+              <a className="btn btn-secondary" href="#" onClick={(e) => { e.preventDefault(); void downloadPdf(token); }}><Download aria-hidden className="size-4" /> Baixar {srv.binding ? "PDF" : "prévia em PDF"}</a>
               <button className="btn btn-secondary" onClick={() => print()}><Printer aria-hidden className="size-4" /> Imprimir</button>
               {srv.binding && <button className="btn btn-primary min-h-12" onClick={() => setStep(3)}>Continuar para o aceite</button>}
             </div>
+            {!srv.binding && <NotifyMe name={f.kind === "PF" ? f.pf.name : f.pj.rep.name} email={f.kind === "PF" ? f.pf.email : f.pj.rep.email} plan={f.plan} />}
           </section>
         )}
 
@@ -237,6 +239,25 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
         )}
         {!binding && <p className="text-xs text-warning">Contrato pendente de aprovação jurídica: aceite e pagamento só serão liberados depois da aprovação.</p>}
       </aside>
+    </div>
+  );
+}
+
+/** Saída útil enquanto o contrato não é publicado: aviso por e-mail (consentimento explícito) ou voltar aos planos. */
+function NotifyMe({ name, email, plan }: { name: string; email: string; plan: string }) {
+  const [consent, setConsent] = useState(false), [st, setSt] = useState<"idle" | "busy" | "ok" | string>("idle");
+  const send = async () => {
+    setSt("busy");
+    const r = await fetch("/api/contrato", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "interest", name, email, plan, consent }) }).then((x) => x.json()).catch(() => null);
+    setSt(r?.ok ? "ok" : r?.error?.message ?? "Sem conexão. Tente de novo.");
+  };
+  if (st === "ok") return <p role="status" className="rounded border border-success/30 bg-success-bg p-3 text-sm text-success" data-testid="aviso-registrado">Pronto. Avisaremos {email.replace(/^(.).*(@.*)$/, "$1***$2")} assim que a contratação abrir. Nenhuma conta ou cobrança foi criada. <Link href="/planos" className="underline">Voltar aos planos</Link></p>;
+  return (
+    <div className="panel space-y-3 p-4 text-sm" data-testid="avise-me">
+      <p className="font-medium">Quer ser avisado(a) quando a contratação abrir?</p>
+      <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 size-4" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Autorizo a LexSion a me enviar um único e-mail avisando que a contratação foi liberada.</label>
+      <div className="flex flex-wrap gap-2"><button className="btn btn-primary" disabled={!consent || st === "busy"} onClick={() => void send()}>Avise-me quando abrir</button><Link href="/planos" className="btn btn-ghost">Voltar aos planos</Link><Link href="/demonstracao" className="btn btn-ghost">Explorar a demonstração</Link></div>
+      {st !== "idle" && st !== "busy" && <p role="alert" className="text-danger">{st}</p>}
     </div>
   );
 }

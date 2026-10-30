@@ -176,17 +176,25 @@ test("COM-04: Super Admin suspende e reativa; equipe perde e recupera o acesso c
   const before = (await rows("clients")).length;
   await login(page, people.sa, /\/admin/);
   saSecret = await passMfa(page, saSecret);
+  // Lista real → ficha 360º → ação com motivo (função do banco com auditoria antes/depois).
   await page.goto("/admin/organizacoes");
-  await page.getByTestId(`tenant-qa-com-${tag}`).getByRole("button", { name: "Suspender" }).click();
-  await page.getByLabel("Motivo (registrado na auditoria)").fill("Teste QA de suspensão");
-  await page.getByRole("dialog").getByRole("button", { name: "Suspender" }).click();
+  { const card = page.getByTestId(`org-qa-com-${tag}`).locator("visible=true").first(); await (await card.evaluate((e) => e.tagName === "A") ? card : card.getByRole("link").first()).click(); }
+  await page.getByRole("button", { name: /Suspender/ }).click();
+  let d = page.getByRole("dialog");
+  await d.getByLabel(/Motivo/).fill("Teste QA de suspensão");
+  await d.getByRole("button", { name: "Confirmar" }).click();
   await expect.poll(async () => (await admin.from("organizations").select("status").eq("id", org).single()).data?.status, { timeout: SLOW }).toBe("suspensa");
   const adv = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false } });
   await adv.auth.signInWithPassword({ email: people.adv.email, password: people.adv.password });
   expect((await adv.from("org_records").select("id").eq("organization_id", org)).data ?? []).toEqual([]);
   await page.reload();
-  await page.getByTestId(`tenant-qa-com-${tag}`).getByRole("button", { name: "Reativar" }).click();
+  await page.getByRole("button", { name: "Reativar" }).click();
+  d = page.getByRole("dialog");
+  await d.getByLabel(/Motivo/).fill("Fim do teste QA de suspensão");
+  await d.getByRole("button", { name: "Confirmar" }).click();
   await expect.poll(async () => (await admin.from("organizations").select("status").eq("id", org).single()).data?.status, { timeout: SLOW }).toBe("ativa");
+  const { data: au } = await admin.from("audit_logs").select("action,reason,before,after").eq("organization_id", org).eq("action", "status");
+  expect(au?.map((a) => a.reason)).toEqual(expect.arrayContaining(["Teste QA de suspensão", "Fim do teste QA de suspensão"]));
   expect(((await adv.from("org_records").select("id").eq("organization_id", org).eq("collection", "clients")).data ?? []).length).toBe(before);
 });
 

@@ -6,7 +6,7 @@ create role authenticated nologin;
 create role service_role nologin bypassrls;
 
 create schema auth;
-create table auth.users (id uuid primary key, email text unique);
+create table auth.users (id uuid primary key, email text unique, last_sign_in_at timestamptz, email_confirmed_at timestamptz);
 -- Mesma leitura de claims que o Supabase faz (sub do JWT da requisição).
 create function auth.uid() returns uuid language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub', ''))::uuid

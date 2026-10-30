@@ -22,6 +22,8 @@ const ROLE_PREVIEW: Record<Role, string> = {
   superadmin: "Painel da plataforma LexSion: escritórios, planos e faturas SaaS (fictício).",
   platform_admin: "Opera a plataforma com permissões delegadas: escritórios, planos e faturas. Sem acesso a documentos dos escritórios.",
   platform_support: "Atende chamados dos escritórios. Vê dados agregados; não altera planos nem faturas.",
+  platform_finance: "Acompanha a receita da plataforma (assinaturas e pagamentos). Não altera escritórios.",
+  platform_auditor: "Somente leitura de indicadores e auditoria.",
   tenant_admin: "Gestor(a) operacional: equipe, agenda e rotinas do escritório, sem aprovar peças nem alterar a marca.",
   external_collaborator: "Correspondente ou parceiro: só os casos, documentos e compromissos que lhe forem atribuídos.",
 };

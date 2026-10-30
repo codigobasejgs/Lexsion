@@ -55,6 +55,21 @@ describe("Modelo de contrato: aprovação jurídica e imutabilidade", () => {
   });
 });
 
+describe("Texto com pendência não é aprovado (CT-02)", () => {
+  it("versão com [PENDENTE] não passa de revisão jurídica; sem pendência, aprova", async () => {
+    const pend = (await db.query<{ id: string }>(`insert into public.saas_contract_template_versions (version, title, clauses, content_sha256) values ('p-1','T','[{"n":"1","title":"x","body":"[PENDENTE: foro]"}]','p') returning id`)).rows[0].id;
+    await db.query("update public.saas_contract_template_versions set status='REVISAO_JURIDICA' where id=$1", [pend]);
+    expect(await fails("service", "update public.saas_contract_template_versions set status='APROVADO', approved_by_name='Fulana de Tal OAB 1/SP', approved_at=now() where id=$1", [pend])).toMatch(/\[PENDENTE\]/);
+  });
+  it("interesse em contratar: e-mail único, sem leitura pública; titular comum não lê", async () => {
+    await db.query("insert into public.saas_signup_interests (email, name, consent_at) values ('a@x.test','Ana Teste',now())");
+    expect(await fails("service", "insert into public.saas_signup_interests (email, name, consent_at) values ('a@x.test','Ana 2',now())")).toMatch(/duplicate key|unique/);
+    expect(await fails("service", "insert into public.saas_signup_interests (email, name, consent_at) values ('A@X.test','Ana 3',now())")).toMatch(/check/);
+    expect(await as(U.ta, "select id from public.saas_signup_interests")).toEqual([]);
+    expect(await fails(null, "select id from public.saas_signup_interests")).toMatch(/permission denied/);
+  });
+});
+
 describe("Aceite, arquivos e auditoria", () => {
   it("aceite é único por contrato e só-acréscimo (não altera nem apaga)", async () => {
     const c = await contract(orgA, "LX-A-1");

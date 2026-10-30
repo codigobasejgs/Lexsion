@@ -26,11 +26,27 @@ export async function GET(req: NextRequest) {
   if (secret.length < 24 || req.headers.get("authorization") !== `Bearer ${secret}`) return new NextResponse(null, { status: 401 });
   const db = supabaseAdmin();
   const now = new Date(), today = day(now);
-  const out = { expirados: 0, reativacoes: 0, cobrancas: 0, suspensos: 0, vencidos: 0, erros: [] as string[] };
+  const out = { testes_expirados: 0, cortesias_expiradas: 0, expirados: 0, reativacoes: 0, cobrancas: 0, suspensos: 0, vencidos: 0, erros: [] as string[] };
 
   // 1) Pedidos de contratação não pagos: expiram (o link também expira, se houver API Key).
   const { data: exp } = await db.from("saas_orders").update({ status: "expirado", updated_at: now.toISOString() }).eq("status", "pendente").eq("kind", "contratacao").lt("expires_at", now.toISOString()).select("id");
   out.expirados = exp?.length ?? 0;
+  // 1b) Teste/cortesia vencidos ⇒ suspensão sem apagar dados (função transacional e idempotente no banco).
+  const { data: exp2 } = await db.rpc("saas_expire_access");
+  Object.assign(out, exp2 ?? {});
+  // 1c) Aviso de fim de teste 7/3/1 dias antes (1 e-mail por marco; registro na auditoria evita repetir).
+  const { data: trials } = await db.from("organizations").select("id,name,meta").eq("status", "trial");
+  for (const t of trials ?? []) {
+    const end = (t.meta as { trialEndsAt?: string; ownerEmail?: string })?.trialEndsAt, to = (t.meta as { ownerEmail?: string })?.ownerEmail;
+    if (!end || !to) continue;
+    const left = Math.ceil((Date.parse(end) - now.getTime()) / 86_400_000);
+    if (![7, 3, 1].includes(left)) continue;
+    const key = `aviso-teste-${left}d-${end.slice(0, 10)}`;
+    const { count } = await db.from("audit_logs").select("id", { count: "exact", head: true }).eq("organization_id", t.id).eq("action", "aviso.teste").eq("entity_id", key);
+    if (count) continue;
+    const ok = await mail(to, `LexSion: seu teste grátis termina em ${left} ${left === 1 ? "dia" : "dias"}`, `O teste grátis do ${t.name} termina em ${new Date(end).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}.\nDepois disso o acesso é suspenso, sem apagar nenhum dado. Para continuar, contrate um plano em https://lexsion.com.br/planos ou responda pelo contato do site.`);
+    await db.from("audit_logs").insert({ organization_id: t.id, actor_id: null, action: "aviso.teste", entity: "organizations", entity_id: key, detail: ok ? `aviso de ${left} dia(s) aceito pelo Resend` : `aviso de ${left} dia(s) NÃO enviado` });
+  }
   // 2) Pago sem ativação: tenta de novo (nunca cobra de novo).
   for (const o of (await db.from("saas_orders").select("order_nsu").in("status", ["pago", "teste"]).neq("activation", "concluida").limit(20)).data ?? []) {
     if ((await activate(o.order_nsu)) === "concluida") out.reativacoes++;

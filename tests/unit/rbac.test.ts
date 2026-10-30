@@ -3,15 +3,17 @@ import { ALL_ROLES, ROLE_PRODUCT, allowed, can, isPlatformRole } from "@/domain/
 import { users } from "@/mocks/fixtures";
 
 // QA-RBAC — matriz demonstrativa (UX). Não substitui autorização no servidor (fase backend).
-describe("RBAC — 12 papéis do produto", () => {
-  it("existem exatamente os 12 papéis da especificação, sem duplicar nome técnico", () => {
+// Papéis internos da LexSion só da operação real (sem perfil na demonstração): financeiro SaaS e auditor.
+const REAL_ONLY = ["platform_finance", "platform_auditor"];
+describe("RBAC — 12 papéis do produto + 2 papéis internos da operação", () => {
+  it("existem os 12 papéis da especificação + financeiro SaaS e auditor, sem duplicar nome técnico", () => {
     const product = Object.values(ROLE_PRODUCT).sort();
-    expect(ALL_ROLES).toHaveLength(12);
-    expect(product).toEqual(["assistant", "controller", "external_collaborator", "finance", "intern", "lawyer", "platform_admin", "platform_owner", "platform_support", "tenant_admin", "tenant_client", "tenant_owner"]);
+    expect(ALL_ROLES).toHaveLength(14);
+    expect(product).toEqual(["assistant", "controller", "external_collaborator", "finance", "intern", "lawyer", "platform_admin", "platform_auditor", "platform_finance", "platform_owner", "platform_support", "tenant_admin", "tenant_client", "tenant_owner"]);
   });
 
-  it("cada papel tem ao menos um perfil fictício na demonstração", () => {
-    expect(ALL_ROLES.filter((r) => !users.some((u) => u.role === r))).toEqual([]);
+  it("cada papel da demonstração tem ao menos um perfil fictício", () => {
+    expect(ALL_ROLES.filter((r) => !REAL_ONLY.includes(r) && !users.some((u) => u.role === r))).toEqual([]);
   });
 
   it("plataforma não entra em módulos do escritório; escritório não entra no Super Admin", () => {

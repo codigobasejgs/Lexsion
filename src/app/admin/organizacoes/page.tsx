@@ -12,6 +12,7 @@ import { tenantRepo } from "@/services/mock/tenant-repo";
 import { PLAN_LABEL, STATUS_LABEL, type BillingCycle, type PlanId, type Tenant, type TenantStatus } from "@/domain/tenancy";
 import { formatInstant } from "@/lib/dates";
 import { TenantWizard } from "../tenant-wizard";
+import { RealOrgs } from "@/modules/admin/real-orgs";
 
 const TONE: Record<TenantStatus, "success" | "info" | "warning" | "danger" | "neutral"> = { ativa: "success", trial: "info", suspensa: "warning", inadimplente: "danger", cancelada: "neutral", removida: "neutral" };
 
@@ -25,11 +26,21 @@ export default function ContratantesPage() {
   const [suspend, setSuspend] = useState<Tenant | null>(null);
   const [planFor, setPlanFor] = useState<Tenant | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const tenants = useQuery({ queryKey: ["tenants"], queryFn: () => tenantRepo.list() });
-  const usage = useQuery({ queryKey: ["tenants", "usage"], enabled: !!tenants.data, queryFn: async () => Object.fromEntries(await Promise.all(tenants.data!.map(async (t) => [t.id, await tenantRepo.getUsage(t.id)] as const))) });
+  const live = mode === "real";
+  const tenants = useQuery({ queryKey: ["tenants"], enabled: !live, queryFn: () => tenantRepo.list() });
+  const usage = useQuery({ queryKey: ["tenants", "usage"], enabled: !live && !!tenants.data, queryFn: async () => Object.fromEntries(await Promise.all(tenants.data!.map(async (t) => [t.id, await tenantRepo.getUsage(t.id)] as const))) });
   const refresh = () => qc.invalidateQueries({ queryKey: ["tenants"] });
   const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   const list = (tenants.data ?? []).filter((t) => t.status !== "removida" && (!status || t.status === status) && (!busca || norm(`${t.name} ${t.slug} ${t.ownerName ?? ""}`).includes(norm(busca))));
+  // Operação real: lista do banco (platform_orgs) com ficha 360º; o assistente de criação continua o mesmo.
+  if (live) return (
+    <>
+      <PageHeader title="Contratantes" description="Escritórios reais da plataforma: situação, teste, plano, titular, uso e histórico. Clique para abrir a ficha e agir." />
+      <RealOrgs />
+      <TenantWizard open={wizard || url.get("novo") === "1"} onClose={() => { setWizard(false); url.set("novo", null); }} onCreated={(t) => { void qc.invalidateQueries({ queryKey: ["platform-orgs"] }); setNotice(`${t.name} criado. Convite enviado ao responsável.`); }} />
+      {notice && <p role="status" className="mt-3 text-sm text-success">{notice}</p>}
+    </>
+  );
 
   return (
     <>
@@ -68,7 +79,7 @@ export default function ContratantesPage() {
         })}
       </ul>
       <p className="mt-6 text-sm text-fg-muted">A assinatura LexSion é cobrada do escritório; os honorários que o escritório cobra dos clientes dele ficam em contas, provedores e relatórios separados.</p>
-      <TenantWizard open={wizard} onClose={() => setWizard(false)} onCreated={(t) => setNotice(mode === "real" ? `${t.name} criado. Convite enviado ao responsável (${t.ownerEmail ?? "e-mail informado"}).` : `${t.name} criado. Endereço demonstrativo: /demo/tenant/${t.slug}`)} />
+      <TenantWizard open={wizard} onClose={() => setWizard(false)} onCreated={(t) => setNotice(`${t.name} criado. Endereço demonstrativo: /demo/tenant/${t.slug}`)} />
       <SuspendDialog tenant={suspend} onClose={() => setSuspend(null)} onDone={async (msg) => { await refresh(); setNotice(msg); }} />
       <PlanDialog tenant={planFor} onClose={() => setPlanFor(null)} onDone={async (msg) => { await refresh(); setNotice(msg); }} />
     </>

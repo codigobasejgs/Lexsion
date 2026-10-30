@@ -40,6 +40,19 @@ export async function POST(req: NextRequest) {
   const action = String(b.action ?? "");
   const token = String(b.token ?? "");
 
+  if (action === "interest") {
+    // Contrato ainda não publicado: guarda só nome, e-mail e plano (com consentimento) para avisar quando abrir.
+    // Não cria conta, escritório, contrato nem cobrança. Repetir o mesmo e-mail atualiza, não duplica.
+    const email = String(b.email ?? "").trim().toLowerCase(), name = String(b.name ?? "").trim().slice(0, 120);
+    if (!/^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/.test(email)) return err(400, "invalid", "Informe um e-mail válido.", "email");
+    if (name.length < 3) return err(400, "invalid", "Informe seu nome.", "name");
+    if (b.consent !== true) return err(400, "consent", "Marque a autorização para receber o aviso.", "consent");
+    const { data: p } = await db.from("saas_plans").select("id").eq("id", String(b.plan ?? "")).maybeSingle();
+    const { error } = await db.from("saas_signup_interests").upsert({ email, name, plan_id: p?.id ?? null, consent_at: new Date().toISOString(), ip_hash: hmac(ip(req)).slice(0, 32) }, { onConflict: "email" });
+    if (error) return err(500, "save_failed", "Não foi possível registrar agora. Tente de novo.");
+    return NextResponse.json({ ok: true });
+  }
+
   if (action === "save") {
     // Plano, ciclo e preço resolvidos AQUI a partir do catálogo aprovado; nada de preço vem do navegador.
     const { data: p } = await db.from("saas_plans").select("*").eq("id", String(b.plan ?? "")).eq("visible", true).maybeSingle();

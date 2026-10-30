@@ -81,12 +81,14 @@ test("CTR-04: revisão traz o texto do SERVIDOR com nº e hash; sem aprovação 
   await expect(paper).toContainText(/Nº LX-\d{4}-[0-9A-F]{10}/);
   await expect(paper).toContainText(/SHA-256 do texto: [0-9a-f]{64}/);
   await expect(paper).toContainText("CPF sob o nº 529.982.247-25");
-  await expect(page.getByText("Pendente de aprovação jurídica.")).toBeVisible();
+  await expect(page.getByText("Contratação online em preparação.")).toBeVisible();
+  await expect(page.getByTestId("avise-me")).toBeVisible(); // nunca beco sem saída (CT-08)
+  await expect(page.getByRole("link", { name: "Voltar aos planos" }).last()).toBeVisible();
   await expect(page.getByRole("button", { name: "Continuar para o aceite" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Aceitar eletronicamente" })).toHaveCount(0);
   // Minuta em PDF real (A4, com tarja) antes do aceite
   const dl = page.waitForEvent("download");
-  await page.getByRole("link", { name: /Baixar minuta em PDF/ }).click();
+  await page.getByRole("link", { name: /Baixar prévia em PDF/ }).click();
   expect((await dl).suggestedFilename()).toMatch(/^minuta-lexsion-LX-/);
   // Voltar preserva os dados
   await page.getByRole("button", { name: "Corrigir dados" }).click();

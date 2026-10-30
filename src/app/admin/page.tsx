@@ -7,10 +7,15 @@ import { readAll } from "@/services/mock/db";
 import { saasMetrics } from "@/domain/saas-metrics";
 import { formatBRL } from "@/lib/money";
 import { PLAN_LABEL, type PlanId } from "@/domain/tenancy";
+import { useLive } from "@/modules/shared";
+import { RealDashboard } from "@/modules/admin/real-dashboard";
 
-// Painel executivo SaaS: TODOS os números derivados dos dados da demo (nenhum valor fixo).
+// Painel geral. Operação real: SÓ dados do Supabase (RealDashboard). Demonstração: números derivados das fixtures,
+// com a tarja de dados fictícios. As duas fontes nunca se misturam.
 export default function AdminPainel() {
-  const q = useQuery({ queryKey: ["admin-metrics"], queryFn: async () => saasMetrics(await readAll("tenants"), await readAll("saasInvoices")) });
+  const live = useLive();
+  const q = useQuery({ queryKey: ["admin-metrics"], enabled: !live, queryFn: async () => saasMetrics(await readAll("tenants"), await readAll("saasInvoices")) });
+  if (live) return <><PageHeader title="Painel geral" description="Indicadores reais da plataforma LexSion, lidos do banco de produção." /><RealDashboard /></>;
   const m = q.data;
   return (
     <>
