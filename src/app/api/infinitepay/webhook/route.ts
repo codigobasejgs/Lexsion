@@ -15,11 +15,13 @@ export async function POST(req: NextRequest) {
   const tx = typeof body.transaction_nsu === "string" ? body.transaction_nsu.slice(0, 80) : "";
   const slug = typeof body.invoice_slug === "string" ? body.invoice_slug.slice(0, 80) : typeof body.slug === "string" ? body.slug.slice(0, 80) : "";
   const event = typeof body.event === "string" ? body.event : typeof body.type === "string" ? body.type : "paid";
+  // Só pedidos desta plataforma (lx-…) são registrados: aviso alheio não ocupa o banco.
+  if (!orderNsu.startsWith("lx-")) return NextResponse.json({ ok: true, ignored: "pedido de outra origem" });
+  if (!process.env.SUPABASE_SECRET_KEY) return new NextResponse(null, { status: 503 }); // fora do ar: a InfinitePay reenvia
   const db = supabaseAdmin();
   const hash = crypto.createHash("sha256").update(raw).digest("hex");
   const { error: dup } = await db.from("saas_webhook_events").insert({ order_nsu: orderNsu || null, body_sha256: hash, body: { ...body, customer: undefined } });
   const repeated = dup?.code === "23505";
-  if (!orderNsu.startsWith("lx-")) return NextResponse.json({ ok: true, ignored: "pedido de outra origem" });
   if (/refund|cancel|chargeback/i.test(event)) { if (!repeated) await flagReversal(orderNsu, event); return NextResponse.json({ ok: true }); }
   if (/fail/i.test(event)) return NextResponse.json({ ok: true });
   if (!tx || !slug) return NextResponse.json({ ok: true, ignored: "aviso sem transação" });

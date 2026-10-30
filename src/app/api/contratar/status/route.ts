@@ -6,7 +6,7 @@ import { confirmOrder } from "@/lib/billing";
 // Retorno do checkout (navegador). Os parâmetros da URL NÃO liberam nada sozinhos: viram uma consulta ao
 // /payment_check. Resposta mínima (sem dados do titular): só o estado do pedido.
 export async function POST(req: NextRequest) {
-  if (!supabaseConfigured()) return NextResponse.json({ ok: false }, { status: 503 });
+  if (!supabaseConfigured() || !process.env.SUPABASE_SECRET_KEY) return NextResponse.json({ ok: false, state: "desconhecido" }, { status: 503 });
   const b = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   const order = String(b?.order_nsu ?? "").slice(0, 80), tx = String(b?.transaction_nsu ?? "").slice(0, 80), slug = String(b?.slug ?? "").slice(0, 80);
   if (!order.startsWith("lx-")) return NextResponse.json({ ok: false, state: "desconhecido" }, { status: 400 });

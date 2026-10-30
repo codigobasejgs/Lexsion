@@ -15,7 +15,7 @@ const RESERVED = new Set(["admin", "app", "api", "www", "portal", "demo", "lexsi
 const err = (status: number, code: string, message: string, field?: string) => NextResponse.json({ ok: false, error: { code, message, field } }, { status });
 
 export async function POST(req: NextRequest) {
-  if (!supabaseConfigured()) return err(503, "not_configured", "Contratação indisponível neste ambiente.");
+  if (!supabaseConfigured() || !process.env.SUPABASE_SECRET_KEY) return err(503, "not_configured", "Contratação indisponível neste ambiente.");
   if (req.headers.get("origin") && new URL(req.headers.get("origin")!).host !== req.headers.get("host")) return err(403, "origin", "Origem não permitida.");
   if (!checkoutEnabled()) return err(503, "disabled", "A contratação online ainda não foi liberada. Fale com a LexSion pelo contato.");
   const b = (await req.json().catch(() => null)) as Record<string, unknown> | null;
