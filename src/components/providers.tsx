@@ -111,11 +111,13 @@ function SessionProvider({ children }: { children: React.ReactNode }) {
   const demoOnly = DEMO_ONLY.test(pathname ?? "") || !!session;
   if (demoOnly) leaveRealMode(); // antes de qualquer leitura: a demo nunca toca o banco real
   useEffect(() => {
-    if (demoOnly || real !== undefined) return;
+    // Só depois da hidratação: antes dela a sessão demo ainda não foi lida (snapshot do servidor) e demoOnly sai falso.
+    if (!hydrated || demoOnly || real !== undefined) return;
     let alive = true;
-    loadRealSession().then((r) => alive && setReal(r), () => { if (alive) { setOffline(true); setReal(null); } });
+    // loadRealSession liga o backend real; se a aba virou demonstração no meio do caminho, desliga de novo.
+    loadRealSession().then((r) => (alive ? setReal(r) : leaveRealMode()), () => { if (alive) { setOffline(true); setReal(null); } });
     return () => { alive = false; };
-  }, [demoOnly, real]);
+  }, [hydrated, demoOnly, real]);
   const ready = hydrated && (demoOnly || real !== undefined);
   const demoUser = users.find((u) => u.id === session?.userId) ?? null;
   // Escritórios e marcas vêm do banco da demo (criados/editados no Super Admin persistem); fixture é só o ponto de partida.
