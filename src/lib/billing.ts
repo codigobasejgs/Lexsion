@@ -54,7 +54,7 @@ export async function confirmOrder(orderNsu: string, transactionNsu: string, slu
 export async function activate(orderNsu: string) {
   const db = supabaseAdmin();
   const o = await load(orderNsu);
-  if (!o || o.status !== "pago" || o.activation === "concluida") return o?.activation ?? null;
+  if (!o || (o.status !== "pago" && o.status !== "teste") || o.activation === "concluida") return o?.activation ?? null;
   try {
     if (o.kind === "renovacao") {
       const { error } = await db.rpc("saas_apply_renewal", { p_order: o.id });
@@ -80,7 +80,7 @@ export async function activate(orderNsu: string) {
   } catch (e) {
     const msg = (e as Error).message.slice(0, 200);
     await db.from("saas_orders").update({ activation: "falhou", activation_error: msg, activation_attempts: o.activation_attempts + 1, updated_at: new Date().toISOString() }).eq("id", o.id);
-    await opsAlert("Pagamento confirmado sem ativação", `Pedido ${o.order_nsu} está PAGO mas a ativação falhou: ${msg}. Nova tentativa automática diária; ou reprocesse no Super Admin. Não cobre de novo.`).catch(() => false);
+    await opsAlert(o.status === "teste" ? "Teste grátis sem ativação" : "Pagamento confirmado sem ativação", `Pedido ${o.order_nsu} (${o.status}) não foi ativado: ${msg}. Nova tentativa automática diária; ou reprocesse no Super Admin.${o.status === "pago" ? " Não cobre de novo." : ""}`).catch(() => false);
     return "falhou";
   }
 }
@@ -93,7 +93,7 @@ async function welcome(o: Order, invited: boolean) {
     method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, signal: AbortSignal.timeout(20_000),
     body: JSON.stringify({
       from: "LexSion <nao-responda@lexsion.com.br>", to: [o.customer.email], subject: `Bem-vindo(a) à LexSion — ${o.customer.office}`,
-      text: `Olá, ${o.customer.name}.\n\nO pagamento foi confirmado e o escritório ${o.customer.office} está ativo na LexSion.\n\n${invited ? "Você receberá (ou já recebeu) um e-mail separado para criar sua senha de acesso." : "Use o e-mail e a senha que você já tem."}\nEntrar: ${SITE}/entrar\n\nNo primeiro acesso, o guia de boas-vindas mostra os próximos passos (marca, equipe, aplicativo e primeiro cliente).\n\nPedido: ${o.order_nsu}\n(Mensagem automática; não responda.)`,
+      text: `Olá, ${o.customer.name}.\n\n${o.status === "teste" ? `O escritório ${o.customer.office} foi criado na LexSion em teste grátis. Nada foi cobrado; antes do fim do teste você recebe por e-mail o link da primeira mensalidade.` : `O pagamento foi confirmado e o escritório ${o.customer.office} está ativo na LexSion.`}\n\n${invited ? "Você receberá (ou já recebeu) um e-mail separado para criar sua senha de acesso." : "Use o e-mail e a senha que você já tem."}\nEntrar: ${SITE}/entrar\n\nNo primeiro acesso, o guia de boas-vindas mostra os próximos passos (marca, equipe, aplicativo e primeiro cliente).\n\nPedido: ${o.order_nsu}\n(Mensagem automática; não responda.)`,
     }),
   }).catch(() => null);
   await supabaseAdmin().from("audit_logs").insert({ organization_id: null, actor_id: null, action: "email.boas_vindas", entity: "saas_orders", entity_id: o.order_nsu, detail: r?.ok ? "aceito pelo Resend" : `falhou (HTTP ${r?.status ?? "rede"})` });

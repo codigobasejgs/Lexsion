@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createCheckout } from "@/lib/infinitepay";
-import { SITE } from "@/lib/billing";
+import { activate, SITE } from "@/lib/billing";
 import { checkoutEnabled, CONTRACT_VERSION } from "@/lib/saas-catalog";
 import { isValidCnpj, isValidCpf } from "@/domain/crm";
 
@@ -49,8 +49,20 @@ export async function POST(req: NextRequest) {
   const { count } = await db.from("saas_orders").select("id", { count: "exact", head: true }).eq("request_fingerprint", fp).gte("created_at", new Date(Date.now() - 3_600_000).toISOString());
   if ((count ?? 0) >= 5) return err(429, "rate", "Muitas tentativas. Tente novamente em uma hora.");
 
+  const snapshot = { id: p.id, label: p.label, version: p.version, price_monthly: p.price_monthly, price_yearly: p.price_yearly, max_users: p.max_users, trial_days: p.trial_days, features: p.features };
+  // Teste grátis: nada é cobrado agora. O escritório nasce em "teste"; a 1ª mensalidade vai por link antes do fim.
+  // Um teste por CPF/CNPJ e por e-mail (índices únicos no banco).
+  if (p.trial_days > 0) {
+    const { data: o, error } = await db.from("saas_orders").insert({
+      plan_id: p.id, cycle, amount, plan_snapshot: snapshot, customer: c, contract_version: CONTRACT_VERSION, contract_accepted_at: new Date().toISOString(), request_fingerprint: fp, status: "teste",
+      history: [{ at: new Date().toISOString(), text: `Teste grátis de ${p.trial_days} dias: ${p.label} ${cycle}, contrato ${CONTRACT_VERSION} aceito` }],
+    }).select("order_nsu").single();
+    if (error?.code === "23505") return err(409, "trial_used", "Este CPF/CNPJ ou e-mail já usou o teste grátis. Fale com a LexSion para contratar.", "document");
+    if (error || !o) return err(500, "order_failed", "Não foi possível registrar o cadastro agora.");
+    const r = await activate(o.order_nsu);
+    return NextResponse.json({ ok: true, data: { order: o.order_nsu, trial: true, days: p.trial_days, activation: r } });
+  }
   const expires = new Date(Date.now() + 24 * 3_600_000).toISOString();
-  const snapshot = { id: p.id, label: p.label, version: p.version, price_monthly: p.price_monthly, price_yearly: p.price_yearly, max_users: p.max_users, features: p.features };
   const { data: o, error } = await db.from("saas_orders").insert({
     plan_id: p.id, cycle, amount, plan_snapshot: snapshot, customer: c, contract_version: CONTRACT_VERSION, contract_accepted_at: new Date().toISOString(),
     request_fingerprint: fp, expires_at: expires, history: [{ at: new Date().toISOString(), text: `Pedido criado: ${p.label} ${cycle}, contrato ${CONTRACT_VERSION} aceito` }],

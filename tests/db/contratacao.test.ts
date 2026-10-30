@@ -6,7 +6,7 @@ import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 
 // Contratação self-service no banco: ativação transacional e idempotente, renovação, limite de usuários e RLS
 // (titular vê só o próprio; navegador não escreve nada; plataforma vê tudo). Migrations reais em PGlite.
-const U = { sa: "00000000-0000-0000-0000-0000000000aa", t1: "00000000-0000-0000-0000-0000000000d1", t2: "00000000-0000-0000-0000-0000000000d2", x: "00000000-0000-0000-0000-0000000000d3" };
+const U = { sa: "00000000-0000-0000-0000-0000000000aa", t1: "00000000-0000-0000-0000-0000000000d1", t2: "00000000-0000-0000-0000-0000000000d2", x: "00000000-0000-0000-0000-0000000000d3", trial: "00000000-0000-0000-0000-0000000000d4" };
 let db: PGlite;
 async function as<T = Record<string, unknown>>(user: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
   await db.exec("reset role");
@@ -74,6 +74,28 @@ describe("Ativação", () => {
     const o = await paidOrder("escritorio-x", "t2@teste.invalid");
     expect(await fails(U.sa, "select public.saas_activate($1, $2)", [o, U.sa])).toMatch(/permission denied/);
     expect(await fails(U.t2, "select public.saas_activate($1, $2)", [o, U.t2])).toMatch(/permission denied/);
+  });
+});
+
+describe("Teste grátis", () => {
+  it("pedido em teste cria escritório 'trial' e assinatura 'teste' com fim = início + dias do plano; sem cobrança", async () => {
+    const o = (await db.query<{ id: string }>(`insert into public.saas_orders (plan_id, cycle, amount, plan_snapshot, customer, status, created_at)
+      values ('profissional', 'mensal', 24990, '{"max_users":5,"trial_days":30,"label":"Profissional"}', '{"slug":"escritorio-teste","office":"Escritório Teste","name":"T","email":"x@teste.invalid","document":"52998224725"}', 'teste', '2026-10-30T12:00:00Z') returning id`)).rows[0].id;
+    const org = (await as<{ id: string }>("service", "select public.saas_activate($1, $2) id", [o, U.trial]))[0].id;
+    expect((await db.query<{ status: string }>("select status from public.organizations where id = $1", [org])).rows[0].status).toBe("trial");
+    expect((await db.query<{ status: string; e: string }>("select status, current_period_end::text e from public.saas_subscriptions where organization_id = $1", [org])).rows[0]).toEqual({ status: "teste", e: "2026-11-29" });
+    expect((await db.query<{ paid_at: string | null; transaction_nsu: string | null }>("select paid_at, transaction_nsu from public.saas_orders where id = $1", [o])).rows[0]).toEqual({ paid_at: null, transaction_nsu: null });
+  });
+  it("um teste por CPF/CNPJ: o 2º teste com o mesmo documento é recusado pelo banco", async () => {
+    expect(await fails("service", `insert into public.saas_orders (plan_id, cycle, amount, plan_snapshot, customer, status) values ('solo','mensal',9990,'{}','{"slug":"outro","document":"52998224725","email":"y@teste.invalid"}','teste')`)).toMatch(/duplicate key|unique/);
+  });
+  it("1ª mensalidade paga ao fim do teste: escritório passa a 'ativa' e o período conta do fim do teste", async () => {
+    const org = (await db.query<{ id: string }>("select id from public.organizations where slug = 'escritorio-teste'")).rows[0].id;
+    const o = (await db.query<{ id: string }>(`insert into public.saas_orders (kind, organization_id, plan_id, cycle, amount, plan_snapshot, customer, status, paid_at, transaction_nsu)
+      values ('renovacao', $1, 'profissional', 'mensal', 24990, '{}', '{}', 'pago', '2026-11-25T12:00:00Z', 'tx-fim-teste') returning id`, [org])).rows[0].id;
+    await as("service", "select public.saas_apply_renewal($1)", [o]);
+    expect((await db.query<{ status: string }>("select status from public.organizations where id = $1", [org])).rows[0].status).toBe("ativa");
+    expect((await db.query<{ status: string; e: string }>("select status, current_period_end::text e from public.saas_subscriptions where organization_id = $1", [org])).rows[0]).toEqual({ status: "ativa", e: "2026-12-29" });
   });
 });
 

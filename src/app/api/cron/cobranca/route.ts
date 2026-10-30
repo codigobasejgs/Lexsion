@@ -32,11 +32,11 @@ export async function GET(req: NextRequest) {
   const { data: exp } = await db.from("saas_orders").update({ status: "expirado", updated_at: now.toISOString() }).eq("status", "pendente").eq("kind", "contratacao").lt("expires_at", now.toISOString()).select("id");
   out.expirados = exp?.length ?? 0;
   // 2) Pago sem ativação: tenta de novo (nunca cobra de novo).
-  for (const o of (await db.from("saas_orders").select("order_nsu").eq("status", "pago").neq("activation", "concluida").limit(20)).data ?? []) {
+  for (const o of (await db.from("saas_orders").select("order_nsu").in("status", ["pago", "teste"]).neq("activation", "concluida").limit(20)).data ?? []) {
     if ((await activate(o.order_nsu)) === "concluida") out.reativacoes++;
   }
   // 3) Renovação: período terminando em até 7 dias sem cobrança emitida.
-  const { data: subs } = await db.from("saas_subscriptions").select("organization_id,plan_id,cycle,price,current_period_end,status,cancel_at_period_end,plan_snapshot,change_request").in("status", ["ativa", "vencida", "suspensa"]);
+  const { data: subs } = await db.from("saas_subscriptions").select("organization_id,plan_id,cycle,price,current_period_end,status,cancel_at_period_end,plan_snapshot,change_request").in("status", ["teste", "ativa", "vencida", "suspensa"]);
   const { data: catalog } = await db.from("saas_plans").select("*");
   for (const s of subs ?? []) {
     const end = new Date(`${s.current_period_end}T12:00:00-03:00`);
@@ -61,16 +61,17 @@ export async function GET(req: NextRequest) {
           const snapshot = target ? { id: target.id, label: target.label, version: target.version, price_monthly: target.price_monthly, price_yearly: target.price_yearly, max_users: target.max_users, features: target.features } : s.plan_snapshot;
           const { data: o } = await db.from("saas_orders").insert({ kind: "renovacao", organization_id: s.organization_id, plan_id: target?.id ?? s.plan_id, cycle: s.cycle, amount, plan_snapshot: snapshot,
             customer: { office: org?.name, email: owner }, history: [{ at: now.toISOString(), text: `Cobrança do período após ${s.current_period_end} emitida${target ? ` (troca para ${target.label})` : ""}` }] }).select("id,order_nsu").single();
-          const url = await createCheckout({ orderNsu: o!.order_nsu, items: [{ quantity: 1, price: amount, description: `LexSion ${(snapshot as { label?: string }).label ?? s.plan_id} — renovação ${s.cycle === "anual" ? "12 meses" : "1 mês"}` }],
+          const url = await createCheckout({ orderNsu: o!.order_nsu, items: [{ quantity: 1, price: amount, description: `LexSion ${(snapshot as { label?: string }).label ?? s.plan_id} — ${s.status === "teste" ? "1ª mensalidade" : "renovação"} ${s.cycle === "anual" ? "12 meses" : "1 mês"}` }],
             redirectUrl: `${SITE}/contratar/retorno`, webhookUrl: `${SITE}/api/infinitepay/webhook` });
           await db.from("saas_orders").update({ checkout_url: url }).eq("id", o!.id);
-          if (owner) await mail(owner, `LexSion: renovação do ${org?.name}`, `A assinatura do ${org?.name} vence em ${end.toLocaleDateString("pt-BR")}.\nValor: R$ ${(amount / 100).toFixed(2).replace(".", ",")}${target ? ` (plano ${target.label}, conforme a troca pedida)` : ""}.\nPagar (Pix ou cartão): ${url}\n\nSem pagamento até ${GRACE_DAYS} dias após o vencimento, o acesso é suspenso. Os dados ficam preservados e o acesso volta assim que o pagamento é confirmado.\nO valor e as datas também aparecem em Configurações → Plano.`);
+          const trial = s.status === "teste";
+          if (owner) await mail(owner, trial ? `LexSion: fim do teste grátis do ${org?.name}` : `LexSion: renovação do ${org?.name}`, `${trial ? `O teste grátis do ${org?.name} termina em` : `A assinatura do ${org?.name} vence em`} ${end.toLocaleDateString("pt-BR")}.${trial ? " Para continuar usando, pague a primeira mensalidade." : ""}\nValor: R$ ${(amount / 100).toFixed(2).replace(".", ",")}${target ? ` (plano ${target.label}, conforme a troca pedida)` : ""}.\nPagar (Pix ou cartão): ${url}\n\nSem pagamento até ${GRACE_DAYS} dias após o vencimento, o acesso é suspenso. Os dados ficam preservados e o acesso volta assim que o pagamento é confirmado.\nO valor e as datas também aparecem em Configurações → Plano.`);
           out.cobrancas++;
         } catch (e) { out.erros.push(`renovação ${s.organization_id.slice(0, 8)}: ${(e as Error).message.slice(0, 80)}`); }
       }
     }
-    if (daysLeft < 0 && s.status === "ativa") { await db.from("saas_subscriptions").update({ status: "vencida", updated_at: now.toISOString() }).eq("organization_id", s.organization_id); out.vencidos++; }
-    if (daysLeft < -GRACE_DAYS && org?.status === "ativa") {
+    if (daysLeft < 0 && (s.status === "ativa" || s.status === "teste")) { await db.from("saas_subscriptions").update({ status: "vencida", updated_at: now.toISOString() }).eq("organization_id", s.organization_id); out.vencidos++; }
+    if (daysLeft < -GRACE_DAYS && (org?.status === "ativa" || org?.status === "trial")) {
       await db.from("saas_subscriptions").update({ status: "suspensa", updated_at: now.toISOString() }).eq("organization_id", s.organization_id);
       await db.from("organizations").update({ status: "suspensa", status_reason: `Inadimplência: período vencido em ${s.current_period_end}`, updated_at: now.toISOString() }).eq("id", s.organization_id);
       await db.from("audit_logs").insert({ organization_id: s.organization_id, actor_id: null, action: "status", entity: "organizations", entity_id: s.organization_id, detail: `suspensa: inadimplência (${today})` });

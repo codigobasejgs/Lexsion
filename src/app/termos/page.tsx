@@ -18,6 +18,7 @@ export default function TermosPage() {
           <li><strong>Objeto.</strong> Licença de uso do sistema LexSion pelo escritório contratante, no plano escolhido e com o limite de usuários do plano.</li>
           <li><strong>Pagamento.</strong> Por Pix ou cartão na InfinitePay (CloudWalk), em nome da LexSion. A LexSion não recebe nem guarda dados de cartão.</li>
           <li><strong>Ativação.</strong> O escritório é criado depois que a InfinitePay confirma o pagamento. O acesso é enviado ao e-mail do(a) titular informado no cadastro.</li>
+          <li><strong>Teste grátis.</strong> Quando o plano oferece teste, o escritório é criado na hora, sem cobrança e sem pedir cartão. Há um teste por CPF/CNPJ e por e-mail. Antes do fim do teste, o link da primeira mensalidade é enviado por e-mail; sem pagamento, valem as regras de atraso abaixo, contadas do fim do teste.</li>
           <li><strong>Renovação.</strong> Não há débito automático. Antes de cada vencimento, a cobrança do próximo período é enviada por e-mail e fica visível em Configurações → Plano.</li>
           <li><strong>Atraso.</strong> Sem pagamento até 5 dias depois do vencimento, o acesso é suspenso. Nenhum dado é apagado, e o acesso volta assim que o pagamento é confirmado.</li>
           <li><strong>Troca de plano.</strong> O(a) titular pode pedir a troca em Configurações → Plano. A mudança vale a partir do próximo período, com o novo valor.</li>

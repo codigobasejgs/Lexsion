@@ -41,9 +41,10 @@ test("QA-LANDING-02: páginas institucionais renderizam, sem overflow e sem viol
     expect(await overflow(page), r).toBeLessThanOrEqual(0);
     expect(await serious(page), r).toEqual([]);
   }
-  // Planos vêm do banco; sem aprovação do dono, nenhum valor aparece (CONTR-01 cobre o conteúdo de cada plano).
+  // Planos vêm do banco: só aparecem os valores aprovados pelo dono (30/10/2026) — nenhum outro preço no site.
   await page.goto("/planos");
-  await expect(page.getByText(/R\$\s?\d/)).toHaveCount(0);
+  const shown = (await page.getByText(/R\$\s?\d/).allInnerTexts()).join(" ").match(/R\$\s?[\d.,]+/g) ?? [];
+  expect(shown.every((p) => ["R$ 99,90", "R$ 249,90", "R$ 499,90"].includes(p.replace(/\s/g, " ")))).toBe(true);
 });
 
 test("QA-LANDING-03: todo link interno da landing aponta para uma página existente", async ({ page, request }) => {

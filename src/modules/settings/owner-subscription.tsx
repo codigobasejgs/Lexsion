@@ -43,7 +43,7 @@ export function OwnerSubscription({ organizationId }: { organizationId: string }
       <div className="panel space-y-2 p-5">
         <h2 className="font-semibold">Plano {sub.plan_snapshot.label ?? sub.plan_id} · {sub.cycle} · {formatBRL(sub.price)}</h2>
         <p>Situação: <Badge tone={sub.status === "ativa" ? "success" : "warning"}>{sub.status}</Badge> · até {sub.max_users} usuário(s)</p>
-        <p>{sub.cancel_at_period_end ? "Cancelamento agendado: o acesso termina em " : "Período pago até "}<strong className="num">{formatCivil(sub.current_period_end)}</strong>. Sem débito automático: a cobrança do próximo período chega por e-mail 7 dias antes.</p>
+        <p>{sub.cancel_at_period_end ? "Cancelamento agendado: o acesso termina em " : sub.status === "teste" ? "Teste grátis até " : "Período pago até "}<strong className="num">{formatCivil(sub.current_period_end)}</strong>. Sem débito automático: a cobrança do próximo período chega por e-mail 7 dias antes.</p>
         {open && <p><a className="btn btn-primary" href={open.checkout_url!} rel="noopener">Pagar a renovação ({formatBRL(open.amount)})</a></p>}
         {sub.change_request?.plan && <p className="text-info">Troca para {plans.find((p) => p.id === sub.change_request!.plan)?.label ?? sub.change_request.plan} a partir do próximo período.</p>}
       </div>

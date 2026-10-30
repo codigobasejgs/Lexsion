@@ -1,27 +1,35 @@
 import { expect, test } from "@playwright/test";
 
-// Contratação pública com os planos NÃO aprovados (estado atual): nada é vendido, nenhum link de pagamento é
-// criado e nenhuma conta nasce. Roda contra local ou produção. Fluxo pago completo fica para quando o dono
-// aprovar preços e autorizar uma compra de teste real (a InfinitePay não tem sandbox).
-test("CONTR-01: /planos lista Solo, Profissional e Elite do banco; sem preço aprovado não há botão Contratar", async ({ page }) => {
+// Contratação pública. O comportamento depende do estado do banco e da liberação no servidor:
+//  * planos aprovados + SAAS_CHECKOUT_ENABLED=1 (produção desde 30/10/2026): preço e "Contratar" visíveis;
+//  * sem liberação (CI/local sem chave): nada é vendido e a API responde 503.
+// Nenhum teste aqui cria pedido, conta ou link de pagamento: só validações que recusam antes de gravar.
+test("CONTR-01: /planos lista Solo, Profissional e Elite do banco; preço só com aprovação; recurso sem integração aparece 'em breve'", async ({ page }) => {
   await page.goto("/planos");
-  for (const id of ["solo", "profissional", "elite"]) {
-    const card = page.getByTestId(`plano-${id}`);
-    test.skip((await card.count()) === 0, "planos do banco indisponíveis neste ambiente (sem chave do servidor)");
-    await expect(card).toContainText("Valores em breve");
-    await expect(card.getByRole("link", { name: /^Contratar/ })).toHaveCount(0);
-  }
-  await expect(page.getByTestId("plano-solo")).toContainText("até 1 usuário");
+  const solo = page.getByTestId("plano-solo");
+  test.skip((await solo.count()) === 0, "planos do banco indisponíveis neste ambiente (sem chave do servidor)");
+  await expect(solo).toContainText("até 1 usuário");
   await expect(page.getByTestId("plano-elite")).toContainText("até 15 usuários");
-  await expect(page.getByTestId("plano-solo")).toContainText("Cobrança online de honorários (em breve)"); // recurso sem integração não é vendido como pronto
+  await expect(solo).toContainText("Cobrança online de honorários (em breve)");
+  const priced = await solo.getByText("R$ 99,90").count();
+  if (priced) {
+    await expect(page.getByTestId("plano-profissional")).toContainText("R$ 249,90");
+    await expect(page.getByTestId("plano-elite")).toContainText("R$ 499,90");
+  } else await expect(solo).toContainText("Valores em breve");
 });
 
-test("CONTR-02: /contratar e a API recusam enquanto a contratação não foi liberada; nenhum pedido nasce", async ({ page, request }) => {
-  await page.goto("/contratar?plano=solo");
-  await expect(page.getByRole("status")).toContainText("ainda não foi liberada");
-  await expect(page.getByRole("button", { name: "Ir para o pagamento" })).toHaveCount(0);
-  const r = await request.post("/api/contratar", { data: { plan: "solo", cycle: "mensal", name: "QA Teste", email: "qa@lexsion-qa.invalid", office: "QA", slug: "qa-contr", document: "52998224725", accept: true, contractVersion: "2026-10-30" } });
-  expect([503]).toContain(r.status());
+test("CONTR-02: cadastro inválido é recusado pelo servidor ANTES de criar pedido (campo apontado)", async ({ request }) => {
+  const base = { plan: "solo", cycle: "mensal", name: "QA Teste", email: "qa@lexsion-qa.invalid", office: "QA Escritório", slug: "qa-contr-invalido", document: "52998224725", accept: true, contractVersion: "2026-10-30" };
+  const post = (d: Record<string, unknown>) => request.post("/api/contratar", { data: { ...base, ...d } });
+  const first = await post({ document: "11111111111" });
+  if (first.status() === 503) { test.skip(true, "contratação não liberada neste ambiente"); return; }
+  expect(first.status()).toBe(400);
+  expect((await first.json()).error.field).toBe("document");
+  expect((await (await post({ email: "sem-arroba" })).json()).error.field).toBe("email");
+  expect((await (await post({ slug: "admin" })).json()).error.field).toBe("slug");
+  expect((await (await post({ accept: false })).json()).error.field).toBe("accept");
+  expect((await (await post({ contractVersion: "antiga" })).json()).error.field).toBe("accept");
+  expect((await post({ plan: "inexistente" })).status()).toBe(409);
 });
 
 test("CONTR-03: retorno do checkout com parâmetros forjados não confirma nada", async ({ page, request }) => {
@@ -41,8 +49,17 @@ test("CONTR-04: webhook não assinado com pedido inexistente é aceito sem efeit
   expect((await request.post("/api/infinitepay/webhook", { data: ["lista"] })).status()).toBe(400);
 });
 
-test("CONTR-05: termos de contratação publicados com versão, renovação, atraso, cancelamento e arrependimento", async ({ page }) => {
+test("CONTR-05: termos de contratação publicados com versão, teste grátis, renovação, atraso, cancelamento e arrependimento", async ({ page }) => {
   await page.goto("/termos#contratacao");
   const t = page.locator("article");
-  for (const s of ["Versão 2026-10-30", "Renovação.", "Atraso.", "Cancelamento.", "Direito de arrependimento."]) await expect(t).toContainText(s);
+  for (const s of ["Versão 2026-10-30", "Teste grátis.", "Renovação.", "Atraso.", "Cancelamento.", "Direito de arrependimento."]) await expect(t).toContainText(s);
+});
+
+test("CONTR-06: formulário de contratação mostra o teste grátis e não pede cartão (quando liberado)", async ({ page }) => {
+  await page.goto("/contratar?plano=profissional");
+  const btn = page.getByRole("button", { name: /Começar o teste grátis|Ir para o pagamento/ });
+  if (!(await btn.count())) { await expect(page.getByRole("status")).toContainText("ainda não foi liberada"); return; }
+  await expect(page.getByLabel("Plano")).toHaveValue("profissional");
+  await expect(page.getByText(/dias grátis, depois R\$ 249,90/)).toBeVisible();
+  await expect(page.getByText(/não pedimos cartão/)).toBeVisible();
 });
