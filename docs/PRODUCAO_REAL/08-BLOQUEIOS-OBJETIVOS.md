@@ -14,6 +14,8 @@
 | B10 | Cálculos e regras previdenciárias | validação jurídica | funcionam, marcados como demonstrativos | revisão por advogado(a) habilitado(a) |
 | B11 | Entrega de e-mail do Resend | verificação | DKIM/SPF/DMARC publicados e envio aceito (HTTP 200); entrega não consultável com chave só de envio | conferir painel Resend ou criar chave de leitura |
 | B12 | Credenciais coladas em conversa | segurança | **devem ser rotacionadas** | ver `10` |
-| B13 | PITR do banco | plano | backup lógico próprio cobre por ora | ativar PITR |
-| B14 | MFA para Super Admin | configuração | não exigido ainda | ativar TOTP no Auth e na conta do dono |
+| B13 | PITR do banco | **plano Free (decisão do dono: sem upgrade)** — risco **não eliminado** | mitigado: backup lógico diário cifrado (AES-256-GCM) no R2 às 06:17 UTC, 30 cópias, restauração verificada; perda máxima ≈ 24 h; arquivos do Storage **fora** do backup | só se eliminaria com PITR pago; não contratar sem autorização |
+| B14 | MFA para Super Admin | **resolvido** (29/10) | `is_platform` exige `aal2` no banco; APIs de admin conferem no servidor; tela pede o código TOTP | — |
+| B16 | Arquivos do Storage no backup | pendente | documentos enviados não entram no backup do R2 | cópia incremental Storage → R2 |
+| B17 | Contratação self-service (InfinitePay) | credencial + confirmação | não iniciada: sem chave da API, sem confirmação de que `$marco-boggian` pertence ao CNPJ 59.760.458/0001-91, sem preços aprovados | chave em `.env.local`, confirmação na conta autenticada, tabela de preços |
 | B15 | Servidor Evolution compartilhado | operação | instâncias `lexsion-*` isoladas por nome no servidor de outra empresa | servidor e chave próprios da LexSion |
