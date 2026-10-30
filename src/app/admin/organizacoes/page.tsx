@@ -60,7 +60,7 @@ export default function ContratantesPage() {
               <div className="flex flex-wrap gap-1">
                 <button className="btn btn-ghost min-h-9" onClick={() => setPlanFor(t)}>Plano</button>
                 {(t.status === "ativa" || t.status === "trial" || t.status === "inadimplente") && <button className="btn btn-ghost min-h-9" onClick={() => setSuspend(t)}><Pause aria-hidden className="size-4" /> Suspender</button>}
-                {(t.status === "suspensa" || t.status === "cancelada") && <button className="btn btn-ghost min-h-9" onClick={async () => { await tenantRepo.reactivate(t.id, user?.id); await refresh(); setNotice(`${t.name} reativado. Os dados foram preservados.`); }}><Play aria-hidden className="size-4" /> Reativar</button>}
+                {(t.status === "suspensa" || t.status === "cancelada") && <button className="btn btn-ghost min-h-9" onClick={async () => { const r = await tenantRepo.reactivate(t.id, user?.id); await refresh(); setNotice(r.ok ? `${t.name} reativado. Os dados foram preservados.` : `Não foi possível reativar ${t.name}: ${r.error.message}`); }}><Play aria-hidden className="size-4" /> Reativar</button>}
                 {mode === "demo" && <Link className="btn btn-ghost min-h-9" href={`/demo/tenant/${t.slug}`} target="_blank">Abrir demonstração</Link>}
               </div>
             </li>
@@ -107,7 +107,7 @@ function PlanDialog({ tenant, onClose, onDone }: { tenant: Tenant | null; onClos
       <p className="mt-3 text-xs text-fg-muted">{mode === "real" ? "Muda o plano e as cotas. Nenhuma cobrança é emitida: o faturamento automático da assinatura ainda não está ativo." : "Simulação: a cobrança proporcional aparece em Financeiro da plataforma. Nada é cobrado de verdade."}</p>
       <div className="mt-4 flex justify-end gap-2">
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-        <button className="btn btn-primary" onClick={async () => { await tenantRepo.changePlan(tenant!.id, p, c, user?.id); onClose(); onDone(`Plano de ${tenant!.name}: ${PLAN_LABEL[p]} (${c}).`); }}>Salvar plano</button>
+        <button className="btn btn-primary" onClick={async () => { const r = await tenantRepo.changePlan(tenant!.id, p, c, user?.id); onClose(); onDone(r.ok ? `Plano de ${tenant!.name}: ${PLAN_LABEL[p]} (${c}).` : `Plano não alterado: ${r.error.message}`); }}>Salvar plano</button>
       </div>
     </Dialog>
   );

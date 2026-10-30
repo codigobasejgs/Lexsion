@@ -2,7 +2,7 @@
 // Mesma interface que um SupabaseTenantRepository futuro; sem backend, nada aqui é autorização real.
 import type { Tenant, TenantUsage, PlanId, BillingCycle } from "@/domain/tenancy";
 import type { Result } from "../contracts";
-import { isRealMode, readAll, writeMany } from "./db";
+import { isRealMode, patchRow, readAll, writeMany } from "./db";
 import { platformUsage } from "../real/backend";
 import { auditRow, fail, ok } from "./generic";
 
@@ -19,6 +19,8 @@ export function slugError(slug: string, taken: string[]): string | null {
 const PLATFORM = { organizationId: "platform", actorId: "u-super" };
 
 async function save(next: Tenant[], action: string, id: string, detail: string, actorId = PLATFORM.actorId) {
+  // Auditoria só-acréscimo: writeMany mescla o evento com o que está gravado DENTRO da transação (ver mergeAudit),
+  // então outra aba gravando ao mesmo tempo não apaga este evento.
   const audit = await readAll("audit");
   await writeMany({ tenants: next, audit: [...audit, auditRow({ organizationId: "platform", actorId }, action, "Tenant", id, detail)] });
 }
@@ -41,16 +43,22 @@ export const tenantRepo = {
   },
 
   update: async (id: string, patch: Partial<Omit<Tenant, "id" | "slug" | "createdAt">>, actorId?: string, detail = "Escritório atualizado"): Promise<Result<Tenant>> => {
-    const all = await readAll("tenants");
-    const cur = all.find((t) => t.id === id);
-    if (!cur) return fail("not_found", "Escritório não encontrado.");
-    const next = { ...cur, ...patch };
+    if (isRealMode()) {
+      // Operação real: o backend grava por linha no banco (RPC/RLS) e a auditoria é feita pelo banco.
+      const all = await readAll("tenants");
+      const cur = all.find((t) => t.id === id);
+      if (!cur) return fail("not_found", "Escritório não encontrado.");
+      const next = { ...cur, ...patch };
+      try { await save(all.map((t) => (t.id === id ? next : t)), "tenant.updated", id, detail, actorId); } catch (e) { return fail("save", (e as Error).message); }
+      return ok(next);
+    }
+    // Demonstração: altera SÓ este escritório e acrescenta o evento, na mesma transação (QA-115: abas simultâneas).
     try {
-      await save(all.map((t) => (t.id === id ? next : t)), "tenant.updated", id, detail, actorId);
+      const next = await patchRow("tenants", id, (cur) => ({ ...cur, ...patch }), [auditRow({ organizationId: "platform", actorId: actorId ?? PLATFORM.actorId }, "tenant.updated", "Tenant", id, detail)]);
+      return next ? ok(next) : fail("not_found", "Escritório não encontrado.");
     } catch (e) {
       return fail("save", (e as Error).message);
     }
-    return ok(next);
   },
 
   suspend: (id: string, reason: string, actorId?: string) =>

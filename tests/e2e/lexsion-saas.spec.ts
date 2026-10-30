@@ -82,12 +82,12 @@ test("QA-115/120: Super Admin cria escritório, suspende com motivo, ERP bloquei
   await office.goto("/demo/tenant/atlas-juridico");
   await expect(office.getByRole("heading", { name: "Acesso suspenso" })).toBeVisible();
   await expect(office.getByText("Rita de Cássia Exemplar")).toHaveCount(0);
-  // Demonstração: as duas abas compartilham o mesmo IndexedDB e a gravação é "ler-modificar-gravar" da coleção.
-  // No Safari a aba do escritório ainda gravava ao carregar e sobrescrevia o evento da outra. Fecha antes de reativar.
-  // (A operação real grava no banco por linha, sem essa corrida.)
-  await office.close();
+  // A aba do escritório fica ABERTA de propósito (QA-115): a auditoria só-acréscimo não pode perder eventos.
 
   await atlas.getByRole("button", { name: "Reativar" }).click();
+  // Espera a CONFIRMAÇÃO da gravação (aviso após o commit). Navegar antes aborta a transação ainda aberta no
+  // IndexedDB — era isso que fazia "Reativado" faltar, não a outra aba.
+  await expect(page.getByRole("status").filter({ hasText: /reativado\. Os dados foram preservados/ })).toBeVisible();
   await expect(atlas.getByText("Ativa")).toBeVisible();
   await page.goto("/admin/auditoria");
   await expect(page.getByText("Suspenso: Inadimplência de teste")).toBeVisible();

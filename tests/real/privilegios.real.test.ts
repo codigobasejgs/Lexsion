@@ -109,7 +109,9 @@ describe.skipIf(!ON)("REAL — sessões de verdade (anon, papéis e escritórios
   });
   it("escalada: titular não vira plataforma nem entra em outro escritório; estagiário não se promove", async () => {
     expect((await s.tit.from("platform_members").insert({ user_id: id.tit, role: "superadmin" })).error?.message).toMatch(/permission denied/);
-    expect((await s.tit.from("organization_memberships").insert({ organization_id: orgs[1], user_id: id.tit, role: "admin" })).error?.message).toMatch(/row-level security/);
+    // Duas camadas recusam: a trigger memberships_guard (papel de titular só por titular DAQUELE escritório) e a RLS.
+    expect((await s.tit.from("organization_memberships").insert({ organization_id: orgs[1], user_id: id.tit, role: "admin" })).error?.message).toMatch(/row-level security|somente o titular/);
+    expect((await admin.from("organization_memberships").select("user_id").eq("organization_id", orgs[1]).eq("user_id", id.tit)).data ?? []).toEqual([]); // nada gravado
     await s.est.from("organization_memberships").update({ role: "admin" }).eq("user_id", id.est);
     const { data } = await admin.from("organization_memberships").select("role").eq("user_id", id.est).single();
     expect(data!.role).toBe("estagiario");

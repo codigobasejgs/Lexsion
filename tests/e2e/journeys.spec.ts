@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -15,6 +16,8 @@ async function seriousAxe(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
   return r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).slice(0, 2).join(" | ")}`);
 }
+// Login e recuperação REAIS dependem do Supabase (CI público não tem credenciais): sem ele o teste é PULADO, não aprovado.
+const SUPABASE = (() => { try { return fs.readFileSync(".env.local", "utf8").includes("NEXT_PUBLIC_SUPABASE_URL=https://"); } catch { return !!process.env.NEXT_PUBLIC_SUPABASE_URL; } })();
 async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 }
@@ -243,6 +246,7 @@ test.describe("rotas E3–E7: render, sem overflow, sem violação axe séria", 
     await expect(page.locator("h1")).toBeVisible();
   });
   test("/recuperar-acesso (público)", async ({ page }) => {
+    test.skip(!SUPABASE, "Supabase não configurado neste ambiente");
     await page.goto("/recuperar-acesso");
     // Fluxo real (Supabase): domínio .invalid nunca recebe e-mail; resposta igual exista ou não a conta.
     await page.getByLabel("E-mail").fill("qa-recuperacao@lexsion-qa.invalid");

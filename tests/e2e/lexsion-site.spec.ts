@@ -1,8 +1,12 @@
+import fs from "node:fs";
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 // QA-ROTA / QA-LANDING / QA-LOGIN / QA-DEMO — jornadas públicas separadas (landing, login, demonstração).
 const serious = async (page: import("@playwright/test").Page) => (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
+
+// Login e recuperação REAIS dependem do Supabase (CI público não tem credenciais): sem ele o teste é PULADO, não aprovado.
+const SUPABASE = (() => { try { return fs.readFileSync(".env.local", "utf8").includes("NEXT_PUBLIC_SUPABASE_URL=https://"); } catch { return !!process.env.NEXT_PUBLIC_SUPABASE_URL; } })();
 const overflow = (page: import("@playwright/test").Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 test("QA-ROTA-01: / mostra a landing (não redireciona para login) e as 3 ações levam a destinos diferentes", async ({ page, isMobile }) => {
@@ -78,6 +82,7 @@ test("QA-LANDING-05: SEO — landing indexável com canonical; demo, login e sis
 });
 
 test("QA-LOGIN-01: login real recusa credencial errada (Supabase Auth), sem revelar se a conta existe e sem criar sessão", async ({ page }) => {
+  test.skip(!SUPABASE, "Supabase não configurado neste ambiente");
   await page.goto("/entrar");
   await expect(page.getByRole("radio", { name: /Helena Prado/ })).toHaveCount(0); // perfis fictícios saíram do login
   await page.getByRole("button", { name: "Entrar", exact: true }).click();
@@ -102,6 +107,7 @@ test("QA-LOGIN-01: login real recusa credencial errada (Supabase Auth), sem reve
 });
 
 test("QA-LOGIN-02: recuperar acesso valida e responde igual exista ou não a conta (anti-enumeração)", async ({ page }) => {
+  test.skip(!SUPABASE, "Supabase não configurado neste ambiente");
   await page.goto("/recuperar-acesso");
   await page.getByRole("button", { name: "Enviar link" }).click();
   await expect(page.getByText("Informe um e-mail válido.")).toBeVisible();

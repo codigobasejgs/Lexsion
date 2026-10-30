@@ -9,7 +9,8 @@ export const ok = <T,>(data: T): Result<T> => ({ ok: true, data, correlationId: 
 export const fail = (code: string, message: string, retryable = false): Result<never> => ({ ok: false, error: { code, message, retryable }, correlationId: cid() });
 
 export function auditRow(ctx: RequestContext, action: string, entity: string, entityId: string, detail: string): AuditEvent {
-  return { id: cid(), organizationId: ctx.organizationId, at: nowIso(), actorId: ctx.actorId, action, entity, entityId, detail };
+  // id do evento com UUID completo: a gravação só-acréscimo deduplica por id, então colisão (8 chars) faria perder evento.
+  return { id: `ev-${crypto.randomUUID()}`, organizationId: ctx.organizationId, at: nowIso(), actorId: ctx.actorId, action, entity, entityId, detail };
 }
 
 type OrgRow = { id: string; organizationId: string };

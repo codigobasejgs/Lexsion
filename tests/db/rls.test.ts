@@ -255,3 +255,31 @@ describe("Saúde da plataforma", () => {
     expect(await denied(U.adminA, "select public.trigger_backup()")).toMatch(/permission denied/);
   });
 });
+
+describe("Governança de vínculos (sem escalada de privilégio)", () => {
+  const G = "00000000-0000-0000-0000-0000000000a6"; // gestor (tenant_admin) do escritório A
+  const role = async (u: string) => (await db.query<{ role: string }>("select role from public.organization_memberships where organization_id = $1 and user_id = $2", [orgA, u])).rows[0]?.role;
+  it("gestor não se promove, não promove ninguém a titular e não mexe no titular; titular não se rebaixa nem se remove sendo o único", async () => {
+    await db.query("insert into auth.users (id, email) values ($1, 'gestorA@teste.invalid') on conflict do nothing", [G]);
+    await as(U.adminA, "insert into public.organization_memberships (organization_id, user_id, role) values ($1, $2, 'tenant_admin')", [orgA, G]);
+    expect(await denied(G, "update public.organization_memberships set role = 'admin' where organization_id = $1 and user_id = $2", [orgA, G])).toMatch(/próprio papel/);
+    expect(await denied(G, "update public.organization_memberships set role = 'admin' where organization_id = $1 and user_id = $2", [orgA, U.estagA])).toMatch(/somente o titular/);
+    expect(await denied(G, "update public.organization_memberships set role = 'estagiario' where organization_id = $1 and user_id = $2", [orgA, U.adminA])).toMatch(/somente o titular/);
+    expect(await denied(G, "delete from public.organization_memberships where organization_id = $1 and user_id = $2", [orgA, U.adminA])).toMatch(/somente o titular/);
+    expect(await denied(U.adminA, "update public.organization_memberships set role = 'advogado' where organization_id = $1 and user_id = $2", [orgA, U.adminA])).toMatch(/próprio papel/);
+    expect(await denied(U.adminA, "delete from public.organization_memberships where organization_id = $1 and user_id = $2", [orgA, U.adminA])).toMatch(/pelo menos um titular/);
+    expect(await role(U.adminA)).toBe("admin");
+    expect(await role(G)).toBe("tenant_admin");
+    expect(await role(U.estagA)).toBe("estagiario");
+  });
+  it("legítimo: gestor muda papel comum; titular nomeia outro titular e só então o anterior pode sair", async () => {
+    await as(G, "update public.organization_memberships set role = 'controladoria' where organization_id = $1 and user_id = $2", [orgA, U.estagA]);
+    expect(await role(U.estagA)).toBe("controladoria");
+    await as(G, "update public.organization_memberships set role = 'estagiario' where organization_id = $1 and user_id = $2", [orgA, U.estagA]);
+    await as(U.adminA, "update public.organization_memberships set role = 'admin' where organization_id = $1 and user_id = $2", [orgA, G]);
+    expect(await role(G)).toBe("admin");
+    await as(U.adminA, "update public.organization_memberships set role = 'tenant_admin' where organization_id = $1 and user_id = $2", [orgA, G]);
+    expect(await role(G)).toBe("tenant_admin");
+    await as(U.adminA, "delete from public.organization_memberships where organization_id = $1 and user_id = $2", [orgA, G]);
+  });
+});

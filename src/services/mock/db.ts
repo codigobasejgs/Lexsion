@@ -175,6 +175,7 @@ export async function writeAll<C extends CollectionName>(name: C, rows: Row<C>[]
     await real.write({ [name]: rows });
     return broadcast();
   }
+  if (APPEND_ONLY.has(name)) return writeMany({ [name]: rows } as Partial<{ [K in CollectionName]: Row<K>[] }>); // mesmo caminho só-acréscimo
   try {
     const db = await openDb();
     await tx(db, "readwrite", (s) => s.put(rows, name));
@@ -183,6 +184,63 @@ export async function writeAll<C extends CollectionName>(name: C, rows: Row<C>[]
     memory.set(name, rows);
   }
   broadcast();
+}
+
+/**
+ * Auditoria é SÓ-ACRÉSCIMO. Os serviços gravam "lista lida + evento novo"; se outra aba gravou entre a leitura e a
+ * gravação, a lista lida está velha e regravá-la apagaria o evento da outra aba (QA-115). Por isso a coleção "audit"
+ * nunca é substituída: dentro da MESMA transação (o IndexedDB serializa transações readwrite do mesmo store, entre
+ * abas) lê-se o que está gravado e acrescentam-se só os ids que ainda não existem. Nada é removido nem duplicado.
+ */
+export function mergeAudit<T extends { id: string }>(stored: T[] | undefined, incoming: T[]): T[] {
+  const base = Array.isArray(stored) ? stored : [];
+  const ids = new Set(base.map((e) => e.id));
+  const fresh = incoming.filter((e) => !ids.has(e.id) && (ids.add(e.id), true));
+  return fresh.length ? [...base, ...fresh] : base;
+}
+const APPEND_ONLY = new Set<CollectionName>(["audit"]);
+
+/**
+ * Altera UM registro (por id) e acrescenta eventos de auditoria, numa única transação. A coleção é lida DENTRO da
+ * transação: outra aba que alterou outro registro ao mesmo tempo não é desfeita (regravar a lista inteira lida antes
+ * apagava a mudança dela). `fn` recebe o registro atual gravado; devolver null aborta sem gravar.
+ */
+export async function patchRow<C extends CollectionName>(name: C, id: string, fn: (cur: Row<C>) => Row<C> | null, events: { id: string }[] = []): Promise<Row<C> | null> {
+  if (real) {
+    const rows = await readAll(name);
+    const cur = rows.find((r) => (r as { id: string }).id === id);
+    const next = cur ? fn(cur) : null;
+    if (next) await writeMany({ [name]: rows.map((r) => ((r as { id: string }).id === id ? next : r)), ...(events.length ? { audit: [...(await readAll("audit")), ...events] } : {}) } as Partial<{ [K in CollectionName]: Row<K>[] }>);
+    return next;
+  }
+  let result: Row<C> | null = null;
+  try {
+    const db = await openDb();
+    await new Promise<void>((resolve, reject) => {
+      const t = db.transaction(STORE, "readwrite");
+      const s = t.objectStore(STORE);
+      const get = s.get(name);
+      get.onsuccess = () => {
+        const rows = ((get.result ?? seedValue(name)) as Row<C>[]);
+        const cur = rows.find((r) => (r as { id: string }).id === id);
+        result = cur ? fn(cur) : null;
+        if (!result) return; // nada a gravar: a transação termina sem alterações
+        s.put(rows.map((r) => ((r as { id: string }).id === id ? result : r)), name);
+        if (events.length) { const a = s.get("audit"); a.onsuccess = () => s.put(mergeAudit(a.result as { id: string }[] | undefined, events), "audit"); }
+      };
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
+    });
+  } catch {
+    toMemory();
+    const rows = (memory.get(name) ?? seedValue(name)) as Row<C>[];
+    const cur = rows.find((r) => (r as { id: string }).id === id);
+    result = cur ? fn(cur) : null;
+    if (result) { memory.set(name, rows.map((r) => ((r as { id: string }).id === id ? result : r))); if (events.length) memory.set("audit", mergeAudit(memory.get("audit") as { id: string }[] | undefined, events)); }
+  }
+  if (result) broadcast();
+  return result;
 }
 
 /** Escreve várias coleções numa única transação (tudo ou nada) — usado em operações encadeadas. */
@@ -197,14 +255,18 @@ export async function writeMany(patch: Partial<{ [C in CollectionName]: Row<C>[]
     await new Promise<void>((resolve, reject) => {
       const t = db.transaction(STORE, "readwrite");
       const s = t.objectStore(STORE);
-      for (const [name, rows] of entries) s.put(rows, name);
+      for (const [name, rows] of entries) {
+        if (!APPEND_ONLY.has(name)) { s.put(rows, name); continue; }
+        const get = s.get(name); // lido DENTRO da transação: nenhuma outra aba grava entre este get e o put
+        get.onsuccess = () => s.put(mergeAudit(get.result as { id: string }[] | undefined, rows as { id: string }[]), name);
+      }
       t.oncomplete = () => resolve();
       t.onerror = () => reject(t.error);
       t.onabort = () => reject(t.error);
     });
   } catch {
     toMemory();
-    for (const [name, rows] of entries) memory.set(name, rows);
+    for (const [name, rows] of entries) memory.set(name, APPEND_ONLY.has(name) ? mergeAudit(memory.get(name) as { id: string }[] | undefined, rows as { id: string }[]) : rows);
   }
   broadcast();
 }

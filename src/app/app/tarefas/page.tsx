@@ -82,7 +82,8 @@ export default function TarefasPage() {
               const n = diffDays(DEMO_TODAY, t.due);
               return (
                 <li key={t.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
-                  <input type="checkbox" aria-label={`Concluir ${t.title}`} checked={t.done} disabled={!t.done && blocked(t)} onChange={() => move(t, t.done ? "a_fazer" : "concluida")} className="size-5 accent-[var(--brand)]" />
+                  {/* Área de toque de 44 px (WCAG 2.5.8): a caixa de 20 px ficava colada ao título no celular. */}
+                  <label className="-m-2 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center"><input type="checkbox" aria-label={`Concluir ${t.title}`} checked={t.done} disabled={!t.done && blocked(t)} onChange={() => move(t, t.done ? "a_fazer" : "concluida")} className="size-5 accent-[var(--brand)]" /></label>
                   {t.recurrence && <Repeat aria-label={RECURRENCE_LABEL[t.recurrence.every]} className="size-4 shrink-0 text-accent" />}
                   <button onClick={() => url.set("id", t.id)} className={`min-w-0 flex-1 text-left ${t.done ? "text-fg-muted line-through" : "font-medium"} hover:underline`}>{t.title}</button>
                   {!t.done && blocked(t) && <Badge tone="warning">Aguarda dependência</Badge>}

@@ -21,7 +21,7 @@ export async function list<C extends CollectionName>(name: C, orgId: string | nu
 
 async function audit(ctx: RequestContext, action: string, entity: string, entityId: string, detail: string) {
   const rows = await readAll("audit");
-  await writeAll("audit", [...rows, { id: cid(), organizationId: ctx.organizationId, at: new Date().toISOString(), actorId: ctx.actorId, action, entity, entityId, detail }]);
+  await writeAll("audit", [...rows, { id: `ev-${crypto.randomUUID()}`, organizationId: ctx.organizationId, at: new Date().toISOString(), actorId: ctx.actorId, action, entity, entityId, detail }]);
 }
 
 async function update<C extends "tasks" | "conversations" | "pensionAnalyses">(

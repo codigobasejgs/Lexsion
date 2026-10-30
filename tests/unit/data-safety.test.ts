@@ -27,3 +27,26 @@ describe("DATA — migração sem perda e limpeza de cache ao sair", () => {
       .toEqual(["siwiltec-shell-1", "siwiltec-tenant-aurora-advocacia-shell-1", "siwiltec-admin-shell-2"]);
   });
 });
+
+describe("AUD — auditoria da demonstração só-acréscimo (QA-115)", () => {
+  const ev = (id: string, action = "x") => ({ id, organizationId: "platform", at: "2026-10-29T00:00:00Z", actorId: "u-super", action, entity: "Tenant", entityId: "org-1", detail: action });
+  it("AUD-01: lista velha de outra aba não apaga eventos já gravados", async () => {
+    const { mergeAudit } = await import("@/services/mock/db");
+    const gravado = [ev("a", "suspenso"), ev("b", "reativado")]; // outra aba já gravou "b"
+    const abaVelha = [ev("a", "suspenso"), ev("c", "plano")];     // esta aba leu antes de "b" e acrescentou "c"
+    expect(mergeAudit(gravado, abaVelha).map((e) => e.id)).toEqual(["a", "b", "c"]);
+  });
+  it("AUD-02: reenvio do mesmo evento não duplica; ordem e conteúdo dos antigos preservados", async () => {
+    const { mergeAudit } = await import("@/services/mock/db");
+    const gravado = [ev("a", "original")];
+    const r = mergeAudit(gravado, [ev("a", "alterado"), ev("b"), ev("b")]);
+    expect(r.map((e) => e.id)).toEqual(["a", "b"]);
+    expect(r[0].detail).toBe("original"); // registro antigo nunca é sobrescrito
+  });
+  it("AUD-03: nada novo devolve a mesma lista; base vazia aceita", async () => {
+    const { mergeAudit } = await import("@/services/mock/db");
+    const gravado = [ev("a")];
+    expect(mergeAudit(gravado, [ev("a")])).toBe(gravado);
+    expect(mergeAudit(undefined, [ev("z")]).map((e) => e.id)).toEqual(["z"]);
+  });
+});

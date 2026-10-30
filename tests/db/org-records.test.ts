@@ -206,3 +206,50 @@ describe("WhatsApp e IA (estado e consentimento)", () => {
     expect((await as(U.adminA, "select id from public.ai_usage")).length).toBe(1);
   });
 });
+
+describe("Permissões granulares do escritório (restringem, nunca ampliam)", () => {
+  const ids = async (u: string, coll: string) => (await as<{ id: string }>(u, "select id from public.org_records where collection = $1 and organization_id = $2", [coll, orgA])).map((r) => r.id);
+  it("titular retira a leitura de clientes do papel financeiro: o banco nega; devolver restaura", async () => {
+    await put(U.advA, orgA, "clients", "cli-perm", { name: "Cliente perm" });
+    expect(await ids(U.finA, "clients")).toContain("cli-perm"); // teto da plataforma permite
+    await as(U.adminA, "insert into public.org_role_restrictions (organization_id, role, collection, deny_read, reason) values ($1,'financeiro','clients',true,'Financeiro só por relatório')", [orgA]);
+    expect(await ids(U.finA, "clients")).toEqual([]);
+    expect(await ids(U.advA, "clients")).toContain("cli-perm"); // outros papéis intactos
+    await as(U.adminA, "delete from public.org_role_restrictions where organization_id = $1 and role = 'financeiro' and collection = 'clients'", [orgA]);
+    expect(await ids(U.finA, "clients")).toContain("cli-perm");
+  });
+  it("restrição não concede: liberar escrita onde o teto não permite não muda nada", async () => {
+    await as(U.adminA, "insert into public.org_role_restrictions (organization_id, role, collection, deny_read, deny_write) values ($1,'financeiro','leads',false,false)", [orgA]);
+    expect(await ids(U.finA, "leads")).toEqual([]); // financeiro continua sem CRM (teto)
+    expect(await denied(U.finA, "insert into public.org_records (organization_id, collection, id, data) values ($1,'leads','x',$2::jsonb)", [orgA, rec(orgA, "x")])).toMatch(/row-level security/);
+  });
+  it("revogação individual: só aquela pessoa perde a escrita; motivo obrigatório; vencida não vale", async () => {
+    expect(await denied(U.adminA, "insert into public.org_member_restrictions (organization_id, user_id, collection, reason) values ($1,$2,'tasks','x')", [orgA, U.advA])).toMatch(/check|reason/i);
+    await as(U.adminA, "insert into public.org_member_restrictions (organization_id, user_id, collection, deny_write, reason) values ($1,$2,'tasks',true,'Afastamento temporário')", [orgA, U.advA]);
+    expect(await denied(U.advA, "insert into public.org_records (organization_id, collection, id, data) values ($1,'tasks','t-rev',$2::jsonb)", [orgA, rec(orgA, "t-rev")])).toMatch(/row-level security/);
+    await put(U.estagA, orgA, "tasks", "t-est"); // outra pessoa do mesmo papel? (estagiário) segue gravando
+    await as(U.adminA, "update public.org_member_restrictions set expires_at = now() - interval '1 minute' where organization_id = $1 and user_id = $2 and collection = 'tasks'", [orgA, U.advA]);
+    await put(U.advA, orgA, "tasks", "t-volta"); // restrição vencida não bloqueia
+  });
+  it("ninguém restringe a si nem o titular; gestor não restringe gestor; outro escritório não vê as regras", async () => {
+    expect(await denied(U.adminA, "insert into public.org_member_restrictions (organization_id, user_id, collection, reason) values ($1,$2,'tasks','Teste')", [orgA, U.adminA])).toMatch(/próprio acesso/);
+    expect(await denied(U.advA, "insert into public.org_role_restrictions (organization_id, role, collection, deny_read) values ($1,'estagiario','cases',true)", [orgA])).toMatch(/row-level security/);
+    expect(await as(U.adminB, "select * from public.org_role_restrictions where organization_id = $1", [orgA])).toEqual([]);
+  });
+  it("titular nunca se tranca: restrição ao papel admin não é aceita", async () => {
+    expect(await denied(U.adminA, "insert into public.org_role_restrictions (organization_id, role, collection, deny_read) values ($1,'admin','clients',true)", [orgA])).toMatch(/check/i);
+  });
+  it("auditoria registra antes/depois e autor; 'o que esta pessoa pode' reflete as regras sem expor dados", async () => {
+    const au = await as<{ action: string; actor_id: string; detail: string }>(U.adminA, "select action, actor_id, detail from public.audit_logs where organization_id = $1 and entity like 'org_%_restrictions' order by at", [orgA]);
+    expect(au.length).toBeGreaterThanOrEqual(4);
+    expect(au.every((a) => a.actor_id === U.adminA)).toBe(true);
+    expect(au.some((a) => a.action === "permissao.delete" && /financeiro/.test(a.detail))).toBe(true);
+    await as(U.adminA, "insert into public.org_role_restrictions (organization_id, role, collection, deny_write) values ($1,'estagiario','drafts',true) on conflict (organization_id, role, collection) do update set deny_write = true", [orgA]);
+    const ea = (await as<{ e: { role: string; collections: { collection: string; read: boolean; write: boolean; ceiling_write: boolean }[] } }>(U.adminA, "select public.effective_access($1,$2) e", [orgA, U.estagA]))[0].e;
+    const dr = ea.collections.find((c) => c.collection === "drafts")!;
+    expect(ea.role).toBe("estagiario");
+    expect(dr).toMatchObject({ read: true, write: false, ceiling_write: true });
+    expect(await denied(U.estagA, "select public.effective_access($1,$2)", [orgA, U.advA])).toMatch(/sem permissão/);
+    await as(U.adminA, "delete from public.org_role_restrictions where organization_id = $1", [orgA]);
+  });
+});
