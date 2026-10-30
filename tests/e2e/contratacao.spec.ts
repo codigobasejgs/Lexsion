@@ -60,6 +60,6 @@ test("CONTR-06: formulário de contratação mostra o teste grátis e não pede 
   const btn = page.getByRole("button", { name: /Começar o teste grátis|Ir para o pagamento/ });
   if (!(await btn.count())) { await expect(page.getByRole("status")).toContainText("ainda não foi liberada"); return; }
   await expect(page.getByLabel("Plano")).toHaveValue("profissional");
-  await expect(page.getByText(/dias grátis, depois R\$ 249,90/)).toBeVisible();
+  await expect(page.getByText(/dias grátis, depois R\$\s249,90/)).toBeVisible(); // \s: o Intl usa espaço não separável
   await expect(page.getByText(/não pedimos cartão/)).toBeVisible();
 });

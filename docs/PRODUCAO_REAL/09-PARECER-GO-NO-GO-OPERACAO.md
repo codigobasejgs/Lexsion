@@ -1,5 +1,12 @@
 # 09 — Parecer GO / NO-GO da operação (atualizado em 29/10/2026)
 
+**Liberação comercial de 30/10 (versão `376a89a`):** o dono aprovou os preços e autorizou a liberação da contratação, que está **aberta ao público** com teste grátis de 30 dias. Ressalvas que seguem abertas:
+1. O ciclo pagamento real → ativação ainda não foi provado com dinheiro real; acontece na 1ª mensalidade de um cliente.
+2. A titularidade do CNPJ da conta InfinitePay não está confirmada.
+3. Os termos não passaram por revisão jurídica.
+4. O plano da Vercel é **Hobby**, que não permite uso comercial: migrar para o Pro.
+5. As credenciais expostas na conversa precisam ser trocadas.
+
 **Revisão comercial de 30/10 (tarde):**
 - **Backup integral:** **GO**. Banco e arquivos do Storage têm restauração isolada comprovada (ver `15`).
 - **Contratação self-service:** **NO-GO para venda**. Está implementada e testada até onde é possível sem dinheiro real, mas falta comprovar o pagamento real confirmado e a ativação do escritório. Também faltam os preços aprovados, a revisão jurídica dos termos e a confirmação do CNPJ da conta recebedora (ver `16`).

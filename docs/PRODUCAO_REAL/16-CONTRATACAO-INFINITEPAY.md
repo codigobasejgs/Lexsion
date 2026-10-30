@@ -1,6 +1,21 @@
 # 16 — Contratação self-service e InfinitePay — 30/10/2026
 
-## Estado: implementada, publicada e **DESLIGADA para venda**
+## Atualização 30/10/2026: venda LIBERADA pelo dono
+- **Preços aprovados pelo dono** (mensagem de 30/10, registrada em `audit_logs` como `plano.aprovado`): Solo R$ 99,90 (1 usuário), Profissional R$ 249,90 (5) e Elite R$ 499,90 (15). Só mensal; o anual não é oferecido.
+- **Teste grátis de 30 dias:** configurado no Super Admin por uma sessão de plataforma (com MFA), nos três planos. Funcionamento:
+  - o escritório é criado em “teste”, **sem cobrança e sem cartão**;
+  - um teste por CPF/CNPJ e por e-mail, garantido no banco;
+  - 7 dias antes do fim, o link da 1ª mensalidade vai por e-mail;
+  - sem pagamento, o acesso é suspenso 5 dias após o fim do teste (dados preservados).
+- **`SAAS_CHECKOUT_ENABLED=1`** na Vercel (produção, cifrada). A versão `376a89a` está publicada, com CI **success**.
+- **Verificado contra `lexsion.com.br`:**
+  - `/planos` mostra os preços aprovados, “30 dias para experimentar” e “Contratar”;
+  - `/contratar` mostra “30 dias grátis, depois R$ 249,90” e “não pedimos cartão”;
+  - validações do servidor recusam cadastro inválido antes de gravar;
+  - e2e de contratação: 12/12.
+- **Não testado em produção, de propósito:** a criação real de um escritório em teste (cria uma conta e envia e-mail) e o pagamento real da 1ª mensalidade (dinheiro real). O 1º cliente real será a 1ª prova de ponta a ponta, acompanhada pelo Super Admin → Financeiro.
+
+## Estado anterior: implementada, publicada e desligada para venda
 Não há venda porque os preços ainda não foram aprovados pelo dono. Nenhuma cobrança real nem pagamento de teste foi feito.
 Para ligar, são necessárias as duas travas:
 1. No Super Admin → Planos, marcar **“Preço aprovado pelo proprietário”** nos planos que serão vendidos.
