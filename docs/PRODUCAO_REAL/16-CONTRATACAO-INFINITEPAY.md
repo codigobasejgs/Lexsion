@@ -76,6 +76,19 @@ Sem as duas, `/planos` mostra “Valores em breve”, `/contratar` mostra que a 
   - webhook de pedido alheio é ignorado e corpo inválido recebe 400;
   - termos publicados.
 
+## Publicação (30/10/2026)
+- **Versão:** `4739800`, com CI do GitHub **success**. Vercel em produção READY (`lexsion.com.br`).
+- **Migrations aplicadas em produção** (dry-run antes, backup lógico antes): `20261030110000_backup_storage` e `20261030120000_contratacao_saas`.
+- **Contra a produção:**
+  - contratação: 10/10 (desktop e mobile);
+  - QA-115, concorrência, governança, comercial, persistência e site: 61 passaram, 1 pulado;
+  - smoke: 4/4.
+- **Rotinas:**
+  - `/api/cron/backup` em produção: `verified: true`, 1.600 linhas, 32 tabelas;
+  - `/api/cron/cobranca`: `ok`, nada a cobrar (0 assinaturas);
+  - sem segredo, a rotina de cobrança responde 401.
+- **Estado do banco:** 0 pedidos, 0 assinaturas, 0 escritórios. Os planos estão como propostos e não aprovados.
+
 ## O que **não** foi comprovado (e não é declarado)
 - **Pagamento real confirmado → escritório ativado em produção:** exige uma compra real (mínimo R$ 1,00; não há sandbox), que precisa de **autorização específica** do dono. Até lá, a contratação **não está operacional**.
 - **Titularidade do CNPJ:** ver a tabela acima.
