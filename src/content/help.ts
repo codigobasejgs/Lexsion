@@ -570,6 +570,29 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
 ];
 
+HELP_ARTICLES.push({
+  slug: "como-contratar", title: "Como contratar a LexSion e aceitar o contrato", category: "Primeiros passos",
+  goal: "Contratar um plano lendo o contrato completo antes de aceitar, e depois consultar o contrato a qualquer momento.",
+  prerequisites: "E-mail que você acessa agora (o código de aceite chega nele) e CPF ou CNPJ do contratante.", who: "Quem vai contratar a LexSion (advogado(a) ou responsável legal do escritório).",
+  steps: [
+    "Em Planos, escolha o plano e toque em “Contratar”. Confira o plano e o ciclo e toque em “Continuar”.",
+    "Escolha pessoa física ou jurídica e preencha os dados. No escritório (PJ), informe o responsável legal e confirme que ele tem poderes para contratar. O contrato ao lado se atualiza enquanto você digita.",
+    "Toque em “Revisar contrato” e leia o texto completo. Você pode baixar o PDF ou imprimir antes de aceitar.",
+    "Marque as duas confirmações, toque em “Enviar código”, digite o código recebido por e-mail e toque em “Aceitar eletronicamente”.",
+    "Com teste grátis, o escritório é criado na hora, sem cobrança. Sem teste, toque em “Ir para pagamento” (Pix ou cartão, pela InfinitePay). Depois, o contrato aceito fica em Configurações → Assinatura → Meu contrato, no botão “Baixar PDF”.",
+  ],
+  buttons: ["Continuar", "Revisar contrato", "Enviar código", "Aceitar eletronicamente", "Baixar PDF"],
+  expected: "Contrato aceito com número, versão e impressão digital (SHA-256), PDF guardado e escritório criado (teste) ou pagamento aberto.",
+  errors: [
+    { problem: "“Pendente de aprovação jurídica” e não há botão de aceite.", fix: "É esperado enquanto a versão final do contrato não é aprovada por advogado(a). Você pode ler e baixar a minuta; nada é cobrado nem aceito." },
+    { problem: "“O contrato mudou desde a sua leitura”.", fix: "Algum dado foi alterado. Releia a versão atual e peça um novo código." },
+    { problem: "“Código expirado” ou “Código incorreto”.", fix: "O código vale 10 minutos e só para a versão que você leu. Toque em “Reenviar código”." },
+  ],
+  related: ["primeiro-acesso", "entender-modo-demo"], keywords: ["contrato", "assinatura", "plano", "contratar", "aceite", "termos", "pdf", "pagamento", "teste grátis"],
+  shots: [{ step: 2, caption: "Dados do contratante com a prévia do contrato ao lado" }, { step: 3, caption: "Contrato completo para revisão, com número e versão" }, { step: 3, caption: "Contrato no celular", mobile: true }],
+  version: HELP_VERSION, reviewedOn: "30/10/2026",
+});
+
 export const GLOSSARY: [string, string][] = [
   ["Lead", "Pessoa interessada que ainda não é cliente."],
   ["Funil", "Etapas comerciais, do primeiro contato até contratar."],

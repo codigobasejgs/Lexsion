@@ -76,6 +76,15 @@
   --ai-bg: #f6ecd6;
 }
 
+/* Documento contratual: papel marfim e tinta escura em QUALQUER tema (leitura longa e impressão). */
+.contract-paper { background: var(--brand-ivory); color: var(--brand-ink); border: 1px solid #ddd6c8; }
+.contract-paper h3 { color: #4a3510; }
+@media print {
+  body * { visibility: hidden; }
+  .contract-paper, .contract-paper * { visibility: visible; }
+  .contract-paper { position: absolute; inset: 0; border: 0; max-height: none !important; overflow: visible !important; }
+}
+
 /* Preferências do escritório: densidade, tamanho de texto e movimento (data-* no <html>). */
 :root[data-text-size="grande"] {
   font-size: 112.5%;

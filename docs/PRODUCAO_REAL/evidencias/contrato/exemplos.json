@@ -1,0 +1,14 @@
+{
+  "versao": "2026.10-1",
+  "status": "REVISAO_JURIDICA",
+  "pf": {
+    "hash": "600aa3a4ee735f7cae7eaf0ab8e86de66a1653610e12f8989f9888cefb8f78c5",
+    "pdfSha256": "d341081ff68133e92b572adc89e58aa7d999195163975112722afdc4d05a5555",
+    "bytes": 17745
+  },
+  "pj": {
+    "hash": "08611581116b39a2ca52788793a7615bfae2b3d7aa3d780e20eda27d506d45cd",
+    "pdfSha256": "80210dbf2edad30342132f7e2495f5ca7182f07b05f37da38728e530e98d2382",
+    "bytes": 17820
+  }
+}

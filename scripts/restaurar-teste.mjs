@@ -27,17 +27,19 @@ await db.exec("set session_replication_role = replica"); // sem triggers na carg
 const ORDER = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
   "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
   "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts",
-  "org_role_restrictions", "org_member_restrictions", "saas_plans", "saas_orders", "saas_subscriptions", "saas_webhook_events"];
+  "org_role_restrictions", "org_member_restrictions", "saas_plans", "saas_contract_template_versions", "saas_supplier_profile", "saas_contracts", "saas_orders", "saas_subscriptions", "saas_webhook_events",
+  "saas_contract_acceptances", "saas_contract_files", "saas_contract_audit"];
 // Backup antigo (antes destas tabelas existirem) é aceito: a tabela ausente fica vazia e o relatório mostra "--".
 const present = (t) => fs.existsSync(path.join(dir, `${t}.json`));
 // Catálogos que a migration já semeia vêm do backup (mesmo conteúdo): limpa antes para não duplicar.
 await db.exec("delete from public.collection_policies; delete from public.legal_source_providers");
 if (present("saas_plans")) await db.exec("delete from public.saas_plans");
+if (present("saas_supplier_profile")) await db.exec("delete from public.saas_supplier_profile");
 for (const t of ORDER) {
   if (!present(t)) continue;
   const rows = JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), "utf8"));
   if (!rows.length) continue;
-  const over = ["audit_logs", "ai_usage", "source_sync_runs", "saas_webhook_events"].includes(t) ? "overriding system value" : "";
+  const over = ["audit_logs", "ai_usage", "source_sync_runs", "saas_webhook_events", "saas_contract_acceptances", "saas_contract_audit"].includes(t) ? "overriding system value" : "";
   // Colunas geradas (ex.: índice de busca) são recalculadas pelo banco: ficam fora da lista do insert.
   const cols = (await db.query(`select string_agg(quote_ident(column_name), ',' order by ordinal_position) c from information_schema.columns where table_schema='public' and table_name=$1 and is_generated='NEVER'`, [t])).rows[0].c;
   await db.query(`insert into public.${t} (${cols}) ${over} select ${cols} from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);

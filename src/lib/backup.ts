@@ -15,7 +15,8 @@ export const TABLES = ["organizations", "platform_members", "profiles", "organiz
   "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
   "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts",
   "org_role_restrictions", "org_member_restrictions",
-  "saas_plans", "saas_orders", "saas_subscriptions", "saas_webhook_events"];
+  "saas_plans", "saas_orders", "saas_subscriptions", "saas_webhook_events",
+  "saas_supplier_profile", "saas_contract_template_versions", "saas_contracts", "saas_contract_acceptances", "saas_contract_files", "saas_contract_audit"];
 const PREFIX = "backups/diario/";
 const FILES = "backups/arquivos/";
 const INDEX = `${FILES}indice.lxbk`;

@@ -59,6 +59,9 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "fontes-e-versoes-da-minuta:2": { route: "/app/minutas/dr-lucia", selector: '[data-testid="painel-fontes"]' },
   "follow-up-e-opt-out:1": { route: "/app/crm/leads/l-01", selector: '[data-testid="follow-up"]' },
   "super-admin-escritorios:1": { route: "/admin", selector: "text=Receita recorrente mensal", profile: "Suporte LexSion" },
+  // Contratação: página pública (sem perfil). Prints com dados sintéticos preenchidos (docs/PRODUCAO_REAL/evidencias/contrato).
+  "como-contratar:2": { route: "/contratar?plano=profissional", selector: "text=Dados do contratante", profile: "" },
+  "como-contratar:3": { route: "/contratar?plano=profissional", selector: '[data-testid="contrato-texto"]', profile: "" },
 };
 
 export const SHOTS: ShotSpec[] = HELP_ARTICLES.flatMap((a) =>

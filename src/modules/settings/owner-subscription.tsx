@@ -20,17 +20,34 @@ export function OwnerSubscription({ organizationId }: { organizationId: string }
     queryKey: ["owner-sub", organizationId],
     queryFn: async () => {
       const sb = supabaseBrowser();
-      const [s, o, p] = await Promise.all([
+      const [s, o, p, c] = await Promise.all([
         sb.from("saas_subscriptions").select("*").eq("organization_id", organizationId).maybeSingle(),
         sb.from("saas_orders").select("order_nsu,kind,amount,status,paid_at,created_at,checkout_url,receipt_url,period_end").eq("organization_id", organizationId).order("created_at", { ascending: false }),
         sb.from("saas_plans").select("id,label,price_monthly,price_yearly,max_users,approved").eq("approved", true).order("sort"),
+        sb.from("saas_contracts").select("number,status,accepted_at,document_sha256,plan_id,cycle,amount").eq("organization_id", organizationId).order("created_at", { ascending: false }),
       ]);
-      return { sub: s.data as Sub | null, orders: (o.data ?? []) as Order[], plans: (p.data ?? []) as PublicPlan[] };
+      return { sub: s.data as Sub | null, orders: (o.data ?? []) as Order[], plans: (p.data ?? []) as PublicPlan[], contracts: (c.data ?? []) as { number: string; status: string; accepted_at: string | null; document_sha256: string; plan_id: string; cycle: string; amount: number }[] };
     },
   });
   if (q.isPending) return <LoadingBlock rows={3} />;
-  const { sub, orders, plans } = q.data!;
-  if (!sub) return <p className="panel p-5 text-sm text-fg-muted" data-testid="minha-assinatura">Este escritório foi criado pela equipe LexSion, sem assinatura pelo site. Condições e pagamentos: fale com o suporte LexSion.</p>;
+  const { sub, orders, plans, contracts } = q.data!;
+  const pdf = async (number: string) => {
+    const r = await fetch("/api/assinatura/contrato", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ number }) });
+    if (!r.ok) return setMsg({ ok: false, text: "PDF indisponível agora." });
+    const url = URL.createObjectURL(await r.blob()); Object.assign(document.createElement("a"), { href: url, download: `contrato-lexsion-${number}.pdf` }).click(); URL.revokeObjectURL(url);
+  };
+  const contractsPanel = (
+    <div className="panel space-y-2 p-5" data-testid="meu-contrato">
+      <h2 className="font-semibold">Meu contrato</h2>
+      {!contracts.length ? <p className="text-fg-muted">Nenhum contrato SaaS registrado para este escritório.</p> : (
+        <ul className="space-y-2">{contracts.map((c) => <li key={c.number} className="flex flex-wrap items-center gap-2 rounded border border-line p-2">
+          <span className="flex-1">Contrato <strong>{c.number}</strong> · {c.plan_id}/{c.cycle} · {formatBRL(c.amount)} · {c.accepted_at ? `aceito eletronicamente em ${formatInstant(c.accepted_at)}` : "não aceito"}<br /><span className="break-all text-xs text-fg-muted">SHA-256 {c.document_sha256}</span></span>
+          {c.accepted_at && <button className="btn btn-secondary min-h-9" onClick={() => void pdf(c.number)}>Baixar PDF</button>}
+        </li>)}</ul>
+      )}
+    </div>
+  );
+  if (!sub) return <section className="space-y-4 text-sm" data-testid="minha-assinatura"><p className="panel p-5 text-fg-muted">Este escritório foi criado pela equipe LexSion, sem assinatura pelo site. Condições e pagamentos: fale com o suporte LexSion.</p>{contractsPanel}</section>;
   const call = async (body: Record<string, unknown>, ok: string) => {
     setMsg(null);
     const r = await fetch("/api/assinatura", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId, ...body }) }).then((x) => x.json()).catch(() => null);
@@ -59,6 +76,7 @@ export function OwnerSubscription({ organizationId }: { organizationId: string }
           : <button className="btn btn-ghost text-danger" onClick={() => { if (confirm(`Cancelar ao fim do período pago (${formatCivil(sub.current_period_end)})? Os dados ficam preservados por 90 dias.`)) void call({ action: "cancel" }, "Cancelamento agendado para o fim do período."); }}>Cancelar assinatura</button>}
         {msg && <p role={msg.ok ? "status" : "alert"} className={msg.ok ? "text-success" : "text-danger"}>{msg.text}</p>}
       </div>
+      {contractsPanel}
       <div className="panel overflow-x-auto p-5">
         <h2 className="mb-3 font-semibold">Pagamentos</h2>
         <table className="w-full min-w-[480px]"><caption className="sr-only">Pagamentos da assinatura LexSion</caption>

@@ -18,18 +18,14 @@ test("CONTR-01: /planos lista Solo, Profissional e Elite do banco; preço só co
   } else await expect(solo).toContainText("Valores em breve");
 });
 
-test("CONTR-02: cadastro inválido é recusado pelo servidor ANTES de criar pedido (campo apontado)", async ({ request }) => {
-  const base = { plan: "solo", cycle: "mensal", name: "QA Teste", email: "qa@lexsion-qa.invalid", office: "QA Escritório", slug: "qa-contr-invalido", document: "52998224725", accept: true, contractVersion: "2026-10-30" };
-  const post = (d: Record<string, unknown>) => request.post("/api/contratar", { data: { ...base, ...d } });
-  const first = await post({ document: "11111111111" });
-  if (first.status() === 503) { test.skip(true, "contratação não liberada neste ambiente"); return; }
-  expect(first.status()).toBe(400);
-  expect((await first.json()).error.field).toBe("document");
-  expect((await (await post({ email: "sem-arroba" })).json()).error.field).toBe("email");
-  expect((await (await post({ slug: "admin" })).json()).error.field).toBe("slug");
-  expect((await (await post({ accept: false })).json()).error.field).toBe("accept");
-  expect((await (await post({ contractVersion: "antiga" })).json()).error.field).toBe("accept");
-  expect((await post({ plan: "inexistente" })).status()).toBe(409);
+test("CONTR-02: cadastro inválido é recusado pelo servidor ANTES de criar contrato ou pedido (campo apontado)", async ({ request }) => {
+  const party = { kind: "PF", name: "QA Teste Exemplo", cpf: "11111111111", email: "sem-arroba", phone: "1", address: { cep: "1", street: "", number: "", district: "", city: "", uf: "XX" } };
+  const r = await request.post("/api/contrato", { data: { action: "save", plan: "solo", cycle: "mensal", slug: "admin", party } });
+  if (r.status() === 503) { test.skip(true, "contratação não liberada neste ambiente"); return; }
+  expect(r.status()).toBe(400);
+  expect(Object.keys((await r.json()).error.fields)).toEqual(expect.arrayContaining(["cpf", "email", "phone", "address.cep", "address.uf", "slug"]));
+  expect((await request.post("/api/contrato", { data: { action: "save", plan: "inexistente", party } })).status()).toBe(409);
+  expect((await request.post("/api/contratar", { data: {} })).status()).toBe(404); // rota antiga (pedido sem contrato) não existe mais
 });
 
 test("CONTR-03: retorno do checkout com parâmetros forjados não confirma nada", async ({ page, request }) => {
@@ -55,11 +51,11 @@ test("CONTR-05: termos de contratação publicados com versão, teste grátis, r
   for (const s of ["Versão 2026-10-30", "Teste grátis.", "Renovação.", "Atraso.", "Cancelamento.", "Direito de arrependimento."]) await expect(t).toContainText(s);
 });
 
-test("CONTR-06: formulário de contratação mostra o teste grátis e não pede cartão (quando liberado)", async ({ page }) => {
+test("CONTR-06: resumo da contratação mostra o teste grátis e que não pede cartão (quando liberado)", async ({ page }) => {
   await page.goto("/contratar?plano=profissional");
-  const btn = page.getByRole("button", { name: /Começar o teste grátis|Ir para o pagamento/ });
-  if (!(await btn.count())) { await expect(page.getByRole("status")).toContainText("ainda não foi liberada"); return; }
-  await expect(page.getByLabel("Plano")).toHaveValue("profissional");
-  await expect(page.getByText(/dias grátis, depois R\$\s249,90/)).toBeVisible(); // \s: o Intl usa espaço não separável
-  await expect(page.getByText(/não pedimos cartão/)).toBeVisible();
+  const go = page.getByRole("button", { name: "Continuar" });
+  if (!(await go.count())) { await expect(page.getByRole("status")).toContainText("ainda não foi liberada"); return; }
+  const resumo = page.getByLabel("Resumo da contratação");
+  await expect(resumo).toContainText(/dias grátis, depois R\$\s249,90/); // \s: o Intl usa espaço não separável
+  await expect(resumo).toContainText("Sem cartão no cadastro");
 });

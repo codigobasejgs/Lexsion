@@ -73,8 +73,10 @@ export async function activate(orderNsu: string) {
     }
     if (!ownerId) throw new Error("conta do titular não localizada");
     await db.from("profiles").upsert({ user_id: ownerId, full_name: o.customer.name }, { onConflict: "user_id", ignoreDuplicates: true });
-    const { error } = await db.rpc("saas_activate", { p_order: o.id, p_owner: ownerId });
+    const { data: org, error } = await db.rpc("saas_activate", { p_order: o.id, p_owner: ownerId });
     if (error) throw new Error(error.message);
+    // Contrato aceito que originou o pedido: passa a pertencer ao escritório (titular lê em Minha assinatura).
+    await db.from("saas_contracts").update({ organization_id: org, status: "ACTIVE", updated_at: new Date().toISOString() }).eq("order_id", o.id);
     await welcome(o, !invErr).catch(() => false);
     return "concluida";
   } catch (e) {
