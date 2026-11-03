@@ -15,10 +15,6 @@ const out = process.argv[2];
 if (!token || !ref || !out) { console.error("uso: node scripts/backup-logico.mjs <pasta-destino> [--with-files]"); process.exit(2); }
 if (path.resolve(out).startsWith(path.resolve("."))) { console.error("Destino dentro do repositório: recusado (backup nunca vai para o Git)."); process.exit(2); }
 
-const TABLES = ["organizations", "platform_members", "profiles", "organization_memberships", "collection_policies", "org_records", "portal_links", "platform_records",
-  "clients", "client_portal_access", "cases", "portal_updates", "tasks", "documents", "drafts", "audit_logs",
-  "whatsapp_instances", "ai_usage", "legal_source_providers", "legal_documents", "legal_document_versions", "legal_updates", "source_sync_runs", "source_sync_cursors", "tenant_legal_preferences", "tenant_alerts"];
-
 async function q(sql) {
   const r = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ query: sql }) });
   if (!r.ok) throw new Error(`HTTP ${r.status} em consulta de backup`);
@@ -30,6 +26,8 @@ const dir = path.join(out, `lexsion-${stamp}`);
 fs.mkdirSync(dir, { recursive: true });
 const manifest = { createdAt: new Date().toISOString(), project: ref, migrations: [], tables: {}, auth: 0, storage: [] };
 manifest.migrations = (await q("select version from supabase_migrations.schema_migrations order by version")).map((r) => r.version);
+// Todas as tabelas públicas do banco (lista viva: tabela nova nunca fica de fora), menos códigos de aceite efêmeros.
+const TABLES = (await q("select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and c.relname <> 'saas_contract_otps' order by 1")).map((r) => r.relname);
 for (const t of TABLES) {
   const rows = await q(`select coalesce(json_agg(t), '[]'::json) as rows from public.${t} t`);
   const data = rows[0].rows;

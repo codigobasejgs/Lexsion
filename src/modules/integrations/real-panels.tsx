@@ -10,7 +10,7 @@ const post = async <T,>(url: string, body: object): Promise<R<T>> =>
   (await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => null)) ?? { ok: false, error: { message: "Sem conexão." } };
 
 /** Integrações em auditoria (servidor decide): mostra o aviso e não oferece a ação. */
-function useGate(key: "ai" | "whatsapp") {
+export function useGate(key: "ai" | "whatsapp") {
   const [on, setOn] = useState<boolean | null>(null);
   useEffect(() => { void fetch("/api/integracoes/estado").then((r) => r.json()).then((j) => setOn(!!j?.[key])).catch(() => setOn(false)); }, [key]);
   return on;

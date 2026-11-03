@@ -17,7 +17,11 @@ export const TABLES = ["organizations", "platform_members", "profiles", "organiz
   "org_role_restrictions", "org_member_restrictions",
   "saas_plans", "saas_orders", "saas_subscriptions", "saas_webhook_events",
   "saas_supplier_profile", "saas_contract_template_versions", "saas_contracts", "saas_contract_acceptances", "saas_contract_files", "saas_contract_audit",
-  "org_practice_profiles", "data_exports", "data_erasures", "security_incidents", "security_incident_updates"];
+  "org_practice_profiles", "data_exports", "data_erasures", "security_incidents", "security_incident_updates",
+  "saas_trial_grants", "saas_entitlement_overrides", "saas_signup_interests",
+  "conversation_control", "ai_jobs", "wa_events"];
+/** Tabelas públicas deliberadamente fora do backup (efêmeras e sem valor de recuperação). */
+export const NOT_BACKED_UP = ["saas_contract_otps"]; // códigos de aceite de 10 min, guardados só como hash
 const PREFIX = "backups/diario/";
 const FILES = "backups/arquivos/";
 const INDEX = `${FILES}indice.lxbk`;

@@ -3,7 +3,7 @@
 // Liberar uma tela = integração comprovada em produção + remover a entrada daqui.
 export interface Blocked { title: string; reason: string; needs: string }
 
-const AI: Blocked = { title: "Agentes autônomos de IA", reason: "Agentes que respondem sozinhos ao cliente não estão liberados: toda resposta de IA passa por revisão humana.", needs: "Use o Assistente de IA (sugestões com revisão). Agentes autônomos exigem política de uso aprovada pelo escritório." };
+const AI_RUNS: Blocked = { title: "Execuções da assistente", reason: "Na operação real, o histórico detalhado de execuções ainda não é registrado nesta tela.", needs: "Acompanhe as respostas em Conversas (cada mensagem da assistente fica na conversa) e os encaminhamentos no sino de notificações." };
 const PAY: Blocked = { title: "Cobranças online", reason: "Nenhum provedor de pagamento (Asaas, InfinitePay ou Mercado Pago) está credenciado. Nenhuma cobrança é emitida.", needs: "Conta do escritório no provedor, chaves de API e segredo de webhook." };
 const SIGN: Blocked = { title: "Assinatura eletrônica", reason: "A assinatura eletrônica (ZapSign) não está credenciada; registrar assinatura sem provedor não tem validade.", needs: "Token da conta ZapSign e webhook de conclusão." };
 const ADS: Blocked = { title: "Marketing e anúncios", reason: "As contas de anúncios (Meta/Google) e a publicação de páginas não estão conectadas.", needs: "OAuth das contas do escritório e aprovação do app." };
@@ -11,10 +11,9 @@ const RESEARCH: Blocked = { title: "Pesquisa de jurisprudência", reason: "Nenhu
 const AUTOMATION: Blocked = { title: "Automações", reason: "As automações disparam mensagens por WhatsApp/e-mail, que ainda não estão configurados para clientes.", needs: "WhatsApp e e-mail transacional a clientes habilitados." };
 
 export const BLOCKED_ROUTES: [prefix: string, b: Blocked][] = [
-  // Atendimento (WhatsApp/Evolution) e Assistente de IA (Gemini) estão LIBERADOS: integrações reais no servidor.
-  ["/app/ia/agentes", AI],
-  ["/app/ia/simulador", AI],
-  ["/app/ia/execucoes", AI],
+  // Atendimento, agentes e simulador: telas liberadas; o uso real depende do gate do servidor (AI_ENABLED /
+  // WHATSAPP_ENABLED, avisado na tela) e do consentimento do titular do escritório (organizations.ai_enabled_at).
+  ["/app/ia/execucoes", AI_RUNS],
   ["/app/automacoes", AUTOMATION],
   ["/app/pagamentos", PAY],
   ["/app/assinaturas", SIGN],

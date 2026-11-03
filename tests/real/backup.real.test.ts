@@ -15,6 +15,16 @@ if (fs.existsSync(".env.local")) for (const l of fs.readFileSync(".env.local", "
 Object.assign(process.env, env);
 const ON = process.env.RUN_REAL === "1" && !!env.R2_SECRET_ACCESS_KEY && !!env.BACKUP_ENCRYPTION_KEY;
 
+describe.skipIf(!(process.env.RUN_REAL === "1" && env.SUPABASE_ACCESS_TOKEN))("backup cobre todas as tabelas do banco", () => {
+  it("toda tabela pública está no backup ou na lista justificada de exceções (achado: SaaS e atendimento faltavam)", async () => {
+    const { TABLES, NOT_BACKED_UP } = await import("@/lib/backup");
+    const r = await fetch(`https://api.supabase.com/v1/projects/${env.SUPABASE_PROJECT_REF}/database/query`, { method: "POST", headers: { Authorization: `Bearer ${env.SUPABASE_ACCESS_TOKEN}`, "Content-Type": "application/json" }, body: JSON.stringify({ query: "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'" }) });
+    const rows = (await r.json()) as { relname: string }[];
+    expect(Array.isArray(rows) && rows.length > 20).toBe(true);
+    expect(rows.map((x) => x.relname).filter((t) => !TABLES.includes(t) && !NOT_BACKED_UP.includes(t))).toEqual([]);
+  });
+});
+
 describe("cifra do backup (sem rede)", () => {
   it("abre com a chave certa; recusa chave errada e arquivo adulterado", async () => {
     const { seal, open } = await import("@/lib/backup");

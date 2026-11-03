@@ -8,6 +8,7 @@ import { PageHeader, SimulatedBadge } from "@/components/ui";
 import { Feedback, useAction, useUrlState } from "@/modules/shared";
 import { AiNav } from "@/modules/ai/subnav";
 import { createRow } from "@/services/mock/generic";
+import { GatedNotice, useGate } from "@/modules/integrations/real-panels";
 import type { AgentConfig } from "@/domain/types";
 
 // Simulador DETERMINÍSTICO: roteiro fixo por persona; mostra passos, dados capturados e motivo do encaminhamento.
@@ -36,6 +37,7 @@ function LiveSimulator() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const a = agents.data?.find((x) => x.id === agentId) ?? agents.data?.[0];
+  const gate = useGate("ai");
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!a || !ctx || !draft.trim() || busy) return;
@@ -56,6 +58,7 @@ function LiveSimulator() {
           <label className="block min-w-60 flex-1"><span className="label">Assistente</span><select className="field" value={a?.id ?? ""} onChange={(e) => { setAgentId(e.target.value); setTurns([]); }}>{agents.data?.map((x) => <option key={x.id} value={x.id}>{x.name} · v{x.version}</option>)}</select></label>
           <button className="btn btn-ghost" onClick={() => setTurns([])} disabled={!turns.length}>Recomeçar</button>
         </div>
+        {gate === false && <div className="mb-3"><GatedNotice k="ai" /></div>}
         {!agents.data?.length && <p className="panel p-4 text-sm">Crie uma assistente em Agentes para testar.</p>}
         <section aria-label="Conversa de teste" aria-live="polite" className="panel mb-3 min-h-40 space-y-3 p-4">
           {!turns.length && <p className="text-sm text-fg-muted">Escreva abaixo a primeira mensagem do cliente.</p>}
@@ -73,7 +76,7 @@ function LiveSimulator() {
         {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
         <form onSubmit={send} className="flex gap-2">
           <label className="flex-1"><span className="sr-only">Mensagem do cliente</span><input className="field" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ex.: Oi, quero saber sobre aposentadoria" maxLength={2000} /></label>
-          <button className="btn btn-primary" disabled={!draft.trim() || busy || !a}><Play aria-hidden className="size-4" /> Enviar</button>
+          <button className="btn btn-primary" disabled={!draft.trim() || busy || !a || !gate}><Play aria-hidden className="size-4" /> Enviar</button>
         </form>
       </div>
     </Guard>
