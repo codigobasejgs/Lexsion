@@ -55,7 +55,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
       if (r?.ok) {
         setSrv({ ...r.data, token: t });
         if (r.data.accepted_at) { const a = await post({ action: "accept" }); if (a?.ok) { setDone(a.data.next); setStep(4); } }
-        else if (d) setStep(2);
+        else setStep(2); // contrato desta tentativa já existe: retoma no contrato (texto atualizado pelo servidor)
       }
       setResuming(false);
     })();

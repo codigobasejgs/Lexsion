@@ -30,6 +30,30 @@ async function byToken(token: string): Promise<Row | null> {
   const { data } = await supabaseAdmin().from("saas_contracts").select("*").eq("session_token_sha256", sha256(token)).maybeSingle();
   return data as Row | null;
 }
+/**
+ * Retomada: contrato AINDA NÃO ACEITO é regerado a partir dos dados já salvos da tentativa, com o modelo vigente, a
+ * contratada atual e o plano do catálogo (mesmo número e mesma tentativa; nada a redigitar). Se o texto mudou, o
+ * código de aceite pendente é invalidado e o novo texto é o que a pessoa lê antes de aceitar. Contrato aceito: nunca.
+ */
+async function refresh(c: Row): Promise<Row> {
+  if (c.accepted_at || (c.status !== "READY_FOR_REVIEW" && c.status !== "DRAFT")) return c;
+  const db = supabaseAdmin();
+  const [tpl, supplier, { data: p }] = await Promise.all([currentTemplate(), supplierSnapshot(), db.from("saas_plans").select("*").eq("id", c.plan_id).eq("visible", true).maybeSingle()]);
+  if (!p?.approved) return c;
+  const plan = planSnapshot(p);
+  const amount = c.cycle === "anual" ? p.price_yearly : p.price_monthly;
+  if (!amount) return c;
+  const party = { ...(c.party as Party & { slug?: string }) };
+  delete party.slug;
+  const r = renderStored(tpl, { supplier, party: party as Party, plan, cycle: c.cycle, number: c.number, created_at: c.created_at, binding: tpl.status === "PUBLICADO" && !missingConditions(supplier).length });
+  if (r.hash === c.document_sha256 && c.template_version_id === tpl.id) return c;
+  const { data } = await db.from("saas_contracts").update({ template_version_id: tpl.id, template_status_at_render: tpl.status, plan_snapshot: plan, supplier_snapshot: supplier, amount, body_text: r.text, document_sha256: r.hash, updated_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString() }).eq("id", c.id).is("accepted_at", null).in("status", ["DRAFT", "READY_FOR_REVIEW"]).select("*").maybeSingle();
+  if (!data) return c;
+  await db.from("saas_contract_otps").update({ used_at: new Date().toISOString() }).eq("contract_id", c.id).is("used_at", null);
+  await caudit(c.id, "contrato.atualizado", `texto regerado na retomada (modelo ${tpl.version}); código anterior invalidado`, null, tpl.id);
+  return data as Row;
+}
 async function view(c: Row) {
   const db = supabaseAdmin();
   const { data: t } = await db.from("saas_contract_template_versions").select("id,version,title,status,clauses").eq("id", c.template_version_id).single();
@@ -111,8 +135,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, data: { token: outToken, ...(await view(c)) } });
   }
 
-  const c = await byToken(token);
-  if (!c) return err(404, "not_found", "Contratação não encontrada ou expirada. Recomece pelo plano.");
+  const found = await byToken(token);
+  if (!found) return err(404, "not_found", "Contratação não encontrada ou expirada. Recomece pelo plano.");
+  // Retomada: o texto de um contrato não aceito é regerado dos dados salvos (também renova o prazo de 7 dias).
+  const c = action === "status" ? await refresh(found) : found;
   if (new Date(c.expires_at) < new Date() && !c.accepted_at) return err(410, "expired", "Esta prévia expirou (7 dias). Recomece pelo plano.");
 
   if (action === "status") return NextResponse.json({ ok: true, data: await view(c) });

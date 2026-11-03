@@ -137,3 +137,62 @@ test("FLUXO-01: cadastro → contrato automático (sem aprovação) → aceite �
   await page.goto("/app/boas-vindas");
   await expect(page.getByTestId("perfil-atuacao")).toBeVisible({ timeout: SLOW });
 });
+
+test("FLUXO-02: tentativa EXISTENTE criada com configuração incompleta retoma sozinha após configurar (sem redigitar), aceita e ativa", async ({ page, request }) => {
+  const EMAIL2 = `qa-flow2-${tag}@lexsion-qa.invalid`;
+  const SLUG2 = `qa-flow2-${tag}`;
+  const qaCond = (await admin.from("saas_supplier_profile").select("conditions").eq("id", "qa").single()).data!.conditions as Record<string, string>;
+  // 1) Configuração incompleta (falta a transferência internacional): o contrato nasce com pendência.
+  const { transferencia, ...rest } = qaCond;
+  await admin.from("saas_supplier_profile").update({ conditions: rest }).eq("id", "qa").throwOnError();
+  try {
+    await page.goto("/contratar?plano=profissional");
+    await page.evaluate(() => sessionStorage.clear());
+    await page.reload();
+    await page.getByRole("button", { name: "Continuar" }).click();
+    await fill(page);
+    await page.getByLabel(/^E-mail/).fill(EMAIL2);
+    await page.getByLabel("CPF", { exact: true }).fill("390.533.447-05"); // outro titular: 1 teste grátis por CPF/e-mail é regra real
+    await page.getByLabel(/Endereço do escritório na LexSion/).fill(SLUG2);
+    await page.getByRole("button", { name: "Revisar contrato" }).click();
+    await expect(page.getByTestId("contrato-indisponivel")).toContainText("Seus dados ficam salvos", { timeout: SLOW });
+    await expect(page.getByRole("button", { name: "Continuar para o aceite" })).toHaveCount(0);
+    const before = (await admin.from("saas_contracts").select("number,body_text").eq("party->>email", EMAIL2)).data!;
+    expect(before.length).toBe(1);
+    expect(before[0].body_text).toContain("[PENDENTE");
+  } finally {
+    // 2) O administrador conclui a configuração (mesma tabela que o Super Admin grava).
+    await admin.from("saas_supplier_profile").update({ conditions: { ...rest, transferencia } }).eq("id", "qa").throwOnError();
+  }
+  // 3) A MESMA aba recarrega: o contrato é regerado dos dados salvos (mesmo número), sem redigitar nada.
+  const n = (await admin.from("saas_contracts").select("number").eq("party->>email", EMAIL2).single()).data!.number;
+  await page.reload();
+  await expect(page.getByTestId("contrato-texto")).toContainText(n, { timeout: SLOW });
+  await expect(page.getByTestId("contrato-texto")).not.toContainText("[PENDENTE");
+  await expect(page.getByTestId("contrato-indisponivel")).toHaveCount(0);
+  await page.getByRole("button", { name: "Continuar para o aceite" }).click();
+  await page.getByLabel(/Li o contrato integral/).check();
+  await page.getByLabel(/Aceito o contrato nesta versão/).check();
+  const otpResp = page.waitForResponse((r) => r.url().endsWith("/api/contrato") && r.request().postData()?.includes('"otp"') === true && !r.request().postData()?.includes('"accept"'));
+  await page.getByRole("button", { name: "Enviar código" }).click();
+  await page.getByLabel("Código recebido por e-mail").fill((await (await otpResp).json()).data.qaCode);
+  await page.getByRole("button", { name: "Aceitar e ativar teste" }).click();
+  await expect(page.getByText(/teste grátis de 30 dias, sem cobrança e sem cartão/)).toBeVisible({ timeout: SLOW });
+  const after = (await admin.from("saas_contracts").select("id,number,status,organization_id").eq("party->>email", EMAIL2)).data!;
+  expect(after.map((c) => c.number)).toEqual([n]); // mesma tentativa, nenhum contrato novo
+  expect(after[0].status).toBe("ACTIVE");
+  const token = await page.evaluate(() => sessionStorage.getItem("lexsion.contratar.token"));
+  expect(((await (await request.post("/api/contrato", { data: { action: "accept", token } })).json()).data.next.kind)).toBe("trial");
+  expect((await admin.from("saas_orders").select("id").eq("contract_id", after[0].id)).data?.length).toBe(1);
+  // limpeza deste caso
+  await admin.from("organizations").delete().eq("id", after[0].organization_id!);
+  await admin.from("audit_logs").delete().eq("organization_id", after[0].organization_id!);
+  const { data: o } = await admin.from("saas_orders").select("id,order_nsu").eq("contract_id", after[0].id);
+  await admin.storage.from("contratos-saas").remove([`${n}/contrato-aceito.pdf`]);
+  for (const t of ["saas_contract_files", "saas_contract_acceptances", "saas_contract_audit"]) await admin.from(t).delete().eq("contract_id", after[0].id);
+  await admin.from("saas_contracts").update({ order_id: null }).eq("id", after[0].id);
+  if (o?.length) { await admin.from("audit_logs").delete().in("entity_id", o.map((x) => x.order_nsu)); await admin.from("saas_orders").delete().in("id", o.map((x) => x.id)); }
+  await admin.from("saas_contracts").delete().eq("id", after[0].id);
+  const { data: us } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  for (const u of us.users.filter((x) => x.email === EMAIL2)) await admin.auth.admin.deleteUser(u.id);
+});
