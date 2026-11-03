@@ -51,6 +51,13 @@ export const TOURS: Tour[] = [
     ],
   },
   {
+    id: "assistente", title: "Assistente virtual", summary: "Configurar, testar no simulador e publicar.", area: "ia", version: TOUR_VERSION,
+    steps: [
+      { route: "/app/ia/agentes/ag-triagem-prev", target: ["agente-secoes", "agente-secoes-celular"], title: "O que a assistente sabe", body: "Objetivo, regras, perguntas frequentes e a base de conhecimento do escritório. Ela usa só o que estiver aqui." },
+      { route: "/app/ia/agentes/ag-triagem-prev", target: "agente-publicar", title: "Rascunho e versão publicada", body: "Salvar cria rascunho. Só a versão publicada atende os clientes; teste no simulador antes de publicar." },
+    ],
+  },
+  {
     id: "cliente", title: "Ficha do cliente", summary: "Tudo do cliente em um lugar.", area: "clientes", version: TOUR_VERSION,
     steps: [
       { route: "/app/clientes/c-maria", target: ["abas-cliente", "abrir-caso"], title: "Seções do cliente", body: "Casos, atendimentos, documentos, financeiro e histórico do mesmo cliente." },

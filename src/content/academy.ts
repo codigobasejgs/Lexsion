@@ -32,6 +32,7 @@ export const TRACKS: Track[] = [
     id: "atendimento", title: "Atendimento e funil", level: "Iniciante", roles: ["admin", "tenant_admin", "advogado", "atendimento"],
     lessons: [
       { key: "assumir", title: "Assumir conversa e pausar a assistente", minutes: 5, article: "assumir-conversa", tour: "atendimento" },
+      { key: "assistente", title: "Criar, testar e publicar a assistente virtual", minutes: 8, article: "configurar-assistente", tour: "assistente" },
       { key: "lead", title: "Organizar lead no funil", minutes: 5, article: "organizar-lead", tour: "primeiro-lead", exercise: { text: "Mova um lead de “Novo” para “Em atendimento”.", href: "/app/crm" } },
       { key: "converter", title: "Converter lead em cliente", minutes: 5, article: "converter-lead" },
       { key: "cliente", title: "Cadastrar cliente", minutes: 4, article: "cadastrar-cliente", exercise: { text: "Cadastre um cliente fictício.", href: "/app/clientes/novo" } },

@@ -26,6 +26,13 @@ for (const s of SHOTS) {
       await page.screenshot({ path: s.out, fullPage: false, animations: "disabled", caret: "hide" });
       return;
     }
+    if (s.article === "configurar-assistente" && s.step === 3) {
+      await page.getByRole("button", { name: /Executar/ }).click();
+      await expect(page.getByRole("region", { name: "Conversa de teste" })).toBeVisible();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: s.out, fullPage: false, animations: "disabled", caret: "hide" });
+      return;
+    }
     if (s.article === "importar-csv") {
       await page.getByRole("button", { name: "Continuar" }).click();
       await page.getByRole("button", { name: "Usar exemplo fictício" }).click();

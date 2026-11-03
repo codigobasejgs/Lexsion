@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-10-28T12:50:13.752Z",
+  "generatedAt": "2026-11-03T19:22:45.638Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -347,12 +347,34 @@
       "article": "conectar-whatsapp",
       "step": 2,
       "mobile": false,
-      "caption": "Conexão e fila de saída",
+      "caption": "Conexão WhatsApp (demonstração) e fila de saída",
       "route": "/app/integracoes/evolution",
       "profile": "Helena Prado",
       "selector": "[data-tour=\"conexao-whatsapp\"]",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/conectar-whatsapp-2.png"
+    },
+    {
+      "article": "configurar-assistente",
+      "step": 2,
+      "mobile": false,
+      "caption": "Editor da assistente com as seções de configuração",
+      "route": "/app/ia/agentes/ag-triagem-prev",
+      "profile": "Helena Prado",
+      "selector": "role=tab[name=\"Base de conhecimento\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/configurar-assistente-2.png"
+    },
+    {
+      "article": "configurar-assistente",
+      "step": 3,
+      "mobile": false,
+      "caption": "Simulador da assistente (demonstração)",
+      "route": "/app/ia/simulador?agente=ag-triagem-prev",
+      "profile": "Helena Prado",
+      "selector": "role=button[name=/Executar/]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/configurar-assistente-3.png"
     },
     {
       "article": "usar-calculos",
@@ -518,6 +540,39 @@
       "selector": "[data-testid=\"follow-up\"]",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/follow-up-e-opt-out-1.png"
+    },
+    {
+      "article": "como-contratar",
+      "step": 2,
+      "mobile": false,
+      "caption": "Dados do contratante com a prévia do contrato ao lado",
+      "route": "/contratar?plano=profissional",
+      "profile": "",
+      "selector": "text=Dados do contratante",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/como-contratar-2.png"
+    },
+    {
+      "article": "como-contratar",
+      "step": 3,
+      "mobile": false,
+      "caption": "Contrato completo para revisão, com número e versão",
+      "route": "/contratar?plano=profissional",
+      "profile": "",
+      "selector": "[data-testid=\"contrato-texto\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/como-contratar-3.png"
+    },
+    {
+      "article": "como-contratar",
+      "step": 3,
+      "mobile": true,
+      "caption": "Contrato no celular",
+      "route": "/contratar?plano=profissional",
+      "profile": "",
+      "selector": "[data-testid=\"contrato-texto\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/como-contratar-3-mobile.png"
     }
   ]
 }

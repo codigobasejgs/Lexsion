@@ -50,6 +50,8 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "ler-relatorios:2": { route: "/app/relatorios", selector: "figure" },
   "gerir-equipe:2": { route: "/app/equipe", selector: "text=Matriz de acesso por perfil" },
   "conectar-whatsapp:2": { route: "/app/integracoes/evolution", selector: '[data-tour="conexao-whatsapp"]' },
+  "configurar-assistente:2": { route: "/app/ia/agentes/ag-triagem-prev", selector: 'role=tab[name="Base de conhecimento"]' },
+  "configurar-assistente:3": { route: "/app/ia/simulador?agente=ag-triagem-prev", selector: "role=button[name=/Executar/]" },
   "trocar-logo-e-cores:4": { route: "/app/configuracoes/branding", selector: "text=Prévia ao vivo" },
   "instalar-app-do-escritorio:1": { route: "/app/configuracoes/branding", selector: 'role=img[name=/QR Code/]' },
   "tarefas-recorrentes:2": { route: "/app/tarefas", selector: "h1" },

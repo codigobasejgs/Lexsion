@@ -64,8 +64,8 @@ function Editor({ a }: { a: AgentConfig }) {
       <div className="mx-auto max-w-[1100px]">
         <PageHeader breadcrumb={[{ href: "/app/ia/agentes", label: "Agentes de IA" }]} title={a.name} description={`Áreas: ${a.areas.join(", ")}`} actions={<Badge tone={AGENT_STATUS[a.status].tone}>{AGENT_STATUS[a.status].label} · v{a.version}{a.publishedVersion ? ` (publicada v${a.publishedVersion})` : ""}</Badge>} />
         <AiNav />
-        <label className="mb-4 block sm:hidden"><span className="label">Seção</span><select className="field" value={tab} onChange={(e) => setTab(e.target.value as Tab)}>{TABS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-        <div role="tablist" aria-label="Configuração" className="mb-5 hidden flex-wrap gap-1 sm:flex">
+        <label className="mb-4 block sm:hidden" data-tour="agente-secoes-celular"><span className="label">Seção</span><select className="field" value={tab} onChange={(e) => setTab(e.target.value as Tab)}>{TABS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+        <div role="tablist" aria-label="Configuração" className="mb-5 hidden flex-wrap gap-1 sm:flex" data-tour="agente-secoes">
           {TABS.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`rounded-full border px-3 py-1.5 text-sm ${tab === k ? "border-brand bg-selection" : "border-line text-fg-muted"}`}>{l}</button>)}
         </div>
         <section className="panel space-y-4 p-4" role="tabpanel">
@@ -80,7 +80,7 @@ function Editor({ a }: { a: AgentConfig }) {
           {tab === "versoes" && <ol className="space-y-1 text-sm">{[...a.versions].reverse().map((v) => <li key={v.version + v.at}>v{v.version} · {formatInstant(v.at)} · {userName(v.actorId)} — {v.note}</li>)}</ol>}
           {tab === "consumo" && <div className="space-y-2 text-sm"><p className="num">{a.usage.conversations} conversas · {a.usage.handoffs} encaminhamentos para humano (dados de demonstração)</p><p className="text-fg-muted">Limite de uso e modelo preferido serão definidos com o provedor de IA (pendência).</p><Link className="btn btn-secondary" href={`/app/ia/simulador?agente=${a.id}`}>Testar no simulador</Link></div>}
           <Feedback error={act.error} notice={act.notice} />
-          <div className="flex flex-wrap gap-2 border-t border-line pt-4">
+          <div className="flex flex-wrap gap-2 border-t border-line pt-4" data-tour="agente-publicar">
             <button className="btn btn-secondary" disabled={!dirty || act.pending} onClick={async () => { if (await saveDraft()) setDirty(false); }}>Salvar rascunho</button>
             {user && canApprove(user.role) && <button className="btn btn-primary" disabled={dirty || (a.status === "publicado" && a.publishedVersion === a.version)} onClick={() => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, status: "publicado", publishedVersion: x.version,
               published: { name: x.name, objective: x.objective, tone: x.tone, rules: x.rules, steps: x.steps, faq: x.faq, requestedDocs: x.requestedDocs, hours: x.hours, handoff: x.handoff, knowledge: x.knowledge, version: x.version },

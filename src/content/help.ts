@@ -99,9 +99,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Para devolver à assistente, toque em “Retomar assistente virtual”.",
     ],
     buttons: ["Assumir atendimento", "Enviar", "Retomar assistente virtual"],
-    expected: "Somente você responde enquanto a conversa estiver assumida.",
-    errors: [{ problem: "O botão Enviar está desativado.", fix: "Toque primeiro em “Assumir atendimento”: a assistente virtual está ativa." }],
-    related: ["organizar-lead", "conectar-whatsapp"], keywords: ["whatsapp", "mensagem", "robô", "atendimento"], shots: [{ step: 2, caption: "Faixa com a assistente ativa e o botão Assumir atendimento" }, { step: 2, caption: "Conversa no celular", mobile: true }], ...R,
+    expected: "Somente você responde enquanto a conversa estiver assumida. Se a assistente já estava escrevendo uma resposta, ela é descartada e não chega ao cliente.",
+    errors: [
+      { problem: "O botão Enviar está desativado.", fix: "Toque primeiro em “Assumir atendimento”: a assistente virtual está ativa." },
+      { problem: "A conversa voltou sozinha para a equipe.", fix: "A assistente passa para a equipe quando o cliente pede atendente, quando há urgência ou quando ela não consegue responder. Veja o aviso no sino." },
+    ],
+    related: ["organizar-lead", "conectar-whatsapp", "configurar-assistente"], keywords: ["whatsapp", "mensagem", "robô", "atendimento"], shots: [{ step: 2, caption: "Faixa com a assistente ativa e o botão Assumir atendimento" }, { step: 2, caption: "Conversa no celular", mobile: true }], ...R,
   },
   {
     slug: "organizar-lead", title: "Organizar um lead no funil", category: "Atendimento e comercial",
@@ -365,18 +368,38 @@ export const HELP_ARTICLES: HelpArticle[] = [
     related: ["conectar-whatsapp"], shots: [{ step: 2, caption: "Preferências por evento e canal" }], ...R,
   },
   {
-    slug: "conectar-whatsapp", title: "Conexão do WhatsApp (etapa futura)", category: "Administração",
-    goal: "Entender a conexão e o que acontece se ela cair.", prerequisites: "Nenhum. A conexão real será feita na fase de backend.", who: "Administrador.",
+    slug: "conectar-whatsapp", title: "Conectar o WhatsApp do escritório", category: "Administração",
+    goal: "Ligar o número do escritório para receber e responder conversas pela LexSion.", prerequisites: "Ser titular do escritório e ter o celular do número em mãos. Na operação real, a conexão só aparece depois que a LexSion libera o WhatsApp na plataforma.", who: "Administrador (titular).",
     steps: [
       "Abra Integrações e escolha Evolution API (WhatsApp).",
-      "Em Conexão WhatsApp (simulação), veja o estado atual e a fila de saída.",
-      "Teste a falha com “Simular desconexão”: mensagens enviadas ficam pendentes.",
-      "Use “Simular reconexão” e “Reprocessar fila”: cada mensagem sai uma única vez.",
+      "Na operação real, toque em “Gerar QR” e leia o código no celular (WhatsApp → Aparelhos conectados). Na demonstração, a seção “Conexão WhatsApp (simulação)” mostra o mesmo comportamento sem número real.",
+      "Grupos, status e listas de transmissão nunca entram em Conversas e nunca recebem resposta automática.",
+      "Se a conexão cair, as respostas não são enviadas e a conversa passa para a equipe. Reconecte com “Gerar QR”; na demonstração, teste com “Simular desconexão” e “Reprocessar fila”.",
     ],
-    buttons: ["Simular desconexão", "Simular reconexão", "Reprocessar fila"],
-    expected: "Você entende que nenhuma mensagem é perdida nem duplicada.",
-    errors: [{ problem: "Mensagens “na fila” na conversa.", fix: "A conexão caiu. Reconecte e reprocesse a fila." }],
-    related: ["assumir-conversa"], shots: [{ step: 2, caption: "Conexão e fila de saída" }], ...R,
+    buttons: ["Gerar QR", "Desconectar", "Simular desconexão", "Reprocessar fila"],
+    expected: "O estado mostra “Conectado” e as mensagens de contatos individuais aparecem em Conversas.",
+    errors: [
+      { problem: "Aparece “WhatsApp indisponível para dados de clientes”.", fix: "A plataforma ainda não liberou o WhatsApp. Nada é gravado nem enviado enquanto esse aviso estiver na tela." },
+      { problem: "O QR não aparece.", fix: "Toque em “Gerar QR” de novo depois de alguns segundos. Só o titular vê esse botão." },
+    ],
+    related: ["assumir-conversa", "configurar-assistente"], keywords: ["qr", "evolution", "número"], shots: [{ step: 2, caption: "Conexão WhatsApp (demonstração) e fila de saída" }], ...R,
+  },
+  {
+    slug: "configurar-assistente", title: "Criar, testar e publicar a assistente virtual", category: "Administração",
+    goal: "Ter uma assistente que responde no WhatsApp só com as informações do seu escritório.", prerequisites: "Ser titular ou gestor. Na operação real, a IA precisa estar habilitada pelo titular em Integrações.", who: "Administrador e Gestor.",
+    steps: [
+      "Abra IA → Agentes, toque em “Nova assistente”, escolha a finalidade e toque em “Criar rascunho”.",
+      "Preencha Objetivo, Regras, Perguntas/FAQ e a aba “Base de conhecimento” com endereço, horários e o que a assistente pode explicar. Não coloque dados de clientes.",
+      "Toque em “Salvar rascunho” e abra o Simulador. Na operação real, converse como se fosse o cliente (usa o modelo de IA real com o rascunho); na demonstração, escolha uma persona e toque em “Executar”. O simulador não envia nada pelo WhatsApp.",
+      "Quando estiver bom, toque em “Publicar versão”. É a versão publicada que atende; editar de novo cria um rascunho e não muda o atendimento até nova publicação.",
+    ],
+    buttons: ["Nova assistente", "Criar rascunho", "Salvar rascunho", "Publicar versão", "Atende no WhatsApp"],
+    expected: "A assistente publicada responde contatos novos; urgência, dúvida, pedido de atendente ou falha passam a conversa para a equipe.",
+    errors: [
+      { problem: "A assistente não responde no WhatsApp.", fix: "Confira se há uma versão publicada, se a IA está habilitada pelo titular e se a conversa não foi assumida por alguém da equipe." },
+      { problem: "Não vejo o botão “Publicar versão”.", fix: "Só titular e gestor publicam. Peça a eles." },
+    ],
+    related: ["assumir-conversa", "conectar-whatsapp"], keywords: ["agente", "ia", "robô", "gemini", "simulador"], shots: [{ step: 2, caption: "Editor da assistente com as seções de configuração" }, { step: 3, caption: "Simulador da assistente (demonstração)" }], ...R,
   },
 
   // Novos (cobertura rota → artigo)
