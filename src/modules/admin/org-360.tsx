@@ -30,10 +30,12 @@ export function Org360({ id }: { id: string }) {
   const s = lifecycle(o);
   const r = role.data ?? "";
   const canOps = r === "superadmin" || r === "platform_admin";
+  // Recarrega do banco ANTES de confirmar: a próxima ação já sai com a versão nova (updated_at). Antes, confirmar e
+  // abrir outra ação logo em seguida enviava a versão antiga e o banco recusava como "alterado por outra pessoa".
   const done = async (res: { ok: boolean; message?: string }, okText: string) => {
+    await Promise.all([qc.invalidateQueries({ queryKey: ["platform-orgs"] }), qc.invalidateQueries({ queryKey: ["platform-tl", id] }), qc.invalidateQueries({ queryKey: ["platform-metrics"] })]);
     setMsg(res.ok ? { ok: true, text: okText } : { ok: false, text: res.message ?? "Não concluído." });
     if (res.ok) setOpen(null);
-    await Promise.all([qc.invalidateQueries({ queryKey: ["platform-orgs"] }), qc.invalidateQueries({ queryKey: ["platform-tl", id] }), qc.invalidateQueries({ queryKey: ["platform-metrics"] })]);
   };
   const btn = (a: Action, label: string, Icon: typeof Play, show = true) => show ? <button className="btn btn-secondary min-h-10" onClick={() => { setMsg(null); setOpen(a); }} disabled={!canOps && a !== "invite"}><Icon aria-hidden className="size-4" /> {label}</button> : null;
   return (
