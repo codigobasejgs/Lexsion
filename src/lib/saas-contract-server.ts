@@ -8,21 +8,39 @@ export const sha256 = (s: string | Buffer) => crypto.createHash("sha256").update
 export const hmac = (s: string) => crypto.createHmac("sha256", process.env.CRON_SECRET ?? "lexsion").update(s).digest("hex");
 export const templateHash = (t: Pick<TemplateVersion, "title" | "clauses">) => sha256(JSON.stringify({ title: t.title, clauses: t.clauses }));
 
-/** Versão do modelo apresentada ao público: a PUBLICADA (aprovada por advogado) ou, sem ela, a mais recente em revisão. */
-export async function currentTemplate() {
+// Namespace de configuração: produção usa o modelo "saas-lexsion" e a contratada "vigente". O servidor de TESTE define
+// SAAS_CONFIG_NS=qa e passa a usar "saas-lexsion-qa"/"qa" (mesmo banco, sem tocar no contrato de produção).
+const QA = process.env.SAAS_CONFIG_NS === "qa";
+export const TEMPLATE_KEY = QA ? "saas-lexsion-qa" : "saas-lexsion";
+export const SUPPLIER_ID = QA ? "qa" : "vigente";
+type Tpl = TemplateVersion & { id: string; content_sha256: string };
+
+/**
+ * Modelo vigente: o PUBLICADO. Sem aprovação manual — salvar um modelo completo já o disponibiliza
+ * (saas_publish_template). Primeira execução: o modelo-base do código é disponibilizado sozinho (não tem pendência
+ * fixa; as condições da plataforma vêm da configuração). Versões antigas em revisão ficam só como histórico.
+ */
+export async function currentTemplate(): Promise<Tpl> {
   const db = supabaseAdmin();
-  const { data: pub } = await db.from("saas_contract_template_versions").select("*").eq("template_key", "saas-lexsion").eq("status", "PUBLICADO").maybeSingle();
-  if (pub) return pub as TemplateVersion & { id: string; content_sha256: string };
-  const { data: rev } = await db.from("saas_contract_template_versions").select("*").eq("template_key", "saas-lexsion").in("status", ["REVISAO_JURIDICA", "APROVADO"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (rev) return rev as TemplateVersion & { id: string; content_sha256: string };
-  // Primeira execução: semeia a minuta-base EM REVISÃO (nunca publica sozinha).
+  const { data: pub } = await db.from("saas_contract_template_versions").select("*").eq("template_key", TEMPLATE_KEY).eq("status", "PUBLICADO").maybeSingle();
+  if (pub) return pub as Tpl;
   const t = DEFAULT_TEMPLATE;
-  const { data } = await db.from("saas_contract_template_versions").upsert({ template_key: "saas-lexsion", version: t.version, title: t.title, status: "REVISAO_JURIDICA", clauses: t.clauses, content_sha256: templateHash(t), change_reason: "Minuta-base técnica para revisão jurídica" }, { onConflict: "template_key,version", ignoreDuplicates: true }).select("*").maybeSingle();
-  return (data ?? (await db.from("saas_contract_template_versions").select("*").eq("version", t.version).single()).data) as TemplateVersion & { id: string; content_sha256: string };
+  const { error } = await db.rpc("saas_publish_template", { p_key: TEMPLATE_KEY, p_version: t.version, p_title: t.title, p_clauses: t.clauses, p_hash: templateHash(t), p_reason: "Modelo-base do código disponibilizado automaticamente", p_actor: null });
+  // Corrida (duas primeiras execuções juntas) ou versão já registrada: relê a vigente.
+  const { data } = await db.from("saas_contract_template_versions").select("*").eq("template_key", TEMPLATE_KEY).eq("status", "PUBLICADO").maybeSingle();
+  if (!data) throw new Error(`modelo de contrato indisponível${error ? `: ${error.message}` : ""}`);
+  return data as Tpl;
 }
 
 export async function supplierSnapshot(): Promise<Supplier & { verified_at: string | null }> {
-  const { data } = await supabaseAdmin().from("saas_supplier_profile").select("*").eq("id", "vigente").single();
+  const db = supabaseAdmin();
+  let { data } = await db.from("saas_supplier_profile").select("*").eq("id", SUPPLIER_ID).maybeSingle();
+  if (!data && QA) {
+    // Perfil de teste copiado da contratada real (dados públicos do CNPJ) com contato e condições sintéticos.
+    const { data: base } = await db.from("saas_supplier_profile").select("trade_name,legal_name,document,legal_nature,size,address").eq("id", "vigente").single();
+    await db.from("saas_supplier_profile").upsert({ id: "qa", ...base, contact_email: "contato-qa@lexsion-qa.invalid", conditions: { acesso_tecnico: "QA", resend_local: "QA", infinitepay_papel: "QA", transferencia: "QA" } });
+    data = (await db.from("saas_supplier_profile").select("*").eq("id", "qa").single()).data;
+  }
   return data as Supplier & { verified_at: string | null };
 }
 

@@ -7,10 +7,11 @@ import { formatBRL } from "@/lib/money";
 import type { PublicPlan } from "@/domain/saas";
 import { DRAFT_BANNER, renderContract, validateParty, type Party, type Supplier, type TemplateVersion } from "@/domain/saas-contract";
 
-// Jornada: Plano → Dados do contratante → Revisar contrato → Aceite (código por e-mail) → Pagamento ou teste grátis.
-// A prévia ao vivo é só conforto: o TEXTO que vale (e o hash) vem do servidor no passo “Revisar”.
-// Rascunho local (sessionStorage) para não perder o preenchimento ao voltar; nada de CPF em URL.
-// Última etapa muda conforme o plano: com teste grátis não há pagamento agora (ativação gratuita).
+// Jornada: Plano → Dados do contratante → Contrato → Aceite (código por e-mail) → Pagamento ou teste grátis.
+// Sem aprovação manual: o contrato é gerado do cadastro e das condições configuradas; o contratante aceita uma vez.
+// TENTATIVA = token aleatório criado UMA vez nesta aba (sessionStorage); o servidor faz "obter ou criar" por ele, então
+// salvar de novo, duplo clique ou retry nunca criam outro contrato. Ao recarregar, a tela consulta o estado do
+// servidor (só leitura) e retoma a etapa; contrato aceito vai direto ao resultado. Nada de CPF em URL.
 const stepsFor = (trial: boolean) => ["Plano", "Seus dados", "Contrato", "Aceite", trial ? "Ativação gratuita" : "Pagamento"];
 const slugify = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 const EMPTY_ADDR = { cep: "", street: "", number: "", complement: "", district: "", city: "", uf: "" };
@@ -18,7 +19,9 @@ type Form = { plan: string; cycle: "mensal" | "anual"; kind: "PF" | "PJ"; slug: 
   pf: { name: string; cpf: string; email: string; phone: string; oab: string; trade_name: string };
   pj: { legal_name: string; trade_name: string; cnpj: string; rep: { name: string; cpf: string; role: string; email: string; phone: string; oab: string }; rep_powers: boolean };
   address: typeof EMPTY_ADDR };
-type Server = { token: string; number: string; binding: boolean; templateVersion: string; templateStatus: string; text: string; hash: string; holderEmail: string; status: string; accepted_at: string | null; plan: { label: string; cycle: string; amount: number; trial_days: number } };
+type Next = { kind: string; url?: string; message?: string; activation?: string | null };
+const newAttempt = () => { const b = new Uint8Array(24); crypto.getRandomValues(b); return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+type Server = { token: string; number: string; binding: boolean; unavailable: string | null; pdf: "pronto" | "pendente" | null; templateVersion: string; templateStatus: string; text: string; hash: string; holderEmail: string; status: string; accepted_at: string | null; plan: { label: string; cycle: string; amount: number; trial_days: number } };
 const DRAFT_KEY = "lexsion.contratar";
 const load = (): Partial<Form> | null => { try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? "null"); } catch { return null; } };
 
@@ -31,17 +34,31 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
   const [srv, setSrv] = useState<Server | null>(null);
   const [token, setToken] = useState("");
   const [read, setRead] = useState(false), [agree, setAgree] = useState(false), [otp, setOtp] = useState(""), [otpSent, setOtpSent] = useState<string | null>(null);
-  const [done, setDone] = useState<{ kind: string; url?: string; message?: string; activation?: string | null } | null>(null);
+  const [done, setDone] = useState<Next | null>(null);
+  const [resuming, setResuming] = useState(true);
   const [slugTouched, setSlugTouched] = useState(false);
   const head = useRef<HTMLHeadingElement>(null);
 
-  // Retoma rascunho e token desta aba (não sai do navegador; CPF nunca vai para URL).
+  // Retoma rascunho e tentativa desta aba e consulta o servidor (só leitura): se o contrato desta tentativa já existe,
+  // volta à etapa certa (aceito ⇒ resultado; gerado ⇒ contrato). Nenhuma mutação ao montar.
   useEffect(() => {
     const d = load();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restauração única do rascunho desta aba
     // O plano escolhido agora (?plano=) prevalece sobre o do rascunho; os dados digitados são preservados.
     if (d) setF((cur) => ({ ...cur, ...d, plan: cur.plan, cycle: d.plan === cur.plan ? (d.cycle ?? cur.cycle) : "mensal" }));
-    try { const t = sessionStorage.getItem(`${DRAFT_KEY}.token`); if (t) setToken(t); } catch {}
+    let t = "";
+    try { t = sessionStorage.getItem(`${DRAFT_KEY}.token`) ?? ""; if (!t) { t = newAttempt(); sessionStorage.setItem(`${DRAFT_KEY}.token`, t); } } catch { t = newAttempt(); }
+    setToken(t);
+    const post = (body: object) => fetch("/api/contrato", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: t, ...body }) }).then((x) => x.json()).catch(() => null);
+    (async () => {
+      const r = await post({ action: "status" });
+      if (r?.ok) {
+        setSrv({ ...r.data, token: t });
+        if (r.data.accepted_at) { const a = await post({ action: "accept" }); if (a?.ok) { setDone(a.data.next); setStep(4); } }
+        else if (d) setStep(2);
+      }
+      setResuming(false);
+    })();
   }, [plans]);
   useEffect(() => { try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(f)); } catch {} }, [f]);
   useEffect(() => { head.current?.focus(); }, [step]);
@@ -80,8 +97,12 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
     setBusy(true);
     const { status, j } = await call({ action: "save", plan: f.plan, cycle: f.cycle, party, slug: f.slug, marketing: f.marketing });
     setBusy(false);
-    if (j?.ok) { setSrv(j.data); setToken(j.data.token); try { sessionStorage.setItem(`${DRAFT_KEY}.token`, j.data.token); } catch {} setRead(false); setAgree(false); setOtp(""); setOtpSent(null); setStep(2); return; }
-    if (status === 409 && j?.error?.code === "locked") { try { sessionStorage.removeItem(`${DRAFT_KEY}.token`); } catch {} setToken(""); }
+    if (j?.ok) {
+      setSrv(j.data);
+      if (j.data.accepted_at) { const a = await call({ action: "accept" }); if (a.j?.ok) { setDone(a.j.data.next); setStep(4); return; } }
+      setRead(false); setAgree(false); setOtp(""); setOtpSent(null); setStep(2); return;
+    }
+    if (status === 409 && j?.error?.code === "locked") { const t = newAttempt(); try { sessionStorage.setItem(`${DRAFT_KEY}.token`, t); } catch {} setToken(t); }
     setErrs(j?.error?.fields ?? (j?.error?.field ? { [j.error.field]: j.error.message } : {}));
     setMsg(j?.error?.message ?? "Sem conexão. Nada foi gravado; tente de novo.");
   };
@@ -93,9 +114,11 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
   };
   const accept = async () => {
     setMsg(null); setBusy(true);
-    const { j } = await call({ action: "accept", hash: srv!.hash, read, agree, otp });
+    let { j } = await call({ action: "accept", hash: srv!.hash, read, agree, otp });
+    // Resposta perdida (rede caiu depois do commit): consulta o estado autoritativo antes de qualquer nova tentativa.
+    if (!j) { const st = await call({ action: "status" }); if (st.j?.ok && st.j.data.accepted_at) j = (await call({ action: "accept" })).j; }
     setBusy(false);
-    if (!j?.ok) { setErrs(j?.error?.field ? { [j.error.field]: j.error.message } : {}); setMsg(j?.error?.message ?? "Sem conexão."); return; }
+    if (!j?.ok) { setErrs(j?.error?.field ? { [j.error.field]: j.error.message } : {}); setMsg(j?.error?.message ?? "Sem conexão. Seus dados e o contrato continuam salvos; tente de novo."); return; }
     setSrv((s) => ({ ...s!, ...j.data })); setDone(j.data.next); setStep(4);
     try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
   };
@@ -104,7 +127,6 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
   const input = (k: string, label: string, value: string, on: (v: string) => void, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <div><label htmlFor={`c-${k}`} className="label">{label}</label><input id={`c-${k}`} className="field" value={value} onChange={(e) => on(e.target.value)} aria-invalid={!!errs[k]} aria-describedby={errs[k] ? `e-${k}` : undefined} {...extra} /><E k={k} /></div>
   );
-  const binding = srv?.binding ?? template?.status === "PUBLICADO";
 
   return (
     <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -116,7 +138,8 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
         <h2 ref={head} tabIndex={-1} className="text-xl font-semibold outline-none">{["Escolha o plano", "Dados do contratante", "Revise o contrato", "Aceite eletrônico", "Concluir"][step]}</h2>
         {msg && <p role="alert" className="rounded border border-danger/40 bg-danger-bg p-3 text-sm text-danger">{msg}</p>}
 
-        {step === 0 && (
+        {resuming && <p className="flex items-center gap-2 text-sm text-fg-muted" aria-busy="true"><Loader2 aria-hidden className="size-4 animate-spin" /> Retomando sua contratação…</p>}
+        {!resuming && step === 0 && (
           <section className="space-y-4">
             <fieldset><legend className="label">Plano</legend>
               <div className="grid gap-2 sm:grid-cols-3">{plans.map((p) => (
@@ -134,7 +157,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
           </section>
         )}
 
-        {step === 1 && (
+        {!resuming && step === 1 && (
           <section className="space-y-4" aria-describedby="finalidade">
             <p id="finalidade" className="text-sm text-fg-muted">Usamos estes dados só para gerar o contrato, criar o acesso do titular e emitir as cobranças, conforme a <Link href="/privacidade" target="_blank" className="text-accent underline">política de privacidade</Link>.</p>
             <fieldset><legend className="label">Você contrata como</legend>
@@ -183,7 +206,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
 
         {step === 2 && srv && (
           <section className="space-y-4">
-            {!srv.binding && <p role="status" className="rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning"><strong>Contratação online em preparação.</strong> O contrato está em revisão jurídica final. Você pode ler esta prévia e pedir para ser avisado(a) assim que a contratação abrir. Nada é cobrado e nenhum compromisso é registrado agora.</p>}
+            {!srv.binding && <p role="status" className="rounded border border-warning/40 bg-warning-bg p-3 text-sm text-warning" data-testid="contrato-indisponivel">{srv.unavailable}</p>}
             <ContractPaper text={srv.text} number={srv.number} hash={srv.hash} big />
             <div className="flex flex-wrap gap-2">
               <button className="btn btn-ghost" onClick={() => setStep(1)}><ArrowLeft aria-hidden className="size-4" /> Corrigir dados</button>
@@ -191,7 +214,6 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
               <button className="btn btn-secondary" onClick={() => print()}><Printer aria-hidden className="size-4" /> Imprimir</button>
               {srv.binding && <button className="btn btn-primary min-h-12" onClick={() => setStep(3)}>Continuar para o aceite</button>}
             </div>
-            {!srv.binding && <NotifyMe name={f.kind === "PF" ? f.pf.name : f.pj.rep.name} email={f.kind === "PF" ? f.pf.email : f.pj.rep.email} plan={f.plan} />}
           </section>
         )}
 
@@ -207,7 +229,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
               {otpSent && input("otp", "Código recebido por e-mail", otp, (v) => setOtp(v.replace(/\D/g, "").slice(0, 6)), { inputMode: "numeric", autoComplete: "one-time-code" })}
             </div>
             <div className="flex flex-wrap gap-2"><button className="btn btn-ghost" onClick={() => setStep(2)}><ArrowLeft aria-hidden className="size-4" /> Reler contrato</button>
-              <button className="btn btn-primary min-h-12" disabled={busy || !read || !agree || otp.length !== 6} onClick={() => void accept()}>{busy ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <ShieldCheck aria-hidden className="size-4" />} Aceitar eletronicamente</button></div>
+              <button className="btn btn-primary min-h-12" disabled={busy || !read || !agree || otp.length !== 6} onClick={() => void accept()}>{busy ? <Loader2 aria-hidden className="size-4 animate-spin" /> : <ShieldCheck aria-hidden className="size-4" />} {busy ? "Registrando aceite…" : plan.trial_days > 0 ? "Aceitar e ativar teste" : "Aceitar e ir para o pagamento"}</button></div>
             <p className="text-xs text-fg-muted">Registramos data e hora, versão e impressão digital do texto, e-mail, navegador e um código derivado do IP. Isso é um aceite eletrônico comprovável; não é assinatura digital ICP-Brasil.</p>
           </section>
         )}
@@ -215,7 +237,7 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
         {step === 4 && done && (
           <section role="status" className="space-y-3">
             <p className="flex items-center gap-2 text-success"><Check aria-hidden className="size-5" /> Aceite eletrônico registrado (contrato {srv?.number}).</p>
-            {done.kind === "trial" && <p>{done.activation === "concluida" ? `Escritório criado em teste grátis de ${plan.trial_days} dias, sem cobrança. Enviamos ao e-mail do titular o link para criar a senha.` : "Cadastro recebido; o escritório está sendo preparado pela equipe LexSion. Você não será cobrado(a) agora."}</p>}
+            {done.kind === "trial" && <p>{done.activation === "concluida" ? `Escritório criado em teste grátis de ${plan.trial_days} dias, sem cobrança e sem cartão. Enviamos ao e-mail do titular o link para criar a senha e acessar.` : "Aceite registrado. O escritório está sendo criado; o e-mail de acesso chega em instantes (há nova tentativa automática). Nada foi cobrado."}</p>}
             {done.kind === "payment" && done.url && <p><a className="btn btn-primary min-h-12" href={done.url} rel="noopener"><Lock aria-hidden className="size-4" /> Ir para pagamento ({formatBRL(price)})</a></p>}
             {done.kind === "blocked" && <p className="text-warning">{done.message}</p>}
             <p className="flex flex-wrap gap-2"><a className="btn btn-secondary" href="#" onClick={(e) => { e.preventDefault(); void downloadPdf(token); }}><Download aria-hidden className="size-4" /> Baixar contrato aceito (PDF)</a>{done.kind === "trial" && <Link href="/entrar" className="btn btn-ghost">Entrar</Link>}</p>
@@ -237,34 +259,14 @@ export function SignupForm({ plans, initialPlan, supplier, template }: { plans: 
             <div className="mt-2"><ContractPaper text={preview} number={srv?.number ?? ""} hash="" /></div>
           </details>
         )}
-        {!binding && <p className="text-xs text-warning">Contrato pendente de aprovação jurídica: aceite e pagamento só serão liberados depois da aprovação.</p>}
       </aside>
-    </div>
-  );
-}
-
-/** Saída útil enquanto o contrato não é publicado: aviso por e-mail (consentimento explícito) ou voltar aos planos. */
-function NotifyMe({ name, email, plan }: { name: string; email: string; plan: string }) {
-  const [consent, setConsent] = useState(false), [st, setSt] = useState<"idle" | "busy" | "ok" | string>("idle");
-  const send = async () => {
-    setSt("busy");
-    const r = await fetch("/api/contrato", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "interest", name, email, plan, consent }) }).then((x) => x.json()).catch(() => null);
-    setSt(r?.ok ? "ok" : r?.error?.message ?? "Sem conexão. Tente de novo.");
-  };
-  if (st === "ok") return <p role="status" className="rounded border border-success/30 bg-success-bg p-3 text-sm text-success" data-testid="aviso-registrado">Pronto. Avisaremos {email.replace(/^(.).*(@.*)$/, "$1***$2")} assim que a contratação abrir. Nenhuma conta ou cobrança foi criada. <Link href="/planos" className="underline">Voltar aos planos</Link></p>;
-  return (
-    <div className="panel space-y-3 p-4 text-sm" data-testid="avise-me">
-      <p className="font-medium">Quer ser avisado(a) quando a contratação abrir?</p>
-      <label className="flex items-start gap-2"><input type="checkbox" className="mt-1 size-4" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Autorizo a LexSion a me enviar um único e-mail avisando que a contratação foi liberada.</label>
-      <div className="flex flex-wrap gap-2"><button className="btn btn-primary" disabled={!consent || st === "busy"} onClick={() => void send()}>Avise-me quando abrir</button><Link href="/planos" className="btn btn-ghost">Voltar aos planos</Link><Link href="/demonstracao" className="btn btn-ghost">Explorar a demonstração</Link></div>
-      {st !== "idle" && st !== "busy" && <p role="alert" className="text-danger">{st}</p>}
     </div>
   );
 }
 
 async function downloadPdf(token: string) {
   const r = await fetch("/api/contrato", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "pdf", token }) });
-  if (!r.ok) return alert("Não foi possível gerar o PDF agora.");
+  if (!r.ok) return alert(r.status === 503 ? "O PDF ainda está sendo gerado. O aceite já está registrado; tente de novo em instantes." : "Não foi possível gerar o PDF agora. Tente de novo.");
   const url = URL.createObjectURL(await r.blob());
   const a = Object.assign(document.createElement("a"), { href: url, download: (r.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1]) ?? "contrato-lexsion.pdf" });
   a.click(); URL.revokeObjectURL(url);

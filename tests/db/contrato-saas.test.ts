@@ -38,28 +38,31 @@ describe("Modelo de contrato: aprovação jurídica e imutabilidade", () => {
     const s = (await db.query<{ legal_name: string; document: string }>("select legal_name, document from public.saas_supplier_profile")).rows[0];
     expect(s).toEqual({ legal_name: "59.760.458 MARCO ANTONIO BOGGIAN", document: "59.760.458/0001-91" });
   });
-  it("não pula etapas: rascunho não vira publicado; aprovar exige nome/OAB do(a) advogado(a)", async () => {
-    expect(await fails("service", "update public.saas_contract_template_versions set status='PUBLICADO' where id=$1", [tpl])).toMatch(/não permitida/);
-    await db.query("update public.saas_contract_template_versions set status='REVISAO_JURIDICA' where id=$1", [tpl]);
-    expect(await fails("service", "update public.saas_contract_template_versions set status='APROVADO' where id=$1", [tpl])).toMatch(/advogado/);
-    await db.query("update public.saas_contract_template_versions set status='APROVADO', approved_by_name='Fulana de Tal OAB 1/SP', approved_at=now() where id=$1", [tpl]);
-    await db.query("update public.saas_contract_template_versions set status='PUBLICADO', published_at=now() where id=$1", [tpl]);
+  it("sem aprovação manual: modelo completo é disponibilizado pela função do servidor (sem nome/OAB); sem pendência", async () => {
+    // Função de disponibilização: só o servidor; arquiva a vigente e publica a nova na mesma transação.
+    expect(await fails(U.ta, "select public.saas_publish_template('saas-lexsion','x','T','[]','h','motivo ok', null)")).toMatch(/permission denied/);
+    await db.query("update public.saas_contract_template_versions set status='PUBLICADO', published_at=now() where id=$1", [tpl]); // rascunho completo publica direto (sem OAB)
+    const t2 = (await as<{ id: string }>("service", "select public.saas_publish_template('saas-lexsion','t-2','T','[{\"n\":\"1\",\"title\":\"x\",\"body\":\"y\"}]','h2','nova versão completa', null) id"))[0].id;
+    const st = (await db.query<{ id: string; status: string }>("select id, status from public.saas_contract_template_versions where id in ($1,$2)", [tpl, t2])).rows;
+    expect(st.find((x) => x.id === tpl)?.status).toBe("ARQUIVADO");
+    expect(st.find((x) => x.id === t2)?.status).toBe("PUBLICADO");
+    expect((await db.query("select 1 from public.saas_contract_audit where action = 'modelo.disponibilizado'")).rows.length).toBe(1);
+    expect((await db.query("select 1 from public.saas_contract_audit where action like 'modelo.aprovad%'")).rows).toEqual([]); // nenhum evento falso de aprovação
+    tpl = t2;
   });
   it("versão publicada é imutável (conteúdo) e não pode ser apagada; só uma publicada por vez", async () => {
     expect(await fails("service", "update public.saas_contract_template_versions set clauses='[]' where id=$1", [tpl])).toMatch(/imutável/);
     expect(await fails("service", "delete from public.saas_contract_template_versions where id=$1", [tpl])).toMatch(/rascunho/);
-    const t2 = (await db.query<{ id: string }>("insert into public.saas_contract_template_versions (version, title, clauses, content_sha256, status, approved_by_name, approved_at) values ('t-2','T','[]','d','RASCUNHO',null,null) returning id")).rows[0].id;
-    await db.query("update public.saas_contract_template_versions set status='REVISAO_JURIDICA' where id=$1", [t2]);
-    await db.query("update public.saas_contract_template_versions set status='APROVADO', approved_by_name='Fulana de Tal OAB 1/SP', approved_at=now() where id=$1", [t2]);
-    expect(await fails("service", "update public.saas_contract_template_versions set status='PUBLICADO' where id=$1", [t2])).toMatch(/duplicate key|unique/);
+    const t3 = (await db.query<{ id: string }>("insert into public.saas_contract_template_versions (version, title, clauses, content_sha256, status) values ('t-3','T','[]','d','RASCUNHO') returning id")).rows[0].id;
+    expect(await fails("service", "update public.saas_contract_template_versions set status='PUBLICADO' where id=$1", [t3])).toMatch(/duplicate key|unique/);
   });
 });
 
-describe("Texto com pendência não é aprovado (CT-02)", () => {
-  it("versão com [PENDENTE] não passa de revisão jurídica; sem pendência, aprova", async () => {
+describe("Texto com pendência não é disponibilizado (CT-02)", () => {
+  it("texto com [PENDENTE] nunca é disponibilizado (nem por update, nem pela função)", async () => {
     const pend = (await db.query<{ id: string }>(`insert into public.saas_contract_template_versions (version, title, clauses, content_sha256) values ('p-1','T','[{"n":"1","title":"x","body":"[PENDENTE: foro]"}]','p') returning id`)).rows[0].id;
-    await db.query("update public.saas_contract_template_versions set status='REVISAO_JURIDICA' where id=$1", [pend]);
-    expect(await fails("service", "update public.saas_contract_template_versions set status='APROVADO', approved_by_name='Fulana de Tal OAB 1/SP', approved_at=now() where id=$1", [pend])).toMatch(/\[PENDENTE\]/);
+    expect(await fails("service", "update public.saas_contract_template_versions set status='PUBLICADO' where id=$1", [pend])).toMatch(/\[PENDENTE\]/);
+    expect(await fails("service", "select public.saas_publish_template('saas-lexsion','p-2','T','[{\"body\":\"[PENDENTE: x]\"}]','h','motivo válido', null)")).toMatch(/\[PENDENTE\]/);
   });
   it("interesse em contratar: e-mail único, sem leitura pública; titular comum não lê", async () => {
     await db.query("insert into public.saas_signup_interests (email, name, consent_at) values ('a@x.test','Ana Teste',now())");
@@ -102,5 +105,20 @@ describe("Aceite, arquivos e auditoria", () => {
   });
   it("bucket de contratos é privado e separado do bucket de documentos dos escritórios", async () => {
     expect((await db.query<{ public: boolean }>("select public from storage.buckets where id='contratos-saas'")).rows[0].public).toBe(false);
+  });
+});
+
+describe("Reconciliação de prévias presas (dry run antes de aplicar)", () => {
+  it("prévia antiga do mesmo titular/plano vira SUPERSEDED; vencida vira EXPIRED; aceita/vinculada nunca muda; dry run não altera", async () => {
+    const mk = (n: string, email: string, ago: string, extra = "") => db.query(`insert into public.saas_contracts (number, session_token_sha256, template_version_id, template_status_at_render, plan_id, cycle, amount, plan_snapshot, supplier_snapshot, party, created_at, expires_at, status${extra ? ", accepted_at" : ""})
+      values ($1, md5($1), $2, 'REVISAO_JURIDICA', 'solo', 'mensal', 9990, '{}', '{}', jsonb_build_object('kind','PF','email',$3::text,'cpf','52998224725'), now() - $4::interval, now() - $4::interval + interval '7 days', 'READY_FOR_REVIEW'${extra ? ", now()" : ""})`, [n, tpl, email, ago]);
+    await mk("R-OLD", "r@x.test", "3 days"); await mk("R-NEW", "r@x.test", "1 day"); await mk("R-EXP", "s@x.test", "10 days"); await mk("R-ACC", "r@x.test", "5 days", "acc");
+    const dry = await as<{ number: string; classe: string; acao: string }>("service", "select contrato number, classe, acao from public.saas_reconcile_contracts(false) where contrato like 'R-%'");
+    expect(Object.fromEntries(dry.map((r) => [r.number, r.classe]))).toEqual({ "R-OLD": "substituido", "R-NEW": "em_andamento", "R-EXP": "expirado", "R-ACC": "aceito_ou_vinculado" });
+    expect((await db.query<{ s: string }>("select status s from public.saas_contracts where number = 'R-OLD'")).rows[0].s).toBe("READY_FOR_REVIEW"); // dry run não muda
+    await as("service", "select * from public.saas_reconcile_contracts(true)");
+    const st = Object.fromEntries((await db.query<{ number: string; status: string; sb: string | null }>("select c.number, c.status, (select number from public.saas_contracts n where n.id = c.superseded_by) sb from public.saas_contracts c where c.number like 'R-%'")).rows.map((r) => [r.number, `${r.status}${r.sb ? `>${r.sb}` : ""}`]));
+    expect(st).toEqual({ "R-OLD": "SUPERSEDED>R-NEW", "R-NEW": "READY_FOR_REVIEW", "R-EXP": "EXPIRED", "R-ACC": "READY_FOR_REVIEW" });
+    expect(await fails(U.ta, "select * from public.saas_reconcile_contracts(true)")).toMatch(/permission denied/);
   });
 });

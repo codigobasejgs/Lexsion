@@ -19,6 +19,7 @@ test.use({ extraHTTPHeaders: { "x-forwarded-for": `198.51.100.${Math.floor(Math.
 async function open(page: Page, plano = "profissional") {
   await page.goto(`/contratar?plano=${plano}`);
   const go = page.getByRole("button", { name: "Continuar" });
+  await go.or(page.getByText("ainda não foi liberada")).first().waitFor({ timeout: 30_000 }).catch(() => null);
   test.skip((await go.count()) === 0, "contratação indisponível neste ambiente (sem chave do servidor ou planos não aprovados)");
   await page.evaluate(() => sessionStorage.clear());
   return go;
@@ -72,7 +73,7 @@ test("CTR-03: validação por campo (CPF, PJ sem poderes) no navegador; nada é 
   await expect(page.getByRole("checkbox", { name: /poderes para contratar/ })).not.toBeChecked(); // não vem marcado
 });
 
-test("CTR-04: revisão traz o texto do SERVIDOR com nº e hash; sem aprovação jurídica não há aceite nem pagamento", async ({ page }) => {
+test("CTR-04: revisão traz o texto do SERVIDOR com nº e hash; sem configuração completa: indisponível, cadastro preservado, sem fila de aprovação", async ({ page }) => {
   await (await open(page)).click();
   await fillPF(page);
   await expect(page.getByRole("checkbox", { name: /novidades/ })).not.toBeChecked(); // marketing opcional, desmarcado
@@ -81,21 +82,23 @@ test("CTR-04: revisão traz o texto do SERVIDOR com nº e hash; sem aprovação 
   await expect(paper).toContainText(/Nº LX-\d{4}-[0-9A-F]{10}/);
   await expect(paper).toContainText(/SHA-256 do texto: [0-9a-f]{64}/);
   await expect(paper).toContainText("CPF sob o nº 529.982.247-25");
-  await expect(page.getByText("Contratação online em preparação.")).toBeVisible();
-  await expect(page.getByTestId("avise-me")).toBeVisible(); // nunca beco sem saída (CT-08)
-  await expect(page.getByRole("link", { name: "Voltar aos planos" }).last()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continuar para o aceite" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Aceitar eletronicamente" })).toHaveCount(0);
+  // Produção hoje: condições da plataforma ainda não configuradas ⇒ indisponível (mensagem específica), nunca
+  // "revisão jurídica" nem lista de espera. Com a configuração completa, o fluxo segue (real-contratacao-fluxo).
+  await expect(page.getByText(/revisão jurídica|aprovação jurídica|em preparação/i)).toHaveCount(0);
+  await expect(page.getByTestId("avise-me")).toHaveCount(0);
+  const ok = await page.getByRole("button", { name: "Continuar para o aceite" }).count();
+  if (!ok) await expect(page.getByTestId("contrato-indisponivel")).toContainText("Seus dados ficam salvos");
+  await expect(page.getByRole("link", { name: "Voltar aos planos" }).first()).toBeVisible();
   // Minuta em PDF real (A4, com tarja) antes do aceite
   const dl = page.waitForEvent("download");
-  await page.getByRole("link", { name: /Baixar prévia em PDF/ }).click();
+  await page.getByRole("link", { name: /Baixar (prévia em )?PDF/ }).click();
   expect((await dl).suggestedFilename()).toMatch(/^minuta-lexsion-LX-/);
   // Voltar preserva os dados
   await page.getByRole("button", { name: "Corrigir dados" }).click();
   await expect(page.getByLabel("Nome completo", { exact: true })).toHaveValue("Ana Exemplo Teste");
 });
 
-test("CTR-05: API recusa aceite sem modelo aprovado e token forjado; preço não vem do navegador", async ({ request }) => {
+test("CTR-05: API recusa token forjado; preço não vem do navegador", async ({ request }) => {
   const forged = await request.post("/api/contrato", { data: { action: "accept", token: "x".repeat(32), hash: "h", read: true, agree: true, otp: "123456" } });
   expect([404, 503]).toContain(forged.status());
   const r = await request.post("/api/contrato", { data: { action: "save", plan: "profissional", cycle: "mensal", amount: 100, party: { kind: "PF" }, slug: "x" } });

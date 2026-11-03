@@ -56,6 +56,7 @@ test("CONTR-05: termos de contratação publicados com versão, teste grátis, r
 test("CONTR-06: resumo da contratação mostra o teste grátis e que não pede cartão (quando liberado)", async ({ page }) => {
   await page.goto("/contratar?plano=profissional");
   const go = page.getByRole("button", { name: "Continuar" });
+  await go.or(page.getByText("ainda não foi liberada")).first().waitFor({ timeout: 30_000 }); // a tela retoma a tentativa antes
   if (!(await go.count())) { await expect(page.getByRole("status")).toContainText("ainda não foi liberada"); return; }
   const resumo = page.getByLabel("Resumo da contratação");
   await expect(resumo).toContainText(/dias grátis, depois R\$\s249,90/); // \s: o Intl usa espaço não separável

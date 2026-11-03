@@ -64,7 +64,10 @@ export async function activate(orderNsu: string) {
     // Conta do titular: convite do Auth (o link define a senha). Conta existente é reaproveitada.
     const email = o.customer.email.toLowerCase();
     let ownerId: string | undefined;
-    const { data: inv, error: invErr } = await db.auth.admin.inviteUserByEmail(email, { data: { full_name: o.customer.name }, redirectTo: `${SITE}/redefinir-senha` });
+    // Servidor de TESTE com e-mail sintético (.invalid): cria a conta sem enviar convite (o teste define a senha).
+    const qa = process.env.SAAS_CONFIG_NS === "qa" && email.endsWith("@lexsion-qa.invalid");
+    const { data: inv, error: invErr } = qa ? await db.auth.admin.createUser({ email, email_confirm: true, user_metadata: { full_name: o.customer.name } })
+      : await db.auth.admin.inviteUserByEmail(email, { data: { full_name: o.customer.name }, redirectTo: `${SITE}/redefinir-senha` });
     ownerId = inv?.user?.id;
     if (invErr) {
       if (!/already|registered|exists/i.test(invErr.message)) throw new Error("convite do titular não enviado");
@@ -77,7 +80,7 @@ export async function activate(orderNsu: string) {
     if (error) throw new Error(error.message);
     // Contrato aceito que originou o pedido: passa a pertencer ao escritório (titular lê em Minha assinatura).
     await db.from("saas_contracts").update({ organization_id: org, status: "ACTIVE", updated_at: new Date().toISOString() }).eq("order_id", o.id);
-    await welcome(o, !invErr).catch(() => false);
+    if (!qa) await welcome(o, !invErr).catch(() => false); // e-mail sintético de teste não recebe mensagem
     return "concluida";
   } catch (e) {
     const msg = (e as Error).message.slice(0, 200);

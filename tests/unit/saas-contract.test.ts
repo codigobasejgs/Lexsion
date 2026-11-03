@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_TEMPLATE, DRAFT_BANNER, fields, pendingItems, renderContract, validateParty, type Party, type RenderCtx } from "@/domain/saas-contract";
+import { DEFAULT_TEMPLATE, DRAFT_BANNER, fields, missingConditions, pendingItems, renderContract, validateParty, type Party, type RenderCtx } from "@/domain/saas-contract";
 
 vi.mock("server-only", () => ({}));
 const { contractPdf } = await import("@/lib/contract-pdf");
@@ -62,16 +62,21 @@ describe("texto do contrato", () => {
     expect(h(renderContract(DEFAULT_TEMPLATE, ctx(pf, { plan: { ...plan, price_monthly: 24991 } })))).not.toBe(base);
     expect(h(renderContract(DEFAULT_TEMPLATE, ctx(pf)))).toBe(base); // determinístico
   });
-  it("2026.11-1: decisões do proprietário no texto; só o que não foi comprovado continua pendente", () => {
+  it("2026.11-1: decisões do proprietário no texto; sem pendência fixa no modelo; condições da plataforma configuráveis", () => {
     const t = renderContract(DEFAULT_TEMPLATE, ctx(pf));
     for (const s of ["aviso prévio de 30 (trinta) dias", "sem multa nem juros", "Não há reembolso proporcional", "em até 7 (sete) dias da primeira contratação", "10 (dez) dias corridos", "preservados por 90 (noventa) dias", "art. 63 do Código de Processo Civil", "prazo máximo de 1 (um) dia útil", "Resolução CD/ANPD nº 15/2024"]) expect(t).toContain(s);
     expect(t).not.toMatch(/duas etapas|autenticador/i); // sem TOTP: o contrato não promete segundo fator
     expect(t).toMatch(/WhatsApp e de inteligência artificial não estão ativas para dados de clientes/);
-    const p = pendingItems(DEFAULT_TEMPLATE).join(" | ").toLowerCase();
-    for (const s of ["acesso técnico", "resend", "infinitepay", "matriz individual"]) expect(p).toContain(s);
-    for (const s of ["reajuste", "multa", "reembolso", "sla", "foro", "retenção"]) expect(p).not.toContain(s);
+    // Sem aprovação manual: o MODELO não tem pendência fixa; as condições da plataforma vêm da configuração.
+    expect(pendingItems(DEFAULT_TEMPLATE)).toEqual([]);
+    const semCondicoes = renderContract(DEFAULT_TEMPLATE, ctx(pf, { supplier: { ...supplier, contact_email: null, conditions: {} } }));
+    expect(missingConditions({ contact_email: null, conditions: {} }).map((m) => m.key)).toEqual(["contact_email", "acesso_tecnico", "resend_local", "infinitepay_papel", "transferencia"]);
+    expect(semCondicoes).toContain("[PENDENTE: Transferência internacional"); // falta configurar ⇒ texto não aceitável
+    const completo = renderContract(DEFAULT_TEMPLATE, ctx(pf, { supplier: { ...supplier, contact_email: "contato@exemplo.test", conditions: { acesso_tecnico: "AT", resend_local: "EUA", infinitepay_papel: "Controladora independente, Brasil", transferencia: "Cláusulas-padrão ANPD" } } }));
+    expect(completo).not.toContain("[PENDENTE");
+    expect(completo).toContain("Papel e localização: Controladora independente, Brasil.");
+    expect(DEFAULT_TEMPLATE.status).not.toBe("APROVADO");
     expect(DEFAULT_TEMPLATE.version).toBe("2026.11-1");
-    expect(DEFAULT_TEMPLATE.status).toBe("REVISAO_JURIDICA");
   });
 });
 
