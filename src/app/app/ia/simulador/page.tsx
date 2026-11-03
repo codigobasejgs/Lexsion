@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Bot, Play, UserRound } from "lucide-react";
 import { Guard } from "@/components/guard";
-import { useCollection } from "@/components/providers";
+import { useCollection, useSession } from "@/components/providers";
 import { PageHeader, SimulatedBadge } from "@/components/ui";
 import { Feedback, useAction, useUrlState } from "@/modules/shared";
 import { AiNav } from "@/modules/ai/subnav";
@@ -25,7 +25,66 @@ function reply(a: AgentConfig, p: PersonaKey, i: number): string {
   return "Vou chamar uma pessoa da equipe para te atender agora.";
 }
 
+/** Operação: conversa livre com o modelo real e o rascunho atual. Nada é enviado ao WhatsApp nem gravado. */
+function LiveSimulator() {
+  const url = useUrlState();
+  const { ctx } = useSession();
+  const agents = useCollection("agents");
+  const [agentId, setAgentId] = useState(url.get("agente") ?? "");
+  const [turns, setTurns] = useState<{ role: "user" | "model"; text: string; note?: string }[]>([]);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const a = agents.data?.find((x) => x.id === agentId) ?? agents.data?.[0];
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!a || !ctx || !draft.trim() || busy) return;
+    const history = [...turns, { role: "user" as const, text: draft.trim() }];
+    setTurns(history); setDraft(""); setBusy(true); setError(null);
+    const r = await fetch("/api/ia/simulador", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: ctx.organizationId, agentId: a.id, history: history.map(({ role, text }) => ({ role, text })) }) }).catch(() => null);
+    const j = (await r?.json().catch(() => null)) as { ok: boolean; data?: { text: string | null; handoff: string | null }; error?: { message: string } } | null;
+    setBusy(false);
+    if (!j?.ok) { setError(j?.error?.message ?? "Sem conexão. Tente de novo."); return; }
+    setTurns([...history, { role: "model", text: j.data!.text ?? "(sem resposta automática)", note: j.data!.handoff ? `Encaminhado à equipe: ${j.data!.handoff}` : undefined }]);
+  };
+  return (
+    <Guard area="ia">
+      <div className="mx-auto max-w-[900px]">
+        <PageHeader title="Simulador de agentes" description="Converse como se fosse o cliente. Usa o modelo real com o RASCUNHO atual da assistente (teste antes de publicar). Nada é enviado ao WhatsApp nem gravado." />
+        <AiNav />
+        <div className="mb-4 flex flex-wrap items-end gap-3">
+          <label className="block min-w-60 flex-1"><span className="label">Assistente</span><select className="field" value={a?.id ?? ""} onChange={(e) => { setAgentId(e.target.value); setTurns([]); }}>{agents.data?.map((x) => <option key={x.id} value={x.id}>{x.name} · v{x.version}</option>)}</select></label>
+          <button className="btn btn-ghost" onClick={() => setTurns([])} disabled={!turns.length}>Recomeçar</button>
+        </div>
+        {!agents.data?.length && <p className="panel p-4 text-sm">Crie uma assistente em Agentes para testar.</p>}
+        <section aria-label="Conversa de teste" aria-live="polite" className="panel mb-3 min-h-40 space-y-3 p-4">
+          {!turns.length && <p className="text-sm text-fg-muted">Escreva abaixo a primeira mensagem do cliente.</p>}
+          {turns.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "model" ? "justify-end" : ""}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.role === "model" ? "border border-ai/30 bg-ai-bg" : "border border-line bg-surface"}`}>
+                <p className="mb-1 flex items-center gap-1 text-xs font-medium text-fg-muted">{m.role === "model" ? <><Bot aria-hidden className="size-3.5" /> Assistente (teste)</> : <><UserRound aria-hidden className="size-3.5" /> Cliente (você)</>}</p>
+                <p className="whitespace-pre-wrap">{m.text}</p>
+                {m.note && <p className="mt-1 text-xs text-warning">{m.note}</p>}
+              </div>
+            </div>
+          ))}
+          {busy && <p className="text-right text-sm text-fg-muted">Gerando…</p>}
+        </section>
+        {error && <p role="alert" className="mb-2 text-sm text-danger">{error}</p>}
+        <form onSubmit={send} className="flex gap-2">
+          <label className="flex-1"><span className="sr-only">Mensagem do cliente</span><input className="field" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ex.: Oi, quero saber sobre aposentadoria" maxLength={2000} /></label>
+          <button className="btn btn-primary" disabled={!draft.trim() || busy || !a}><Play aria-hidden className="size-4" /> Enviar</button>
+        </form>
+      </div>
+    </Guard>
+  );
+}
+
 export default function SimuladorPage() {
+  return useSession().mode === "real" ? <LiveSimulator /> : <DemoSimulator />;
+}
+
+function DemoSimulator() {
   const url = useUrlState();
   const agents = useCollection("agents");
   const runs = useCollection("agentRuns");

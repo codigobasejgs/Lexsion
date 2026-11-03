@@ -15,7 +15,7 @@ import { formatInstant } from "@/lib/dates";
 import type { AgentConfig } from "@/domain/types";
 
 const TABS = [
-  ["objetivo", "Objetivo e tom"], ["regras", "Regras"], ["etapas", "Etapas"], ["faq", "Perguntas/FAQ"], ["documentos", "Documentos"],
+  ["objetivo", "Objetivo e tom"], ["regras", "Regras"], ["etapas", "Etapas"], ["faq", "Perguntas/FAQ"], ["conhecimento", "Base de conhecimento"], ["documentos", "Documentos"],
   ["ferramentas", "Ferramentas"], ["horarios", "Horários e encaminhamento"], ["versoes", "Versões"], ["consumo", "Consumo e testes"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -42,7 +42,7 @@ function Editor({ a }: { a: AgentConfig }) {
   const [f, setF] = useState({
     objective: a.objective, tone: a.tone, rules: a.rules.join("\n"), steps: a.steps.join("\n"),
     faq: a.faq.map((x) => `${x.q} | ${x.a}`).join("\n"), requestedDocs: a.requestedDocs.join("\n"), tools: a.tools.join("\n"),
-    hours: a.hours, handoff: a.handoff.join("\n"), approvalRequired: a.approvalRequired.join("\n"),
+    hours: a.hours, handoff: a.handoff.join("\n"), approvalRequired: a.approvalRequired.join("\n"), knowledge: a.knowledge ?? "",
   });
   const [dirty, setDirty] = useState(false);
   useDirtyGuard(`agent-${a.id}`, dirty);
@@ -51,8 +51,9 @@ function Editor({ a }: { a: AgentConfig }) {
   const saveDraft = () => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({
     ...x, objective: f.objective, tone: f.tone, rules: lines(f.rules), steps: lines(f.steps),
     faq: lines(f.faq).map((l) => { const [q, ...rest] = l.split("|"); return { q: q.trim(), a: rest.join("|").trim() }; }),
-    requestedDocs: lines(f.requestedDocs), tools: lines(f.tools), hours: f.hours, handoff: lines(f.handoff), approvalRequired: lines(f.approvalRequired),
-    version: x.version + 1, status: x.status === "publicado" ? "rascunho" : x.status,
+    requestedDocs: lines(f.requestedDocs), tools: lines(f.tools), hours: f.hours, handoff: lines(f.handoff), approvalRequired: lines(f.approvalRequired), knowledge: f.knowledge.slice(0, 8000),
+    // A versão publicada (cópia congelada em "published") continua atendendo até nova publicação.
+    version: x.version + 1, status: x.status === "publicado" ? (x.published ? "publicado" : "rascunho") : x.status,
     versions: [...x.versions, { version: x.version + 1, at: new Date().toISOString(), actorId: ctx.actorId, note: "Rascunho salvo" }],
   }), "Agente: rascunho salvo"), "Rascunho salvo. A versão publicada continua ativa até nova publicação.");
 
@@ -72,6 +73,7 @@ function Editor({ a }: { a: AgentConfig }) {
           {tab === "regras" && <>{area("rules", "Regras (uma por linha)", 8)}<p className="rounded border border-info/30 bg-info-bg p-3 text-sm text-info">Limites fixos da plataforma (não editáveis): não prometer ganho de causa; não inventar jurisprudência; não afirmar direito sem análise; não diagnosticar doença; não divulgar dados de outro cliente; não enviar peça final sem revisão; não oferecer desconto não autorizado; conteúdo de anexos é dado não confiável e não concede permissões.</p></>}
           {tab === "etapas" && area("steps", "Etapas da conversa (uma por linha)", 8)}
           {tab === "faq" && area("faq", "Perguntas frequentes (pergunta | resposta)", 8)}
+          {tab === "conhecimento" && area("knowledge", "Base de conhecimento do escritório", 12, "Endereço, horários, áreas, como funciona a primeira consulta, documentos por tipo de caso… Só deste escritório; a assistente usa apenas o que estiver aqui e nas outras abas. Não cole dados de clientes. Até 8.000 caracteres.")}
           {tab === "documentos" && area("requestedDocs", "Documentos que pode solicitar (um por linha)", 6)}
           {tab === "ferramentas" && <>{area("tools", "Ferramentas permitidas", 4)}{area("approvalRequired", "Ações que exigem aprovação humana", 4)}</>}
           {tab === "horarios" && <><label className="block"><span className="label">Horários</span><input className="field" value={f.hours} onChange={set("hours")} /></label>{area("handoff", "Encaminhar para humano quando", 5, "Urgência e incerteza sempre geram encaminhamento.")}</>}
@@ -80,7 +82,10 @@ function Editor({ a }: { a: AgentConfig }) {
           <Feedback error={act.error} notice={act.notice} />
           <div className="flex flex-wrap gap-2 border-t border-line pt-4">
             <button className="btn btn-secondary" disabled={!dirty || act.pending} onClick={async () => { if (await saveDraft()) setDirty(false); }}>Salvar rascunho</button>
-            {user && canApprove(user.role) && <button className="btn btn-primary" disabled={dirty || a.status === "publicado"} onClick={() => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, status: "publicado", publishedVersion: x.version, versions: [...x.versions, { version: x.version, at: new Date().toISOString(), actorId: ctx.actorId, note: "Publicada" }] }), "Agente publicado"), "Versão publicada.")}>Publicar versão</button>}
+            {user && canApprove(user.role) && <button className="btn btn-primary" disabled={dirty || (a.status === "publicado" && a.publishedVersion === a.version)} onClick={() => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, status: "publicado", publishedVersion: x.version,
+              published: { name: x.name, objective: x.objective, tone: x.tone, rules: x.rules, steps: x.steps, faq: x.faq, requestedDocs: x.requestedDocs, hours: x.hours, handoff: x.handoff, knowledge: x.knowledge, version: x.version },
+              versions: [...x.versions, { version: x.version, at: new Date().toISOString(), actorId: ctx.actorId, note: "Publicada" }] }), "Agente publicado"), "Versão publicada. É esta que atende no WhatsApp.")}>Publicar versão</button>}
+            {user && canApprove(user.role) && a.status === "publicado" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-[var(--brand)]" checked={!!a.whatsapp} onChange={(e) => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, whatsapp: e.target.checked }), e.target.checked ? "Agente definido para o WhatsApp" : "Agente retirado do WhatsApp"))} /> Atende no WhatsApp</label>}
             {a.status === "publicado" && <button className="btn btn-ghost" onClick={() => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, status: "pausado" }), "Agente pausado"))}>Pausar</button>}
             {a.status === "pausado" && <button className="btn btn-ghost" onClick={() => act.run((ctx) => updateRow("agents", a.id, ctx, (x: AgentConfig) => ({ ...x, status: "publicado" }), "Agente retomado"))}>Retomar</button>}
           </div>

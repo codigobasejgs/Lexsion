@@ -14,7 +14,15 @@ const DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT_PER_ORG ?? 200); // chamad
 const HANDOFF_TOKEN = "[[ENCAMINHAR_HUMANO]]";
 export const HANDOFF_ASK = /\b(atendente|humano|pessoa|advogad[oa]|falar com algu[eé]m)\b/i;
 
-type Agent = { name?: string; objective?: string; tone?: string; rules?: string[]; faq?: { q: string; a: string }[]; hours?: string; handoff?: string[]; status?: string };
+type Agent = { name?: string; objective?: string; tone?: string; rules?: string[]; steps?: string[]; faq?: { q: string; a: string }[]; requestedDocs?: string[]; hours?: string; handoff?: string[]; knowledge?: string; status?: string; whatsapp?: boolean; version?: number; published?: Agent };
+
+/** Assistente que atende o WhatsApp: a marcada para o canal (ou a primeira publicada), na VERSÃO PUBLICADA congelada. */
+export function pickAgent(rows: Agent[]): Agent | null {
+  const pub = rows.filter((a) => a.status === "publicado");
+  const a = pub.find((x) => x.whatsapp) ?? pub[0];
+  return a ? (a.published ?? a) : null;
+}
+export const handoffOut = (out: string) => ({ wantsHuman: out.includes(HANDOFF_TOKEN), reply: out.replace(HANDOFF_TOKEN, "").trim().slice(0, 1500) });
 
 /** Prompt de sistema: regras fixas da plataforma primeiro (o conteúdo do agente e das mensagens é não confiável). */
 export function systemPrompt(officeName: string, a: Agent) {
@@ -31,10 +39,13 @@ export function systemPrompt(officeName: string, a: Agent) {
     "INFORMAÇÕES DO ESCRITÓRIO (conteúdo fornecido pelo escritório):",
     a.objective ? `Objetivo: ${a.objective}` : "",
     a.hours ? `Horários: ${a.hours}` : "",
+    (a.steps ?? []).length ? `Roteiro da conversa: ${(a.steps ?? []).join(" → ")}` : "",
+    (a.requestedDocs ?? []).length ? `Documentos que pode pedir: ${(a.requestedDocs ?? []).join(", ")}` : "",
     (a.rules ?? []).length ? `Regras do escritório: ${(a.rules ?? []).join("; ")}` : "",
     (a.handoff ?? []).length ? `Encaminhar a humano quando: ${(a.handoff ?? []).join("; ")}` : "",
     faq ? `Perguntas frequentes:\n${faq}` : "",
-  ].filter(Boolean).join("\n").slice(0, 12_000);
+    a.knowledge?.trim() ? `Base de conhecimento do escritório:\n${a.knowledge.trim().slice(0, 8_000)}` : "",
+  ].filter(Boolean).join("\n").slice(0, 16_000);
 }
 
 /** Chamada ao Gemini (servidor). Devolve texto ou null em falha/tempo. */
@@ -77,7 +88,7 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   const { count } = await db.from("ai_usage").select("id", { count: "exact", head: true }).eq("organization_id", org).eq("purpose", "atendimento").gte("at", new Date(Date.now() - 86_400_000).toISOString());
   if ((count ?? 0) >= DAILY_LIMIT) { await toHuman(org, conv, jobId, "limite diário da assistente atingido"); return "encaminhado"; }
   const { data: agents } = await db.from("org_records").select("data").eq("organization_id", org).eq("collection", "agents");
-  const agent = (agents ?? []).map((a) => a.data as Agent).find((a) => a.status === "publicado");
+  const agent = pickAgent((agents ?? []).map((a) => a.data as Agent));
   if (!agent) { await toHuman(org, conv, jobId, "nenhuma assistente publicada"); return "encaminhado"; }
   const { data: msgs } = await db.from("org_records").select("data").eq("organization_id", org).eq("collection", "messages").contains("data", { conversationId: conv });
   const hist = (msgs ?? []).map((m) => m.data as { author: string; text: string; at: string }).filter((m) => m.author === "contato" || m.author === "ia" || m.author === "equipe").sort((a, b) => a.at.localeCompare(b.at)).slice(-12)
@@ -87,8 +98,7 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   const out = await deps.gemini(systemPrompt(o.name, agent), hist);
   await db.from("ai_usage").insert({ organization_id: org, actor_id: null, purpose: "atendimento", model: MODEL, input_chars: hist.reduce((s, h) => s + h.text.length, 0), output_chars: out?.length ?? 0 });
   if (!out) { await toHuman(org, conv, jobId, "assistente sem resposta (falha ou tempo)"); return "encaminhado"; }
-  const wantsHuman = out.includes(HANDOFF_TOKEN);
-  const reply = out.replace(HANDOFF_TOKEN, "").trim().slice(0, 1500);
+  const { wantsHuman, reply } = handoffOut(out);
   // Portão: trava a conversa e confere modo + versão. Humano assumiu durante a geração ⇒ descartado aqui.
   const { data: can } = await db.rpc("ai_job_claim_send", { p_job: jobId });
   if (can !== true) return "descartado";

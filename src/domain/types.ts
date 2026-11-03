@@ -506,6 +506,12 @@ export interface AgentConfig extends OrgEntity {
   publishedVersion?: number;
   versions: { version: number; at: string; actorId: ID; note: string }[];
   usage: { conversations: number; handoffs: number };
+  /** Assistente escolhida para responder no WhatsApp (sem nenhuma marcada, a primeira publicada). */
+  whatsapp?: boolean;
+  /** Base de conhecimento do escritório (texto livre; só deste escritório). */
+  knowledge?: string;
+  /** Cópia congelada da versão publicada: é a que atende no WhatsApp enquanto o rascunho é editado. */
+  published?: Pick<AgentConfig, "name" | "objective" | "tone" | "rules" | "steps" | "faq" | "requestedDocs" | "hours" | "handoff" | "knowledge" | "version">;
 }
 
 export interface AgentRun extends OrgEntity {
