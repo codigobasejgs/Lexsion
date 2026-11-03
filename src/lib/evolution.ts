@@ -5,7 +5,8 @@ import crypto from "node:crypto";
 // Regra de convivência: o servidor Evolution é compartilhado; a LexSion só cria/usa instâncias "lexsion-<slug>".
 const URL_ = (process.env.EVOLUTION_URL ?? "").replace(/\/+$/, "");
 const KEY = process.env.EVOLUTION_API_KEY ?? "";
-export const evolutionConfigured = () => /^https:\/\//.test(URL_) && KEY.length >= 20;
+// http só para o provedor simulado local dos testes de integração (127.0.0.1); produção exige https.
+export const evolutionConfigured = () => (/^https:\/\//.test(URL_) || /^http:\/\/127\.0\.0\.1:\d+$/.test(URL_)) && KEY.length >= 20;
 export const instanceFor = (slug: string) => `lexsion-${slug}`.slice(0, 68);
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null }> {

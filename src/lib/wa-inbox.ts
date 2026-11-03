@@ -41,7 +41,9 @@ export async function recordEvent(org: string, instance: string, ev: Evo): Promi
   const ts = Number(ev.data?.messageTimestamp ?? 0);
   // Payload mínimo: sem tokens, sem mídia binária. Texto da mensagem é necessário para a caixa de entrada.
   const { text, media } = extract(ev.data?.message);
-  const payload = { pushName: String(ev.data?.pushName ?? "").slice(0, 120), text: text.slice(0, 4000), media, state: ev.data?.state ?? null, jidAlt: k?.remoteJidAlt ?? null };
+  // Grupo/status/broadcast/canal: fica só o registro de que chegou (observabilidade), sem conteúdo nem nome.
+  const personal = !jid || jidKind(jid) === "pessoa";
+  const payload = personal ? { pushName: String(ev.data?.pushName ?? "").slice(0, 120), text: text.slice(0, 4000), media, state: ev.data?.state ?? null, jidAlt: k?.remoteJidAlt ?? null } : { media: null, state: null };
   const { data, error } = await db.from("wa_events").insert({ organization_id: org, instance_name: instance, provider_id: providerId.slice(0, 200), kind, remote_jid: jid || null, from_me: !!k?.fromMe, payload,
     provider_ts: ts ? new Date(ts * 1000).toISOString() : null }).select("id").single();
   if (error?.code === "23505") return null; // reentrega/duplicado: já gravado
@@ -51,6 +53,8 @@ export async function recordEvent(org: string, instance: string, ev: Evo): Promi
 
 type Ev = { id: number; organization_id: string; kind: string; provider_id: string; remote_jid: string | null; from_me: boolean; payload: { pushName?: string; text?: string; media?: string | null; state?: string | null; jidAlt?: string | null }; provider_ts: string | null; received_at: string; attempts: number };
 const digits = (s: string) => s.replace(/\D/g, "").slice(-11);
+/** Espera para agrupar mensagens seguidas do contato numa resposta só. */
+export const DEBOUNCE_MS = Math.min(Math.max(Number(process.env.AI_DEBOUNCE_MS ?? 8000), 200), 30_000);
 
 /** Processa UM evento. Idempotente: mensagem tem id determinístico (wa-<id do provedor>). */
 export async function processEvent(e: Ev): Promise<{ status: "feito" | "ignorado"; reason?: string; aiJob?: number | null }> {
@@ -118,7 +122,7 @@ export async function processEvent(e: Ev): Promise<{ status: "feito" | "ignorado
   }
   if (!ctl || ctl.mode !== "ia" || ctl.is_group || !text.trim() || !aiOn) return { status: "feito", aiJob: null };
   await db.from("ai_jobs").update({ status: "cancelado", reason: "nova mensagem do contato (agrupada)", finished_at: new Date().toISOString() }).eq("organization_id", org).eq("conversation_id", conv.id).eq("status", "pendente");
-  const { data: job } = await db.from("ai_jobs").insert({ organization_id: org, conversation_id: conv.id, trigger_message_id: mid, control_version: ctl.version, run_after: new Date(Date.now() + 8_000).toISOString() }).select("id").maybeSingle();
+  const { data: job } = await db.from("ai_jobs").insert({ organization_id: org, conversation_id: conv.id, trigger_message_id: mid, control_version: ctl.version, run_after: new Date(Date.now() + DEBOUNCE_MS).toISOString() }).select("id").maybeSingle();
   return { status: "feito", aiJob: (job?.id as number | undefined) ?? null };
 }
 

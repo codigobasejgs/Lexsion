@@ -10,6 +10,8 @@ import { jidKind, waTarget } from "@/lib/wa-inbox";
 // ⇒ conversa passa para humano com aviso à equipe; o contato nunca recebe erro técnico.
 const KEY = process.env.GEMINI_API_KEY ?? "";
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+// Só o provedor simulado local dos testes de integração substitui o endereço oficial.
+const BASE = /^http:\/\/127\.0\.0\.1:\d+$/.test(process.env.GEMINI_API_BASE ?? "") ? process.env.GEMINI_API_BASE! : "https://generativelanguage.googleapis.com";
 const DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT_PER_ORG ?? 200); // chamadas de atendimento por escritório/dia
 const HANDOFF_TOKEN = "[[ENCAMINHAR_HUMANO]]";
 export const HANDOFF_ASK = /\b(atendente|humano|pessoa|advogad[oa]|falar com algu[eé]m)\b/i;
@@ -51,7 +53,7 @@ export function systemPrompt(officeName: string, a: Agent) {
 /** Chamada ao Gemini (servidor). Devolve texto ou null em falha/tempo. */
 export async function gemini(system: string, history: { role: "user" | "model"; text: string }[]): Promise<string | null> {
   if (KEY.length < 20) return null;
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+  const r = await fetch(`${BASE}/v1beta/models/${MODEL}:generateContent`, {
     method: "POST", headers: { "x-goog-api-key": KEY, "Content-Type": "application/json" }, signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: history.map((h) => ({ role: h.role, parts: [{ text: h.text.slice(0, 2000) }] })), generationConfig: { temperature: 0.3, maxOutputTokens: 600 } }),
   }).catch(() => null);
@@ -116,9 +118,11 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
 }
 
 /** Trabalhos vencidos (debounce). Chamado após o webhook e pelo cron. */
-export async function drainJobs(limit = 10) {
+export async function drainJobs(limit = 10, org?: string) {
   const db = supabaseAdmin();
-  const { data } = await db.from("ai_jobs").select("id").eq("status", "pendente").lte("run_after", new Date().toISOString()).order("run_after").limit(limit);
+  let q = db.from("ai_jobs").select("id").eq("status", "pendente").lte("run_after", new Date().toISOString()).order("run_after").limit(limit);
+  if (org) q = q.eq("organization_id", org);
+  const { data } = await q;
   const out: Record<string, number> = {};
   for (const j of data ?? []) { const r = await runJob(j.id as number); out[r] = (out[r] ?? 0) + 1; }
   return out;

@@ -3,7 +3,7 @@ import { after, NextResponse, type NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sha } from "@/lib/evolution";
 import { whatsappEnabled } from "@/lib/feature-gates";
-import { drainEvents, recordEvent, type Evo } from "@/lib/wa-inbox";
+import { DEBOUNCE_MS, drainEvents, recordEvent, type Evo } from "@/lib/wa-inbox";
 import { drainJobs } from "@/lib/wa-ai";
 
 // Webhook da Evolution para UM escritório. Autenticação: segredo por escritório (só o hash fica no banco),
@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
   if (id === undefined) return new NextResponse(null, { status: 500 });
   if (id !== null) after(async () => {
     await drainEvents(org);
-    await new Promise((r) => setTimeout(r, 9_000)); // espera o debounce (8 s) das mensagens seguidas
-    await drainJobs();
+    await new Promise((r) => setTimeout(r, DEBOUNCE_MS + 800)); // espera o agrupamento das mensagens seguidas
+    await drainJobs(10, org);
   });
   return ok();
 }
