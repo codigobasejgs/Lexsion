@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Download, HardDrive, Monitor, Moon, Palette, RotateCcw, Sun } from "lucide-react";
+import { Cloud, Download, HardDrive, Monitor, Moon, Palette, RotateCcw, Sun } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, Dialog, PageHeader } from "@/components/ui";
 import { InstallCard } from "@/components/pwa";
 import { Feedback, useAction, useUrlState } from "@/modules/shared";
-import { storageMode, readAll } from "@/services/mock/db";
+import { isRealMode, storageMode, readAll } from "@/services/mock/db";
 import { updateRow } from "@/services/mock/generic";
 import { ALL_AREAS } from "@/domain/areas";
 import { downloadText } from "@/domain/csv";
@@ -248,8 +248,16 @@ function Device() {
   return (
     <section className="space-y-3">
       <InstallCard force />
-      <p className="flex items-center gap-2 text-sm text-fg-muted"><HardDrive aria-hidden className="size-4" />{storageMode() === "memory" ? "Armazenamento local indisponível: dados só em memória até fechar a aba." : "Dados guardados neste navegador (IndexedDB)."} {usage}</p>
-      <button className="btn btn-secondary" onClick={async () => { const ok = await navigator.storage?.persist?.(); setUsage(ok ? "Armazenamento persistente concedido pelo navegador." : "O navegador não garantiu persistência; dados podem ser removidos se faltar espaço."); }}>Pedir armazenamento persistente</button>
+      {/* Operação real: os dados ficam no servidor (Supabase); o navegador guarda só cache. Demo: só neste navegador. */}
+      {isRealMode() ? (
+        <p className="flex items-center gap-2 text-sm text-fg-muted" data-testid="armazenamento"><Cloud aria-hidden className="size-4" />Dados salvos na nuvem do escritório (servidor da LexSion), acessíveis em qualquer dispositivo com o seu login. Este aparelho guarda apenas o aplicativo para abrir mais rápido.</p>
+      ) : (<>
+        <p className="flex items-center gap-2 text-sm text-fg-muted" data-testid="armazenamento"><HardDrive aria-hidden className="size-4" />{storageMode() === "memory" ? "Demonstração: armazenamento local indisponível; dados só em memória até fechar a aba." : "Demonstração: dados fictícios guardados só neste navegador."} {usage}</p>
+        <details className="text-sm"><summary className="cursor-pointer text-fg-muted">Avançado</summary>
+          <p className="mt-2 text-fg-muted">Pedir ao navegador para não apagar os dados da demonstração quando faltar espaço. Isso não é backup.</p>
+          <button className="btn btn-secondary mt-2" onClick={async () => { const ok = await navigator.storage?.persist?.(); setUsage(ok ? "Armazenamento persistente concedido pelo navegador." : "O navegador não garantiu persistência; dados podem ser removidos se faltar espaço."); }}>Pedir armazenamento persistente</button>
+        </details>
+      </>)}
     </section>
   );
 }

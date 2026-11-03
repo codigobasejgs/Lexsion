@@ -42,7 +42,13 @@ export async function POST(req: NextRequest) {
     const next = { ...(cur?.conditions as Record<string, string>) };
     for (const k of Object.keys(CONDITIONS) as ConditionKey[]) {
       const v = (s?.conditions as Record<string, unknown> | undefined)?.[k];
-      if (typeof v === "string") { if (v.trim()) next[k] = v.trim().slice(0, 2000); else delete next[k]; }
+      if (typeof v !== "string") continue;
+      const t = v.trim();
+      if (!t) { delete next[k]; continue; }
+      // O texto entra LITERALMENTE no contrato: recusa pergunta, conversa ou placeholder (vistos colados por engano).
+      const bad = /\?|\b(posso|você|voce|preciso|confirme|me diga|informe)\b|\[PENDENTE|\{\{|^(sim|não|nao|ok)$/i;
+      if (bad.test(t) || t.length < 8) return err(400, `“${CONDITIONS[k].label}”: escreva a cláusula como vai aparecer no contrato (sem perguntas, conversas ou marcadores). Ex.: ${CONDITIONS[k].hint}`);
+      next[k] = t.slice(0, 2000);
     }
     await db.from("saas_supplier_profile").update({ contact_email: email || null, contact_phone: String(s?.contact_phone ?? "").trim() || null, conditions: next, updated_at: new Date().toISOString(), updated_by: me }).eq("id", SUPPLIER_ID);
     await caudit(null, "condicoes.atualizadas", JSON.stringify({ contato: !!email, condicoes: Object.keys(next) }).slice(0, 300), me);

@@ -70,6 +70,21 @@ export function Inbox({ conversationId }: { conversationId?: string }) {
 
   const current = convs.data?.find((c) => c.id === conversationId);
 
+  // Operação: mensagens novas e mudança IA × humano chegam sem recarregar (Realtime com a RLS do usuário).
+  const live = useSession().mode === "real";
+  const orgId = ctx?.organizationId;
+  useEffect(() => {
+    if (!live || !orgId) return;
+    const sb = supabaseBrowser();
+    const ch = sb.channel(`inbox-${orgId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "org_records", filter: `organization_id=eq.${orgId}` }, (p: { new?: object; old?: object }) => {
+        const col = ((p.new && "collection" in p.new ? p.new : p.old) as { collection?: string } | undefined)?.collection;
+        if (col === "messages" || col === "conversations") invalidate("conversations", "messages");
+      })
+      .subscribe();
+    return () => { sb.removeChannel(ch); };
+  }, [live, orgId, invalidate]);
+
   // Marcar lida ao abrir.
   useEffect(() => {
     if (current && current.unread > 0 && ctx) inboxService.markRead(current.id, ctx).then(() => invalidate("conversations"));
@@ -209,6 +224,14 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
     await fn();
     await invalidate("conversations", "messages", "audit");
   };
+  // Operação: modo IA × humano é decidido no servidor (conversation_control, com trava e versão); demonstração: local.
+  const setAi = (m: "ia" | "humano" | "resolvido", local: () => Promise<unknown>) => act(async () => {
+    if (!live) return local();
+    const res = await fetch("/api/whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: ctx!.organizationId, action: "mode", conversationId: conv.id, mode: m }) }).catch(() => null);
+    const j = (await res?.json().catch(() => null)) as { ok: boolean; warning?: string; error?: { message: string } } | null;
+    if (!j?.ok) setError(j?.error?.message ?? "Sem conexão. Tente de novo.");
+    else if (j.warning) setError(j.warning);
+  });
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,18 +288,18 @@ function ConversationView({ conv, messages, backHref, showContext, toggleContext
       <div className={`flex flex-wrap items-center gap-2 border-b px-3 py-2 text-sm sm:px-4 ${conv.aiActive ? "border-ai/30 bg-ai-bg text-ai" : "border-info/30 bg-info-bg text-info"}`} data-tour="estado-ia">
         {conv.aiActive ? <Bot aria-hidden className="size-4" /> : <Hand aria-hidden className="size-4" />}
         <span className="min-w-0 flex-1 font-medium leading-tight">
-          {conv.status === "encerrada" ? "Conversa encerrada" : conv.aiActive ? <>Assistente virtual ativa <span className="font-normal opacity-80">(simulação)</span></> : "Humano no atendimento — assistente pausada"}
+          {conv.status === "encerrada" ? "Conversa encerrada" : conv.aiActive ? <>Assistente virtual ativa {!live && <span className="font-normal opacity-80">(simulação)</span>}</> : "Humano no atendimento — assistente pausada"}
         </span>
         {conv.status !== "encerrada" && (conv.aiActive ? (
-          <button className="btn btn-primary min-h-9" data-tour="assumir" onClick={() => act(async () => { await inboxService.takeOver(conv.id, ctx!); setMode("equipe"); })}>
+          <button className="btn btn-primary min-h-9" data-tour="assumir" onClick={() => { setMode("equipe"); setAi("humano", () => inboxService.takeOver(conv.id, ctx!)); }}>
             <Hand aria-hidden className="size-4" /> Assumir atendimento
           </button>
         ) : (
-          <button className="btn btn-secondary min-h-9" onClick={() => act(async () => { await inboxService.resumeAi(conv.id, ctx!); setMode("nota"); })}>
+          <button className="btn btn-secondary min-h-9" onClick={() => { setMode("nota"); setAi("ia", () => inboxService.resumeAi(conv.id, ctx!)); }}>
             <Bot aria-hidden className="size-4" /> Retomar assistente virtual
           </button>
         ))}
-        <button className="btn btn-ghost min-h-9 px-2" onClick={() => act(() => inboxService.setStatus(conv.id, conv.status === "encerrada" ? "aguardando_equipe" : "encerrada", ctx!))}>
+        <button className="btn btn-ghost min-h-9 px-2" onClick={() => setAi(conv.status === "encerrada" ? "humano" : "resolvido", () => inboxService.setStatus(conv.id, conv.status === "encerrada" ? "aguardando_equipe" : "encerrada", ctx!))}>
           {conv.status === "encerrada" ? "Reabrir" : "Encerrar"}
         </button>
       </div>
