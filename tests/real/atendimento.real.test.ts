@@ -220,4 +220,16 @@ describe.skipIf(!ON)("REAL — atendimento WhatsApp (servidor + Supabase real; p
     expect(sent.length).toBe(sentBefore);
     state = "open";
   });
+
+  it("vigia (cron): sem segredo 401; instância caída há mais de 1 h gera aviso no sino do escritório, uma vez por dia", async () => {
+    expect((await fetch(`${BASE}/api/cron/atendimento`)).status).toBe(401);
+    await admin.from("whatsapp_instances").update({ status: "desconectado", updated_at: new Date(Date.now() - 2 * 3_600_000).toISOString() }).eq("organization_id", orgB).throwOnError();
+    const call = () => fetch(`${BASE}/api/cron/atendimento`, { headers: { Authorization: `Bearer ${env.CRON_SECRET}` } });
+    expect((await call()).status).toBe(200);
+    expect((await call()).status).toBe(200);
+    const { data } = await admin.from("org_records").select("id,data").eq("organization_id", orgB).eq("collection", "notifications").like("id", "wa-desconectado-%");
+    expect(data).toHaveLength(1);
+    expect((data![0].data as { href: string }).href).toBe("/app/integracoes/evolution");
+    expect((await admin.from("org_records").select("id").eq("organization_id", orgA).eq("collection", "notifications").like("id", "wa-desconectado-%")).data).toEqual([]);
+  });
 });

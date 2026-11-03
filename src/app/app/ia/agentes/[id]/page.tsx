@@ -32,7 +32,8 @@ export default function AgentePage({ params }: PageProps<"/app/ia/agentes/[id]">
   const a = agents.data?.find((x) => x.id === id);
   if (agents.isPending) return <LoadingBlock />;
   if (!a) return <EmptyState title="Agente não encontrado" text="" action={<Link href="/app/ia/agentes" className="btn btn-secondary">Voltar</Link>} />;
-  return <Editor key={`${a.id}-${a.version}-${a.status}`} a={a} />;
+  // key só pelo id: salvar/publicar muda versão e status sem remontar (aviso de sucesso e aba aberta continuam).
+  return <Editor key={a.id} a={a} />;
 }
 
 function Editor({ a }: { a: AgentConfig }) {

@@ -49,7 +49,7 @@ test.afterAll(async () => {
   for (const u of Object.values(people)) await admin.auth.admin.deleteUser(u.id);
 });
 
-test("AST-01: titular cria a assistente, salva rascunho e publica; versão publicada fica congelada no banco", async ({ page }) => {
+test("AST-01: titular cria a assistente, salva rascunho e publica; versão publicada fica congelada no banco", async ({ page, isMobile }) => {
   await login(page, people.tit);
   await page.goto("/app/ia/agentes");
   await expect(page.getByText("Ambiente demonstrativo")).toHaveCount(0);
@@ -60,7 +60,9 @@ test("AST-01: titular cria a assistente, salva rascunho e publica; versão publi
   await d.getByLabel("Coleta de documentos").check();
   await d.getByRole("button", { name: "Criar rascunho" }).click();
   await page.waitForURL(/\/app\/ia\/agentes\/agents-/, { timeout: SLOW });
-  await page.getByRole("tab", { name: "Base de conhecimento" }).click();
+  // Celular: as seções viram um seletor; computador: abas.
+  if (isMobile) await page.getByLabel("Seção").selectOption("conhecimento");
+  else await page.getByRole("tab", { name: "Base de conhecimento" }).click();
   await page.getByLabel("Base de conhecimento do escritório").fill(`Endereço: Rua QA, 1. Código ${tag}.`);
   await page.getByRole("button", { name: "Salvar rascunho" }).click();
   await expect(page.getByText(/Rascunho salvo/)).toBeVisible({ timeout: SLOW });
