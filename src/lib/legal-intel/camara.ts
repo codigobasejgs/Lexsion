@@ -25,16 +25,19 @@ export interface NormalizedDoc {
   raw: Record<string, unknown>;
 }
 
+// A API da Câmara passa por janelas de instabilidade de alguns minutos (HTTP 504 e timeouts de conexão, vistos em
+// 28/10, 30/10, 31/10 e 02/11). Retry exponencial com jitter: 5 tentativas, ~2+4+8+16 s (≈ 30 s) antes de desistir.
+const RETRIES = 4;
+const backoff = (attempt: number) => new Promise((res) => setTimeout(res, 2_000 * 2 ** attempt + Math.random() * 1_000));
 async function getJson<T>(url: string, attempt = 0): Promise<T> {
   if (!ALLOW.test(url)) throw new Error("URL fora da allowlist da Câmara");
   const r = await fetch(url, { headers: { accept: "application/json", "user-agent": UA }, signal: AbortSignal.timeout(20_000), cache: "no-store" }).catch((e: Error) => e);
   if (r instanceof Error) {
-    // Falha de rede/tempo esgotado: mesma política de retry exponencial; depois disso o erro sobe e a execução registra.
-    if (attempt < 3) { await new Promise((res) => setTimeout(res, 1000 * 2 ** attempt)); return getJson(url, attempt + 1); }
+    if (attempt < RETRIES) { await backoff(attempt); return getJson(url, attempt + 1); }
     throw new Error(`Câmara inacessível (${(r as Error & { cause?: { code?: string } }).cause?.code ?? r.name})`);
   }
-  if ((r.status === 429 || r.status >= 500) && attempt < 3) {
-    await new Promise((res) => setTimeout(res, 1000 * 2 ** attempt)); // retry exponencial
+  if ((r.status === 429 || r.status >= 500) && attempt < RETRIES) {
+    await backoff(attempt);
     return getJson(url, attempt + 1);
   }
   if (!r.ok) throw new Error(`Câmara respondeu HTTP ${r.status}`);

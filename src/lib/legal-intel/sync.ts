@@ -56,7 +56,7 @@ export async function syncSource(PROVIDER: SourceId, trigger: "cron" | "manual" 
       consecutive_failures: status === "erro" ? prov.consecutive_failures + 1 : 0, circuit_open_until: null, sync_lock_until: null,
       next_run_at: new Date(now.getTime() + prov.frequency_minutes * 60_000).toISOString(), updated_at: now.toISOString(),
     }).eq("id", PROVIDER);
-    return { status, ...stats, window: { from, to: today }, runId: run!.id };
+    return { status, ...stats, window: { from, to: today }, runId: run!.id, consecutiveFailures: status === "erro" ? prov.consecutive_failures + 1 : 0 };
   } catch (e) {
     const fails = prov.consecutive_failures + 1;
     const msg = (e as Error).message.slice(0, 300);
@@ -64,7 +64,7 @@ export async function syncSource(PROVIDER: SourceId, trigger: "cron" | "manual" 
     // Falha: o último dado íntegro continua; só o painel mostra "fonte indisponível".
     await db.from("legal_source_providers").update({ last_run_at: new Date().toISOString(), last_error: msg, consecutive_failures: fails, sync_lock_until: null,
       circuit_open_until: fails >= MAX_FAILS ? new Date(Date.now() + 3_600_000).toISOString() : null, updated_at: new Date().toISOString() }).eq("id", PROVIDER);
-    return { status: "erro" as const, error: msg, runId: run!.id };
+    return { status: "erro" as const, error: msg, runId: run!.id, consecutiveFailures: fails };
   }
 }
 
