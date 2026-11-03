@@ -24,10 +24,18 @@ Retomar daqui. Ordem combinada com o titular (03/11/2026): **atendimento primeir
 
 Verificação local: typecheck ok · lint 0 erros (5 avisos conhecidos) · banco 114/114 · unitários 180/181 (o `.docx` de amostra é pulado quando roda isolado; não tem relação com esta mudança).
 
+Publicado: `8b48b51` com CI verde e Vercel READY. Smoke em produção: webhook 503 (integração desligada), cron sem segredo 401, home 200.
+
+## Fase 2 — assistente configurável (03/11/2026) — commit `daadc7d`, ainda não publicado
+- "Nova assistente": assistente passo a passo cria rascunho; aba "Base de conhecimento" (até 8.000 caracteres, só deste escritório).
+- Publicar congela a versão (`published`); o rascunho em edição não atende no WhatsApp. É possível escolher qual assistente atende.
+- Simulador real (`/api/ia/simulador`): modelo real com o rascunho; não envia e não grava a conversa; uso registrado como `simulador`.
+- Testes: unitários 183/184 (`.docx` de amostra pulado); E2E da demonstração 80/81 (`/recuperar-acesso` instável no título; 3/3 isolado).
+- Publicação de modelo de contrato recusa qualquer marcador `[MAIÚSCULAS]`, além de `[PENDENTE`.
+
 ## Próximos passos
-1. Commit, push pelo titular, CI e Vercel verdes, smoke de produção (webhook com a integração desligada devolve 503).
-2. Fase 2: assistente configurável (assistente passo a passo, versões, simulador sem envio, base de conhecimento por escritório).
-3. Contrato 2026.11-2, depois ligar `AI_ENABLED` e `WHATSAPP_ENABLED`.
+1. Push de `daadc7d` e do commit seguinte; acompanhar CI e Vercel.
+2. Contrato 2026.11-2: minuta em `integracoes.md`, que depende do operador e local do servidor Evolution e da confirmação do Gemini pago. Depois ligar `AI_ENABLED` e `WHATSAPP_ENABLED`.
 4. Fase 4: artigos de ajuda, tours e prints sintéticos do atendimento.
 5. Documentos: `inventario.md`, `matriz-requisitos.md`, `relatorio-qa.md` (QA01–QA35), `integracoes.md`, `operacao.md`.
 

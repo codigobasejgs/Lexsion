@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
     const version = String(b.version ?? "").trim();
     if (!/^[\w.-]{3,20}$/.test(version) || reason.length < 5 || !clauses.length || clauses.some((c) => typeof c.title !== "string" || typeof c.body !== "string")) return err(400, "Versão (3–20 caracteres), motivo (≥ 5) e cláusulas são obrigatórios.");
     const t = { title: String(b.title ?? "").slice(0, 200), clauses: clauses.map((c) => ({ n: String(c.n ?? "").slice(0, 20), title: c.title.slice(0, 200), body: c.body.slice(0, 8000) })) };
-    if (JSON.stringify(t.clauses).includes("[PENDENTE")) return err(400, "O texto ainda tem “[PENDENTE”. Substitua pelo texto definitivo ou use as condições da plataforma ({{condicao.…}}).");
+    const marker = /\[PENDENTE|\[[A-ZÀ-Ú]{3,}(?: [A-ZÀ-Ú]+)*\]/.exec(JSON.stringify(t.clauses));
+    if (marker) return err(400, `O texto ainda tem o marcador “${marker[0]}”. Substitua pelo texto definitivo ou use as condições da plataforma ({{condicao.…}}).`);
     const { error } = await db.rpc("saas_publish_template", { p_key: TEMPLATE_KEY, p_version: version, p_title: t.title, p_clauses: t.clauses, p_hash: templateHash(t), p_reason: reason, p_actor: me });
     if (error) return err(400, error.code === "23505" ? "Já existe uma versão com esse número." : error.message.replace(/^.*?: /, ""));
     return NextResponse.json({ ok: true });
