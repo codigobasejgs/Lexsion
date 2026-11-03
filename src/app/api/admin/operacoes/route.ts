@@ -3,7 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Ações do Super Admin sobre escritórios. Cada ação chama UMA função SQL com a SESSÃO do administrador:
-// o banco confere papel + MFA (aal2), trava a linha, checa a versão (concorrência), aplica e audita na mesma
+// o banco confere o papel, trava a linha, checa a versão (concorrência), aplica e audita na mesma
 // transação. Nada aqui usa a chave secreta para alterar dados, exceto o reenvio do convite (Auth Admin).
 const err = (status: number, message: string) => NextResponse.json({ ok: false, error: { message } }, { status });
 const friendly = (m: string) => m.replace(/^.*?: /, "");
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     case "limit":
       return call("platform_override", { p_org: b.org, p_value: b.value ?? null, p_until: b.until ?? null, p_reason: reason });
     case "invite": {
-      // Reenvio do convite do titular: confere a plataforma (sessão + MFA) ANTES de usar o Auth Admin.
+      // Reenvio do convite do titular: confere a plataforma (sessão + papel) ANTES de usar o Auth Admin.
       const { data: ok } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin", "platform_support"] });
-      if (ok !== true) return err(403, "Somente a plataforma, com verificação em duas etapas.");
+      if (ok !== true) return err(403, "Somente a administração da plataforma.");
       if (reason.length < 5) return err(400, "Informe o motivo (mínimo 5 caracteres).");
       const db = supabaseAdmin();
       const { data: m } = await db.from("organization_memberships").select("user_id").eq("organization_id", b.org).eq("role", "admin").order("created_at").limit(1).maybeSingle();

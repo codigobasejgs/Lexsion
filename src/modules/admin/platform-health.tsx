@@ -6,7 +6,7 @@ import { Badge, LoadingBlock } from "@/components/ui";
 import { formatInstant } from "@/lib/dates";
 
 // Saúde da operação no plano Free: consumo frente aos limites, último backup cifrado e falhas do agendador.
-// Fonte: função platform_health (só plataforma com 2º fator). Nenhum dado de cliente.
+// Fonte: função platform_health (só plataforma). Nenhum dado de cliente.
 type Health = {
   db_bytes: number; db_limit_bytes: number; storage_bytes: number; storage_limit_bytes: number; users: number;
   last_backup_ok: string | null; last_backup_error: string | null; last_backup_detail: string | null;
@@ -20,7 +20,7 @@ export function PlatformHealth() {
   if (q.isPending) return <LoadingBlock rows={3} />;
   const h = q.data;
   const now = q.dataUpdatedAt; // hora da leitura (estável durante a renderização)
-  if (!h) return <p className="text-sm text-danger">Saúde indisponível (exige plataforma com verificação em duas etapas).</p>;
+  if (!h) return <p className="text-sm text-danger">Saúde indisponível (exige acesso de administração da plataforma).</p>;
   const pct = (a: number, b: number) => Math.round((a / b) * 100);
   const backupAge = h.last_backup_ok ? now - Date.parse(h.last_backup_ok) : Infinity;
   const backupFailedLast = !!h.last_backup_error && (!h.last_backup_ok || h.last_backup_error > h.last_backup_ok);

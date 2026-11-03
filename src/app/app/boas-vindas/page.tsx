@@ -8,10 +8,12 @@ import { Feedback, useAction } from "@/modules/shared";
 import { updateRow } from "@/services/mock/generic";
 import { useTour } from "@/tours/runner";
 import type { OrgSettings } from "@/domain/types";
+import { PracticeProfileWizard } from "@/modules/settings/practice-profile";
 
 // Onboarding do escritório: cadastro inicial está em Configurações; aqui o checklist guiado.
 const CHECKLIST = [
-  { key: "configurar", label: "Revisar nome, áreas, horários e fuso", href: "/app/configuracoes?aba=escritorio" },
+  { key: "perfil", label: "Definir especialidades, atuação e módulos (perfil de atuação, abaixo)", href: "#perfil-atuacao" },
+  { key: "configurar", label: "Revisar nome, horários e fuso", href: "/app/configuracoes?aba=escritorio" },
   { key: "identidade", label: "Colocar o logotipo e as cores do escritório", href: "/app/configuracoes/branding" },
   { key: "equipe", label: "Convidar a equipe", href: "/app/equipe" },
   { key: "aplicativo", label: "Instalar o aplicativo do escritório no celular", href: "/app/configuracoes/branding" },
@@ -44,7 +46,8 @@ export default function BoasVindasPage() {
         ))}
       </ul>
       <Feedback error={act.error} notice={act.notice} />
-      <p className="mt-4 text-sm text-fg-muted">Convites de equipe ficam em <Link className="text-accent underline underline-offset-2" href="/app/equipe">Equipe</Link> (simulados nesta fase).</p>
+      <div id="perfil-atuacao" className="mt-6 scroll-mt-20"><PracticeProfileWizard /></div>
+      <p className="mt-4 text-sm text-fg-muted">Convites de equipe ficam em <Link className="text-accent underline underline-offset-2" href="/app/equipe">Equipe</Link>.</p>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-// Super Admin REAL: leituras pelas funções da plataforma (RLS + MFA no banco) e ações pela rota /api/admin/operacoes.
+// Super Admin REAL: leituras pelas funções da plataforma (RLS no banco) e ações pela rota /api/admin/operacoes.
 // Nunca usa fixtures da demonstração.
 export type OrgRow = {
   id: string; slug: string; name: string; status: string; status_reason: string | null; plan: string; created_at: string; updated_at: string;

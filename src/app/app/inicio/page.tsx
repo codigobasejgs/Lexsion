@@ -7,6 +7,7 @@ import { AlertOctagon, ArrowRight, Banknote, CalendarClock, Check, FileWarning, 
 import { useCollection, useInvalidate, useSession } from "@/components/providers";
 import { Badge, ErrorBlock, LoadingBlock, PageHeader } from "@/components/ui";
 import { InstallCard } from "@/components/pwa";
+import { PracticeCard } from "@/modules/settings/practice-profile";
 import { DEMO_TODAY } from "@/mocks/clock";
 import { civilFromInstant, diffDays, formatCivil, formatCivilLong, formatTime } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
@@ -166,6 +167,7 @@ export default function MeuDiaPage() {
         description={<>Hoje é {formatCivilLong(DEMO_TODAY)} {mode === "demo" && <span className="text-xs">(data de referência da demo)</span>} · {org?.name}</>}
       />
 
+      <div className="mb-4"><PracticeCard /></div>
       {error && <ErrorBlock message="Não foi possível carregar seus dados locais. Seus registros continuam neste dispositivo." retry={() => error.refetch()} />}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">

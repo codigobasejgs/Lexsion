@@ -16,6 +16,7 @@ import { checkoutEnabled, CONTRACT_VERSION } from "@/lib/saas-catalog";
 const err = (status: number, code: string, message: string, field?: string) => NextResponse.json({ ok: false, error: { code, message, field } }, { status });
 const SLUG = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 const RESERVED = new Set(["admin", "app", "api", "www", "portal", "demo", "lexsion", "suporte", "status", "entrar"]);
+const reserved = (slug: string) => RESERVED.has(slug) || slug.startsWith("qa-"); // "qa-": escritórios sintéticos de teste
 type Row = Record<string, unknown> & { id: string; number: string; status: string; party: Party; plan_snapshot: ReturnType<typeof planSnapshot>; supplier_snapshot: Awaited<ReturnType<typeof supplierSnapshot>>; cycle: "mensal" | "anual"; created_at: string; template_version_id: string; template_status_at_render: string; document_sha256: string | null; body_text: string | null; amount: number; marketing_opt_in: boolean; order_id: string | null; accepted_at: string | null; expires_at: string };
 
 const ip = (req: NextRequest) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "";
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const party = b.party as Party;
     const v = party && typeof party === "object" ? validateParty(party) : { kind: "Dados inválidos." };
     const slug = String(b.slug ?? "").trim().toLowerCase();
-    if (!SLUG.test(slug) || RESERVED.has(slug)) v.slug = "Endereço: 3 a 40 letras minúsculas, números ou hífen (não reservado).";
+    if (!SLUG.test(slug) || reserved(slug)) v.slug = "Endereço: 3 a 40 letras minúsculas, números ou hífen (não reservado).";
     else if ((await db.from("organizations").select("id").eq("slug", slug).maybeSingle()).data) v.slug = "Este endereço já está em uso. Escolha outro.";
     if (Object.keys(v).length) return NextResponse.json({ ok: false, error: { code: "invalid", message: "Corrija os campos indicados.", fields: v } }, { status: 400 });
     const tpl = await currentTemplate();

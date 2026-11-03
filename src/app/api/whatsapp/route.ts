@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
+import { GATE_MESSAGE, whatsappEnabled } from "@/lib/feature-gates";
 import { connectionState, createOrConnect, evolutionConfigured, instanceFor, logout, sendText } from "@/lib/evolution";
 
 const err = (status: number, code: string, message: string) => NextResponse.json({ ok: false, error: { code, message } }, { status });
@@ -15,6 +16,7 @@ type Body = { organizationId?: string; action?: "status" | "connect" | "disconne
  * com a IA pausada e mensagem já gravada (a tela grava; aqui só despacha e marca enviada/erro). Nunca envia em massa.
  */
 export async function POST(req: NextRequest) {
+  if (!whatsappEnabled()) return err(503, "gated", GATE_MESSAGE.whatsapp);
   if (!supabaseConfigured() || !evolutionConfigured()) return err(503, "not_configured", "WhatsApp não configurado neste ambiente.");
   if (req.headers.get("origin") && new URL(req.headers.get("origin")!).host !== req.headers.get("host")) return err(403, "origin", "Origem não permitida.");
   const b = ((await req.json().catch(() => null)) ?? {}) as Body;

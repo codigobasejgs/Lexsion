@@ -3,7 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { activate, confirmOrder } from "@/lib/billing";
 
-// Super Admin (plataforma + MFA): edita planos sem código, reprocessa ativação, reconcilia pedido no /payment_check
+// Super Admin (plataforma): edita planos sem código, reprocessa ativação, reconcilia pedido no /payment_check
 // e registra estorno conferido na conta InfinitePay. Toda ação vai para a auditoria com o autor.
 const err = (status: number, message: string) => NextResponse.json({ ok: false, error: { message } }, { status });
 
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return err(401, "Sessão expirada.");
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return err(403, "Somente a plataforma, com verificação em duas etapas.");
+  if (isPlat !== true) return err(403, "Somente a administração da plataforma.");
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const db = supabaseAdmin();
   const audit = (action: string, entity_id: string, detail: string, org: string | null = null) =>

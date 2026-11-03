@@ -9,7 +9,7 @@ import { formatBRL } from "@/lib/money";
 import { fmtDateTime, loadMetrics } from "./real-api";
 import { PlatformHealth } from "./platform-health";
 
-// Painel geral da OPERAÇÃO REAL: só dados do Supabase (função platform_metrics, com MFA). Fórmulas declaradas na tela
+// Painel geral da OPERAÇÃO REAL: só dados do Supabase (função platform_metrics). Fórmulas declaradas na tela
 // e em docs/PRODUCAO_REAL/18. Teste e cortesia não entram em receita. Suporte não recebe valores (aparece "restrito").
 const money = (v: number | null) => (v === null ? "restrito" : formatBRL(v));
 

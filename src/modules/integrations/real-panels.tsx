@@ -9,8 +9,23 @@ type R<T> = { ok: boolean; data?: T; error?: { message: string } };
 const post = async <T,>(url: string, body: object): Promise<R<T>> =>
   (await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => null)) ?? { ok: false, error: { message: "Sem conexão." } };
 
+/** Integrações em auditoria (servidor decide): mostra o aviso e não oferece a ação. */
+function useGate(key: "ai" | "whatsapp") {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => { void fetch("/api/integracoes/estado").then((r) => r.json()).then((j) => setOn(!!j?.[key])).catch(() => setOn(false)); }, [key]);
+  return on;
+}
+const GATED = { ai: "Assistente de IA em auditoria: indisponível para dados de clientes até a conclusão da revisão dos termos e do tratamento de dados.", whatsapp: "WhatsApp em auditoria: indisponível para dados de clientes até a confirmação do operador e da infraestrutura do provedor." };
+export function GatedNotice({ k }: { k: "ai" | "whatsapp" }) {
+  return <p role="status" className="panel border-warning/40 bg-warning-bg p-4 text-sm text-warning" data-testid={`integracao-em-auditoria-${k}`}>{GATED[k]}</p>;
+}
+
 /** WhatsApp REAL do escritório: QR para parear o aparelho do escritório, estado ao vivo, desconectar. Só o titular conecta. */
 export function WhatsAppReal() {
+  const gate = useGate("whatsapp");
+  return gate === null ? null : gate ? <WhatsAppPanel /> : <GatedNotice k="whatsapp" />;
+}
+function WhatsAppPanel() {
   const { ctx, user } = useSession();
   const [status, setStatus] = useState<string>("…");
   const [qr, setQr] = useState<string | null>(null);
@@ -60,6 +75,10 @@ export function WhatsAppReal() {
 
 /** Consentimento do titular para usar IA externa (Google Gemini) com dados do escritório. Registrado e auditado no banco. */
 export function AiConsent() {
+  const gate = useGate("ai");
+  return gate === null ? null : gate ? <AiConsentPanel /> : <GatedNotice k="ai" />;
+}
+function AiConsentPanel() {
   const { ctx, user } = useSession();
   const [on, setOn] = useState<boolean | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -90,6 +109,10 @@ export function AiConsent() {
 
 /** Assistente REAL: escolhe a finalidade, cola o texto, recebe sugestão marcada para revisão. */
 export function AiAssistant() {
+  const gate = useGate("ai");
+  return gate ? <AiAssistantPanel /> : null;
+}
+function AiAssistantPanel() {
   const { ctx } = useSession();
   const [purpose, setPurpose] = useState<"resumo" | "resposta" | "minuta" | "triagem">("resumo");
   const [text, setText] = useState("");

@@ -2,7 +2,6 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { passMfa } from "./totp";
 
 // Super Admin REAL (Supabase de produção, dados sintéticos apagados no fim): fonte real × demo, lista, ficha 360º,
 // teste grátis (conceder, prorrogar, persistência), cortesia sem receita, plano, papéis internos e titular bloqueado.
@@ -12,7 +11,7 @@ const ON = !!env.SUPABASE_SECRET_KEY && !!env.NEXT_PUBLIC_SUPABASE_URL;
 const SLOW = Number(process.env.SLOW ?? 30_000);
 const tag = crypto.randomBytes(3).toString("hex");
 type U = { id: string; email: string; password: string };
-let admin: SupabaseClient, org = "", saSecret: string | undefined;
+let admin: SupabaseClient, org = "";
 const people: Record<string, U> = {};
 test.describe.configure({ mode: "serial", timeout: 8 * SLOW + 60_000 });
 test.skip(!ON, "Supabase não configurado neste ambiente");
@@ -52,10 +51,11 @@ test.afterAll(async () => {
   for (const u of Object.values(people)) await admin.auth.admin.deleteUser(u.id);
 });
 
-test("SA-01: /admin real mostra 'Dados reais' (nunca a tarja da demonstração) e o escritório do banco aparece na lista", async ({ page }) => {
+test("SA-01: entra sem autenticador; /admin real mostra 'Dados reais' (nunca a tarja da demonstração) e o escritório do banco aparece na lista", async ({ page }) => {
   await login(page, people.sa, /\/admin/);
-  saSecret = await passMfa(page, saSecret);
+  // Sem aplicativo autenticador: e-mail e senha bastam; nenhuma tela de QR Code ou código.
   await expect(page.getByTestId("faixa-ambiente")).toContainText("Dados reais");
+  await expect(page.getByText(/Verificação em duas etapas|autenticador|QR Code/i)).toHaveCount(0);
   await expect(page.getByTestId("fonte-real")).toBeVisible();
   await expect(page.getByText("dados fictícios da demonstração")).toHaveCount(0);
   await page.goto("/admin/organizacoes");
@@ -64,7 +64,6 @@ test("SA-01: /admin real mostra 'Dados reais' (nunca a tarja da demonstração) 
 
 test("SA-02: conceder 14 dias de teste e prorrogar +7 pela ficha; persiste no banco, após recarregar e com auditoria", async ({ page }) => {
   await login(page, people.sa, /\/admin/);
-  saSecret = await passMfa(page, saSecret);
   await page.goto("/admin/organizacoes");
   await openOrg(page);
   await page.getByRole("button", { name: "Teste grátis" }).click();
@@ -92,7 +91,6 @@ test("SA-02: conceder 14 dias de teste e prorrogar +7 pela ficha; persiste no ba
 
 test("SA-03: cortesia não vira receita; alterar plano não cria cobrança", async ({ page }) => {
   await login(page, people.sa, /\/admin/);
-  saSecret = await passMfa(page, saSecret);
   await page.goto(`/admin/organizacoes/${org}`);
   await page.getByRole("button", { name: "Cortesia" }).click();
   let d = page.getByRole("dialog");

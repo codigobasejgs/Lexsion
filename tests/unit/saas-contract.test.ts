@@ -62,9 +62,15 @@ describe("texto do contrato", () => {
     expect(h(renderContract(DEFAULT_TEMPLATE, ctx(pf, { plan: { ...plan, price_monthly: 24991 } })))).not.toBe(base);
     expect(h(renderContract(DEFAULT_TEMPLATE, ctx(pf)))).toBe(base); // determinístico
   });
-  it("minuta-base declara as pendências jurídicas (não decide por conta própria)", () => {
-    const p = pendingItems(DEFAULT_TEMPLATE).join(" | ");
-    for (const s of ["reajuste", "multa", "reembolso", "SLA", "retenção", "foro", "aplicabilidade", "DPA"]) expect(p.toLowerCase()).toContain(s.toLowerCase());
+  it("2026.11-1: decisões do proprietário no texto; só o que não foi comprovado continua pendente", () => {
+    const t = renderContract(DEFAULT_TEMPLATE, ctx(pf));
+    for (const s of ["aviso prévio de 30 (trinta) dias", "sem multa nem juros", "Não há reembolso proporcional", "em até 7 (sete) dias da primeira contratação", "10 (dez) dias corridos", "preservados por 90 (noventa) dias", "art. 63 do Código de Processo Civil", "prazo máximo de 1 (um) dia útil", "Resolução CD/ANPD nº 15/2024"]) expect(t).toContain(s);
+    expect(t).not.toMatch(/duas etapas|autenticador/i); // sem TOTP: o contrato não promete segundo fator
+    expect(t).toMatch(/WhatsApp e de inteligência artificial não estão ativas para dados de clientes/);
+    const p = pendingItems(DEFAULT_TEMPLATE).join(" | ").toLowerCase();
+    for (const s of ["acesso técnico", "resend", "infinitepay", "matriz individual"]) expect(p).toContain(s);
+    for (const s of ["reajuste", "multa", "reembolso", "sla", "foro", "retenção"]) expect(p).not.toContain(s);
+    expect(DEFAULT_TEMPLATE.version).toBe("2026.11-1");
     expect(DEFAULT_TEMPLATE.status).toBe("REVISAO_JURIDICA");
   });
 });

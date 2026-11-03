@@ -2,7 +2,6 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { serverNow, totp } from "../shared/totp";
 
 // Auditoria REAL sob concorrência (Supabase de produção, dados sintéticos): várias sessões ao mesmo tempo
 // suspendem/reativam escritórios, alteram permissões e convidam. Cada ação gera exatamente UMA linha de auditoria,
@@ -32,8 +31,6 @@ describe.skipIf(!ON)("REAL — auditoria concorrente", () => {
     admin = createClient(URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
     await login("plat");
     await admin.from("platform_members").insert({ user_id: id.plat, role: "platform_admin" }).throwOnError();
-    const { data: e } = await s.plat.auth.mfa.enroll({ factorType: "totp", friendlyName: `qa-${tag}` });
-    await s.plat.auth.mfa.challengeAndVerify({ factorId: e!.id, code: totp(e!.totp.secret, await serverNow(URL)) });
     for (let i = 0; i < N; i++) {
       await login(`tit${i}`); await login(`est${i}`);
       const { data } = await admin.from("organizations").insert({ slug: `qa-audc-${i}-${tag}`, name: `QA AudC ${i}` }).select("id").single().throwOnError();

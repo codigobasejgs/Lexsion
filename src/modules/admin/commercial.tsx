@@ -9,7 +9,7 @@ import { formatInstant } from "@/lib/dates";
 import type { PublicPlan } from "@/domain/saas";
 
 // Super Admin em operação REAL: planos (banco), pedidos, assinaturas e avisos da InfinitePay. Leitura pela RLS
-// (só plataforma com MFA); alterações pela rota /api/admin/comercial, que audita e reconfere a plataforma.
+// (só plataforma); alterações pela rota /api/admin/comercial, que audita e reconfere a plataforma.
 type Order = { order_nsu: string; kind: string; plan_id: string; cycle: string; amount: number; status: string; activation: string; activation_error: string | null; customer: { office?: string; email?: string }; created_at: string; paid_at: string | null; capture_method: string | null; period_end: string | null };
 type Sub = { organization_id: string; plan_id: string; cycle: string; status: string; price: number; current_period_end: string; cancel_at_period_end: boolean; change_request: { plan?: string } | null };
 const call = async (body: unknown) => (await fetch("/api/admin/comercial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => null)) as { ok: boolean; error?: { message: string }; data?: { activation?: string; reason?: string } } | null;

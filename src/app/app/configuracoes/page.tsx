@@ -20,6 +20,7 @@ import { PLAN_LABEL, PLAN_QUOTAS, QUOTA_LABEL, STATUS_LABEL, UNLIMITED } from "@
 import { formatBRL } from "@/lib/money";
 import { tenantRepo } from "@/services/mock/tenant-repo";
 import { OwnerSubscription } from "@/modules/settings/owner-subscription";
+import { RealDataExport } from "@/modules/settings/data-export";
 
 type Theme = "dark" | "light" | "system";
 const TABS = [["aparencia", "Aparência"], ["escritorio", "Escritório"], ["assinatura", "Assinatura LexSion"], ["calendario", "Feriados e calendário"], ["notificacoes", "Notificações"], ["dados", "Dados e LGPD"], ["dispositivo", "Dispositivo"]] as const;
@@ -196,7 +197,7 @@ function Notifications({ s }: { s: OrgSettings }) {
 }
 
 function DataLgpd({ s }: { s: OrgSettings }) {
-  const { org, restoreTenant } = useSession();
+  const { org, restoreTenant, mode } = useSession();
   const act = useAction("settings");
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState(false);
@@ -212,21 +213,21 @@ function DataLgpd({ s }: { s: OrgSettings }) {
       <section className="panel space-y-3 p-5 text-sm">
         <h2 className="font-semibold">LGPD e retenção</h2>
         <p>Retenção configurada: <strong>{s.retentionYears} anos</strong>. Pedidos de eliminação passam por revisão de retenção — não há promessa de exclusão imediata de todo registro (obrigações legais e sigilo profissional).</p>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-secondary" onClick={exportAll}><Download aria-hidden className="size-4" /> Exportar dados do escritório (JSON)</button>
-        </div>
+        {mode === "real" ? <RealDataExport /> : <div className="flex flex-wrap gap-2">
+          <button className="btn btn-secondary" onClick={exportAll}><Download aria-hidden className="size-4" /> Exportar dados da demonstração (JSON)</button>
+        </div>}
         <div className="flex flex-wrap gap-2"><input className="field max-w-xs" aria-label="Titular" placeholder="Titular (nome)" value={subject} onChange={(e) => setSubject(e.target.value)} />
           <button className="btn btn-ghost" disabled={!subject.trim()} onClick={async () => { if (await act.run((ctx) => updateRow("settings", s.id, ctx, (x: OrgSettings) => ({ ...x, dataRequests: [...x.dataRequests, { id: crypto.randomUUID().slice(0, 6), at: new Date().toISOString(), kind: "eliminacao", subject: subject.trim(), status: "em_revisao", note: "Aguardando revisão de retenção" }] }), "Pedido de eliminação"), "Pedido registrado para revisão.")) setSubject(""); }}>Registrar pedido de eliminação</button>
         </div>
         {s.dataRequests.length > 0 && <ul className="space-y-1">{s.dataRequests.map((r) => <li key={r.id}>{formatInstant(r.at)} · {r.kind} · {r.subject} · <Badge tone="warning">{r.status === "em_revisao" ? "Em revisão" : "Concluída"}</Badge></li>)}</ul>}
         <Feedback error={act.error} notice={act.notice} />
       </section>
-      <section className="panel p-5">
+      {mode !== "real" && <section className="panel p-5">
         <h2 className="mb-1 font-semibold">Restaurar demonstração</h2>
         <p className="mb-3 text-sm text-fg-muted">Recarrega os dados fictícios iniciais <strong>somente de {org?.name}</strong> neste navegador. Outros escritórios, a identidade visual e o progresso de treinamento não são alterados. Sair do sistema nunca apaga dados.</p>
         <button className="btn btn-danger" onClick={() => setConfirm(true)}><RotateCcw aria-hidden className="size-4" /> Restaurar demonstração</button>
         {done && <p role="status" className="mt-2 text-sm text-success">Demonstração restaurada.</p>}
-      </section>
+      </section>}
       <Dialog open={confirm} onClose={() => setConfirm(false)} title="Restaurar demonstração?">
         <p>Os cadastros, pagamentos, mensagens e arquivos criados em <strong>{org?.name}</strong> nesta demonstração serão descartados neste navegador. Isso não pode ser desfeito. Exporte antes, se quiser guardar.</p>
         <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

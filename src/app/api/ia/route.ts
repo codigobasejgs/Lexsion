@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
+import { aiEnabled, GATE_MESSAGE } from "@/lib/feature-gates";
 
 // IA jurídica (Google Gemini) no SERVIDOR. Regras:
 // 1) só com IA habilitada pelo titular (consentimento registrado e auditado);
@@ -14,6 +15,7 @@ type Purpose = keyof typeof PURPOSES;
 const err = (status: number, code: string, message: string) => NextResponse.json({ ok: false, error: { code, message } }, { status });
 
 export async function POST(req: NextRequest) {
+  if (!aiEnabled()) return err(503, "gated", GATE_MESSAGE.ai);
   if (!supabaseConfigured() || KEY.length < 20) return err(503, "not_configured", "IA não configurada neste ambiente.");
   if (req.headers.get("origin") && new URL(req.headers.get("origin")!).host !== req.headers.get("host")) return err(403, "origin", "Origem não permitida.");
   const b = (await req.json().catch(() => null)) as { organizationId?: string; purpose?: Purpose; context?: string } | null;

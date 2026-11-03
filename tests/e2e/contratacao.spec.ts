@@ -50,7 +50,7 @@ test("CONTR-04: webhook não assinado com pedido inexistente é aceito sem efeit
 test("CONTR-05: termos de contratação publicados com versão, teste grátis, renovação, atraso, cancelamento e arrependimento", async ({ page }) => {
   await page.goto("/termos#contratacao");
   const t = page.locator("article");
-  for (const s of ["Versão 2026-10-30", "Teste grátis.", "Renovação.", "Atraso.", "Cancelamento.", "Direito de arrependimento."]) await expect(t).toContainText(s);
+  for (const s of ["Versão 2026-11-03", "Teste grátis.", "Renovação.", "Atraso.", "Cancelamento.", "Direito de arrependimento."]) await expect(t).toContainText(s);
 });
 
 test("CONTR-06: resumo da contratação mostra o teste grátis e que não pede cartão (quando liberado)", async ({ page }) => {

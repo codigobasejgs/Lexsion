@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
   const sb = await supabaseServer();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return NextResponse.json({ ok: false, error: { message: "Sessão expirada." } }, { status: 401 });
-  // Mesma regra do banco: vínculo de plataforma E sessão com 2º fator (aal2).
+  // Mesma regra do banco: vínculo de plataforma vigente (is_platform).
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return NextResponse.json({ ok: false, error: { message: "Somente a plataforma, com verificação em duas etapas." } }, { status: 403 });
+  if (isPlat !== true) return NextResponse.json({ ok: false, error: { message: "Somente a administração da plataforma." } }, { status: 403 });
   const b = (await req.json().catch(() => ({}))) as { provider?: string; maxItems?: number };
   if (!SOURCES.includes(b.provider as SourceId)) return NextResponse.json({ ok: false, error: { message: "Fonte não habilitada para execução." } }, { status: 400 });
   const r = await syncSource(b.provider as SourceId, "manual", { maxItems: Math.min(Math.max(Number(b.maxItems) || 150, 1), 300) });

@@ -9,7 +9,7 @@ import { formatInstant } from "@/lib/dates";
 import { pendingItems, type Clause } from "@/domain/saas-contract";
 
 // Super Admin > Contratos SaaS (operação real): contratos (status, versão, aceite, pagamento), modelos com fluxo de
-// aprovação jurídica, dados da contratada e checklist. Leitura pela RLS (plataforma + MFA); ações pela rota auditada.
+// aprovação jurídica, dados da contratada e checklist. Leitura pela RLS (plataforma); ações pela rota auditada.
 type Tpl = { id: string; version: string; title: string; status: string; clauses: Clause[]; content_sha256: string; change_reason: string | null; approved_by_name: string | null; approved_at: string | null; published_at: string | null; created_at: string };
 type Ctr = { number: string; status: string; plan_id: string; cycle: string; amount: number; party: { kind: string; name?: string; legal_name?: string }; template_status_at_render: string; accepted_at: string | null; created_at: string; document_sha256: string | null };
 const TONE: Record<string, "success" | "warning" | "danger" | "neutral" | "info"> = { PUBLICADO: "success", APROVADO: "info", REVISAO_JURIDICA: "warning", RASCUNHO: "neutral", ARQUIVADO: "neutral", ACTIVE: "success", TERMS_ACCEPTED: "info", PAYMENT_PENDING: "warning", PAYMENT_CONFIRMED: "success", READY_FOR_REVIEW: "neutral", CANCELED: "danger", EXPIRED: "neutral", FAILED: "danger" };

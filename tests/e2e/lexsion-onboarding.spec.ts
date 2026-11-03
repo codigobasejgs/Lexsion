@@ -14,11 +14,11 @@ test("E2E-12: escritório em teste completa primeiros passos, que persistem; o v
   await signIn(page, /Carlos Exemplo/);
   await page.goto("/app/boas-vindas");
   await expect(page.getByRole("heading", { name: /Boas-vindas, Carlos/ })).toBeVisible();
-  await expect(page.getByText(/0 de 9 concluídos/)).toBeVisible();
+  await expect(page.getByText(/0 de 10 concluídos/)).toBeVisible();
   await page.getByRole("checkbox", { name: "Colocar o logotipo e as cores do escritório" }).click();
-  await expect(page.getByText(/1 de 9 concluídos/)).toBeVisible();
+  await expect(page.getByText(/1 de 10 concluídos/)).toBeVisible();
   await page.reload();
-  await expect(page.getByText(/1 de 9 concluídos/)).toBeVisible();
+  await expect(page.getByText(/1 de 10 concluídos/)).toBeVisible();
   await page.goto("/app/clientes");
   await expect(page.getByText("Cadastre o primeiro cliente para começar.")).toBeVisible();
   expect(await serious(page)).toEqual([]);

@@ -17,6 +17,9 @@ let org = "";
 const people: Record<string, U> = {};
 
 test.describe.configure({ mode: "serial", timeout: 4 * SLOW + 60_000 });
+// Produção: IA e WhatsApp estão DESLIGADOS (em auditoria; AI_ENABLED/WHATSAPP_ENABLED ausentes). GATE-01 prova o
+// bloqueio; os fluxos completos (IA-01, WA-01, WA-02) só rodam onde o servidor de teste liga as integrações (GATES_ON=1).
+const GATES_ON = process.env.GATES_ON === "1";
 test.skip(!ON, "integrações não configuradas neste ambiente");
 
 async function mkUser(key: string, name: string): Promise<U> {
@@ -52,7 +55,23 @@ test.afterAll(async () => {
   for (const u of Object.values(people)) await admin.auth.admin.deleteUser(u.id);
 });
 
+test("GATE-01: IA e WhatsApp em auditoria: API, webhook e telas recusam/avisam e nada é gravado", async ({ page, request }) => {
+  test.skip(GATES_ON, "integrações ligadas neste servidor");
+  await login(page, people.tit);
+  const st = await page.evaluate(async (o) => { const ia = await fetch("/api/ia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: o, purpose: "resumo", context: "Texto sintético de teste." }) }); const wa = await fetch("/api/whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: o, action: "connect" }) }); return { ia: ia.status, iaCode: (await ia.json()).error?.code, wa: wa.status, waCode: (await wa.json()).error?.code }; }, org);
+  expect(st).toEqual({ ia: 503, iaCode: "gated", wa: 503, waCode: "gated" });
+  expect((await request.post(`/api/whatsapp/webhook?org=${org}&s=${"x".repeat(24)}`, { data: { event: "messages.upsert" } })).status()).toBe(503);
+  await page.goto("/app/ia/assistente");
+  await expect(page.getByTestId("integracao-em-auditoria-ai")).toBeVisible({ timeout: SLOW });
+  await expect(page.getByRole("button", { name: "Habilitar IA" })).toHaveCount(0);
+  await page.goto("/app/integracoes/evolution");
+  await expect(page.getByTestId("integracao-em-auditoria-whatsapp")).toBeVisible({ timeout: SLOW });
+  expect((await admin.from("ai_usage").select("organization_id").eq("organization_id", org)).data).toEqual([]);
+  expect((await admin.from("whatsapp_instances").select("organization_id").eq("organization_id", org)).data).toEqual([]);
+});
+
 test("IA-01: sem habilitação do titular a IA recusa; titular habilita; sugestão real do Gemini marcada para revisão; uso registrado sem conteúdo", async ({ page }) => {
+  test.skip(!GATES_ON, "integração em auditoria: desligada neste servidor (ver GATE-01)");
   await login(page, people.est);
   const r0 = await page.evaluate(async (o) => (await fetch("/api/ia", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: o, purpose: "resumo", context: "Texto sintético de teste para resumo." }) })).status, org);
   expect(r0).toBe(412);
@@ -78,6 +97,7 @@ test("IA-01: sem habilitação do titular a IA recusa; titular habilita; sugest�
 });
 
 test("WA-01: titular gera QR real da instância lexsion-<slug>; estagiário não conecta; envio sem pareamento é recusado (nada sai)", async ({ page }) => {
+  test.skip(!GATES_ON, "integração em auditoria: desligada neste servidor (ver GATE-01)");
   await login(page, people.tit);
   await page.goto("/app/integracoes/evolution");
   await page.getByRole("button", { name: "Gerar QR" }).click();
@@ -104,6 +124,7 @@ test("WA-01: titular gera QR real da instância lexsion-<slug>; estagiário não
 });
 
 test("WA-02: webhook aceita só o segredo do escritório, grava a mensagem recebida uma única vez e ignora instância alheia", async ({ request }) => {
+  test.skip(!GATES_ON, "integração em auditoria: desligada neste servidor (ver GATE-01)");
   // Segredo novo só para o teste: substitui o hash (o segredo real nunca sai do servidor).
   const secret = crypto.randomBytes(24).toString("base64url");
   await admin.from("whatsapp_instances").update({ webhook_secret_hash: crypto.createHash("sha256").update(secret).digest("hex") }).eq("organization_id", org).throwOnError();

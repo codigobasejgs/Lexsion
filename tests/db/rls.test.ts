@@ -24,7 +24,7 @@ let orgA = "", orgB = "", clientA = "", clientA2 = "", caseA = "", caseA2 = "", 
 async function as<T = Record<string, unknown>>(user: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
   await db.exec("reset role");
   await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user ?? ""]);
-  // Sessão com 2º fator (aal2): a plataforma exige MFA (20261029120000). O teste de aal1 está em rls.test.ts.
+  // Sessão de teste (aal2 é indiferente desde 20261103100000: a plataforma não exige autenticador).
   await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub: user ?? "", aal: "aal2" })]);
   await db.exec(user ? "set role authenticated" : "set role anon");
   try {
@@ -157,8 +157,8 @@ describe("Exclusões (dados e LGPD)", () => {
   });
 });
 
-describe("MFA da plataforma (aal2)", () => {
-  // Sessão sem 2º fator: mesmo superadmin perde funções e leituras de plataforma; com aal2, volta.
+describe("Plataforma sem autenticador (aal1)", () => {
+  // Decisão do proprietário: sem TOTP. Sessão comum (aal1) do superadmin opera; quem não tem vínculo segue bloqueado.
   const aal1 = async <T,>(user: string, sql: string, params: unknown[] = []) => {
     await db.exec("reset role");
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user]);
@@ -166,16 +166,11 @@ describe("MFA da plataforma (aal2)", () => {
     await db.exec("set role authenticated");
     try { return (await db.query<T>(sql, params)).rows; } catch (e) { return (e as Error).message; } finally { await db.exec("reset role"); }
   };
-  it("superadmin sem 2º fator não cria escritório, não suspende nem lê dados da plataforma", async () => {
-    expect(await aal1(U.superadmin, "select public.is_platform() ok")).toEqual([{ ok: false }]);
-    expect(String(await aal1(U.superadmin, "select (public.create_organization('mfa-x','MFA X', $1)).id", [U.adminB]))).toMatch(/plataforma|permission|42501/i);
-    expect(String(await aal1(U.superadmin, "select public.set_organization_status($1, 'suspensa', 'x')", [orgA]))).toMatch(/plataforma/i);
-    expect(await aal1(U.superadmin, "select id from public.organizations")).toEqual([]); // não é membro e sem aal2 não é plataforma
-    expect(await aal1(U.superadmin, "select user_id from public.platform_members")).toEqual([{ user_id: U.superadmin }]); // vê só o próprio vínculo (para pedir o fator)
-  });
-  it("com aal2 as mesmas ações voltam a valer", async () => {
-    expect(await as(U.superadmin, "select public.is_platform() ok")).toEqual([{ ok: true }]);
-    expect((await as(U.superadmin, "select id from public.organizations")).length).toBeGreaterThan(0);
+  it("superadmin com sessão comum é plataforma; titular de escritório não é", async () => {
+    expect(await aal1(U.superadmin, "select public.is_platform() ok")).toEqual([{ ok: true }]);
+    expect((await aal1<{ id: string }>(U.superadmin, "select id from public.organizations")).length).toBeGreaterThan(0);
+    expect(await aal1(U.adminA, "select public.is_platform() ok")).toEqual([{ ok: false }]);
+    expect(String(await aal1(U.adminA, "select (public.create_organization('mfa-x','MFA X', $1)).id", [U.adminB]))).toMatch(/plataforma|permission|42501/i);
   });
 });
 
@@ -247,7 +242,7 @@ describe("Onda 2 — ERP operacional", () => {
 });
 
 describe("Saúde da plataforma", () => {
-  it("platform_health: só plataforma com 2º fator; demais recebem null (sem dados)", async () => {
+  it("platform_health: só plataforma; demais recebem null (sem dados)", async () => {
     const h = (await as<{ h: Record<string, unknown> | null }>(U.superadmin, "select public.platform_health() h"))[0].h;
     expect(h).toMatchObject({ db_limit_bytes: 524288000, storage_limit_bytes: 1073741824 });
     expect(Number(h!.db_bytes)).toBeGreaterThan(0);

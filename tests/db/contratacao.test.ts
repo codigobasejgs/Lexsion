@@ -124,7 +124,7 @@ describe("Limites, renovação e isolamento", () => {
     expect(await fails(U.sa, "insert into public.saas_orders (plan_id, cycle, amount, plan_snapshot, customer) values ('solo','mensal',100,'{}','{}')")).toMatch(/permission denied/);
     expect(await fails(null, "select id from public.saas_plans")).toMatch(/permission denied/);
   });
-  it("plataforma (MFA) lê todos os pedidos e avisos; titular não lê avisos do provedor", async () => {
+  it("plataforma lê todos os pedidos e avisos; titular não lê avisos do provedor", async () => {
     expect((await as(U.sa, "select id from public.saas_orders")).length).toBeGreaterThanOrEqual(4);
     await db.query("insert into public.saas_webhook_events (body_sha256, body) values ('h1', '{}')");
     expect((await as(U.sa, "select id from public.saas_webhook_events")).length).toBe(1);

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sha } from "@/lib/evolution";
+import { whatsappEnabled } from "@/lib/feature-gates";
 
 // Webhook da Evolution para UM escritório. Autenticação: segredo por escritório (só o hash fica no banco),
 // comparado em tempo constante. Evento de instância que não é deste escritório é ignorado. Idempotente pelo id da mensagem.
@@ -9,6 +10,7 @@ type Evo = { event?: string; instance?: string; data?: { key?: { id?: string; re
 const ok = () => NextResponse.json({ ok: true });
 
 export async function POST(req: NextRequest) {
+  if (!whatsappEnabled()) return new NextResponse(null, { status: 503 }); // integração em auditoria: nada é gravado
   const org = req.nextUrl.searchParams.get("org") ?? "";
   const secret = req.nextUrl.searchParams.get("s") ?? "";
   if (!/^[0-9a-f-]{36}$/.test(org) || secret.length < 20) return new NextResponse(null, { status: 401 });

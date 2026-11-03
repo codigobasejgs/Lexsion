@@ -111,8 +111,10 @@ describe("Cortesia, plano, status e limites", () => {
 });
 
 describe("RBAC interno e isolamento", () => {
-  it("sem MFA (aal1) nenhuma ação nem leitura gerencial", async () => {
-    expect(await fails(U.nomfa, "select public.platform_trial($1,'prorrogar',3,null,'Sem segundo fator',null,null)", [org], "aal1")).toMatch(/sem permissão/);
+  it("sem autenticador (aal1) a plataforma opera; vínculo vencido não opera nem lê", async () => {
+    expect((await as(U.nomfa, "select * from public.platform_orgs()", [], "aal1")).length).toBeGreaterThan(0);
+    await db.query("update public.platform_members set expires_at = now() - interval '1 minute' where user_id = $1", [U.nomfa]);
+    expect(await fails(U.nomfa, "select public.platform_trial($1,'prorrogar',3,null,'Vínculo vencido',null,null)", [org], "aal1")).toMatch(/sem permissão/);
     expect(await fails(U.nomfa, "select * from public.platform_orgs()", [], "aal1")).toMatch(/somente a plataforma/);
   });
   it("suporte, financeiro e auditor leem a lista; suporte NÃO vê valores; nenhum deles executa ações", async () => {

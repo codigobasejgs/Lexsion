@@ -8,7 +8,7 @@ import { Badge, Dialog, LoadingBlock } from "@/components/ui";
 import { formatBRL } from "@/lib/money";
 import { act, daysLeft, fmtDate, fmtDateTime, lifecycle, loadOrgs, loadTimeline, myPlatformRole, type OrgRow } from "./real-api";
 
-// Ficha 360º do escritório (operação real). Ações chamam funções do banco que conferem papel + MFA, travam a linha,
+// Ficha 360º do escritório (operação real). Ações chamam funções do banco que conferem o papel, travam a linha,
 // checam a versão (outra pessoa alterou? recusa) e auditam antes/depois/motivo. Nada é otimista: a tela recarrega
 // do banco depois de cada ação. Conteúdo jurídico do escritório NÃO é lido aqui.
 type Action = "trial" | "courtesy" | "plan" | "status" | "limit" | "invite";

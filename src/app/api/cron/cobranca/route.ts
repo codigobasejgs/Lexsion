@@ -47,6 +47,9 @@ export async function GET(req: NextRequest) {
     const ok = await mail(to, `LexSion: seu teste grátis termina em ${left} ${left === 1 ? "dia" : "dias"}`, `O teste grátis do ${t.name} termina em ${new Date(end).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}.\nDepois disso o acesso é suspenso, sem apagar nenhum dado. Para continuar, contrate um plano em https://lexsion.com.br/planos ou responda pelo contato do site.`);
     await db.from("audit_logs").insert({ organization_id: t.id, actor_id: null, action: "aviso.teste", entity: "organizations", entity_id: key, detail: ok ? `aviso de ${left} dia(s) aceito pelo Resend` : `aviso de ${left} dia(s) NÃO enviado` });
   }
+  // 1d) Exportações com mais de 7 dias: o ZIP sai do armazenamento (o registro do pedido fica).
+  const { data: oldX } = await db.from("data_exports").select("id,storage_path").eq("status", "pronto").lt("requested_at", new Date(now.getTime() - 7 * 86_400_000).toISOString()).not("storage_path", "is", null).limit(50);
+  for (const x of oldX ?? []) { const { error } = await db.storage.from("exportacoes").remove([x.storage_path!]); if (!error) await db.from("data_exports").update({ storage_path: null }).eq("id", x.id); }
   // 2) Pago sem ativação: tenta de novo (nunca cobra de novo).
   for (const o of (await db.from("saas_orders").select("order_nsu").in("status", ["pago", "teste"]).neq("activation", "concluida").limit(20)).data ?? []) {
     if ((await activate(o.order_nsu)) === "concluida") out.reativacoes++;

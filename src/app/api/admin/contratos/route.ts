@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { caudit, sha256, templateHash } from "@/lib/saas-contract-server";
 import type { Clause } from "@/domain/saas-contract";
 
-// Super Admin (plataforma + MFA): modelos de contrato (rascunho → revisão jurídica → aprovado → publicado),
+// Super Admin (plataforma): modelos de contrato (rascunho → revisão jurídica → aprovado → publicado),
 // dados da contratada e checklist de aprovação, download auditado do PDF aceito. Contrato aceito nunca é editado.
 const err = (status: number, message: string) => NextResponse.json({ ok: false, error: { message } }, { status });
 const CHECK = ["identidade_contratada", "atividade_fiscal", "conta_infinitepay", "clausulas_criticas", "politicas_consumo", "lgpd_dpa"] as const;
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return err(401, "Sessão expirada.");
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return err(403, "Somente a plataforma, com verificação em duas etapas.");
+  if (isPlat !== true) return err(403, "Somente a administração da plataforma.");
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const db = supabaseAdmin();
   const me = auth.user.id;
