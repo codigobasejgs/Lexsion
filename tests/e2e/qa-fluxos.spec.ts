@@ -200,5 +200,7 @@ test("CRM-05: lista com paginação, filtro volta à página 1 e limpar filtro r
   await expect(page).not.toHaveURL(/pagina=/);
   await expect(page.getByRole("link", { name: "Joana Batista Teste" })).toBeVisible();
   await page.getByPlaceholder("Nome, telefone ou serviço").fill("");
-  await expect(page.getByRole("status").filter({ hasText: /^1–10 de/ })).toBeVisible();
+  // O filtro vive na URL (router.replace): espera a navegação antes de conferir a lista (CI lento passava de 5 s).
+  await expect(page).not.toHaveURL(/[?&]q=/, { timeout: 15_000 });
+  await expect(page.getByRole("status").filter({ hasText: /^1–10 de/ })).toBeVisible({ timeout: 15_000 });
 });
