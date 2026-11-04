@@ -113,3 +113,22 @@ test("INT-01: integrações no escritório real mostram o estado verificado no s
   // Rota de saúde: sem sessão 401; de outro escritório 403.
   expect((await page.context().request.get(`/api/integracoes/saude?org=${orgB}`)).status()).toBe(403);
 });
+
+test("INT-02: titular vê o passo a passo de cada conta, salva uma chave (recusada pelo provedor real) e a chave não volta à tela", async ({ page }) => {
+  await login(page, people.tit);
+  await page.goto("/app/integracoes");
+  const box = page.getByTestId("chaves-escritorio");
+  await expect(box).toBeVisible({ timeout: SLOW });
+  for (const id of ["gemini", "asaas", "mercadopago", "zapsign", "infinitepay"]) await expect(page.getByTestId(`chave-${id}`)).toBeVisible();
+  const card = page.getByTestId("chave-asaas");
+  await card.getByText("Como conseguir a chave").click();
+  await expect(card.getByRole("link", { name: /Abrir o painel/ })).toHaveAttribute("href", /^https:\/\//);
+  const fake = "$aact_hmlg_000000000000000000000000e2e";
+  await card.getByLabel("Chave de API").fill(fake);
+  await card.getByLabel("Teste (sandbox)").check();
+  await card.getByRole("button", { name: "Salvar e testar" }).click();
+  await expect(card.getByRole("alert")).toContainText(/recusou/, { timeout: SLOW });
+  await expect(card.getByText("Recusada pelo provedor")).toBeVisible();
+  await expect(card.getByText(/••••0e2e/)).toBeVisible();
+  expect(await page.content()).not.toContain(fake);
+});

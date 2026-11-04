@@ -3,12 +3,12 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { aiEnabled, GATE_MESSAGE } from "@/lib/feature-gates";
+import { geminiKeyFor } from "@/lib/wa-ai";
 
 // IA jurídica (Google Gemini) no SERVIDOR. Regras:
 // 1) só com IA habilitada pelo titular (consentimento registrado e auditado);
 // 2) papel com acesso à IA; 3) texto limitado; 4) saída SEMPRE marcada como sugestão para revisão humana;
 // 5) uso registrado sem conteúdo (só contagem e finalidade). A chave nunca vai ao navegador.
-const KEY = process.env.GEMINI_API_KEY ?? "";
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 const PURPOSES = { resposta: "Escreva uma resposta curta, educada e clara ao cliente, em português do Brasil, sem prometer resultado e sem citar lei que não esteja no contexto.", resumo: "Resuma em tópicos objetivos, em português do Brasil, o que está no texto. Não invente fatos.", minuta: "Organize um rascunho de peça a partir do contexto, em português do Brasil, marcando com [VERIFICAR] tudo que dependa de conferência. Não invente jurisprudência nem números de processo.", triagem: "Liste, em português do Brasil, as perguntas e documentos que faltam para avaliar o caso descrito. Não dê parecer." } as const;
 type Purpose = keyof typeof PURPOSES;
@@ -16,7 +16,7 @@ const err = (status: number, code: string, message: string) => NextResponse.json
 
 export async function POST(req: NextRequest) {
   if (!aiEnabled()) return err(503, "gated", GATE_MESSAGE.ai);
-  if (!supabaseConfigured() || KEY.length < 20) return err(503, "not_configured", "IA não configurada neste ambiente.");
+  if (!supabaseConfigured()) return err(503, "not_configured", "IA não configurada neste ambiente.");
   if (req.headers.get("origin") && new URL(req.headers.get("origin")!).host !== req.headers.get("host")) return err(403, "origin", "Origem não permitida.");
   const b = (await req.json().catch(() => null)) as { organizationId?: string; purpose?: Purpose; context?: string } | null;
   const ctx = String(b?.context ?? "").trim();
@@ -29,10 +29,12 @@ export async function POST(req: NextRequest) {
   if (!me || !["admin", "tenant_admin", "advogado", "atendimento", "estagiario"].includes(me.role)) return err(403, "forbidden", "Seu perfil não usa a IA.");
   const { data: org } = await sb.from("organizations").select("ai_enabled_at,status").eq("id", b.organizationId).maybeSingle();
   if (!org || !["ativa", "trial"].includes(org.status)) return err(403, "forbidden", "Escritório sem acesso.");
-  if (!org.ai_enabled_at) return err(412, "ai_disabled", "A IA ainda não foi habilitada pelo titular do escritório (Configurações → IA).");
+  if (!org.ai_enabled_at) return err(412, "ai_disabled", "A IA ainda não foi habilitada pelo titular do escritório (Integrações → Assistente de IA).");
+  const key = await geminiKeyFor(b.organizationId);
+  if (key.length < 20) return err(503, "not_configured", "IA sem chave: cadastre a chave do Gemini em Integrações.");
 
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-    method: "POST", headers: { "x-goog-api-key": KEY, "Content-Type": "application/json" }, signal: AbortSignal.timeout(60_000),
+    method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, signal: AbortSignal.timeout(60_000),
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: `Você auxilia a equipe de um escritório de advocacia brasileiro. ${PURPOSES[b.purpose]} Sua saída é uma SUGESTÃO que será revisada por um profissional antes de qualquer uso.` }] },
       contents: [{ role: "user", parts: [{ text: ctx }] }],

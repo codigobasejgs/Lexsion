@@ -11,7 +11,7 @@ const STATE = {
   operacional: { label: "Funcionando", tone: "success" },
   pendente_escritorio: { label: "Falta configurar", tone: "warning" },
   desligada: { label: "Aguardando liberação", tone: "neutral" },
-  nao_contratada: { label: "Não disponível", tone: "neutral" },
+  nao_contratada: { label: "Uso ainda não implementado", tone: "neutral" },
   erro: { label: "Com problema", tone: "danger" },
 } as const;
 

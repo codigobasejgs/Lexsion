@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { aiEnabled, whatsappEnabled } from "@/lib/feature-gates";
 import { connectionState, sendText } from "@/lib/evolution";
 import { jidKind, waTarget } from "@/lib/wa-inbox";
+import { officeSecret } from "@/lib/credentials";
 
 // Atendimento automático (Gemini) no WhatsApp: processa ai_jobs vencidos (debounce), gera a resposta com o agente
 // PUBLICADO do escritório e só envia depois do portão ai_job_claim_send (modo IA + mesma versão de controle, com trava
@@ -50,11 +51,16 @@ export function systemPrompt(officeName: string, a: Agent) {
   ].filter(Boolean).join("\n").slice(0, 16_000);
 }
 
+/** Chave do Gemini para o escritório: a dele, se cadastrada e não recusada; senão, a da plataforma. */
+export async function geminiKeyFor(org: string) {
+  return (await officeSecret(org, "gemini").catch(() => null)) ?? KEY;
+}
+
 /** Chamada ao Gemini (servidor). Devolve texto ou null em falha/tempo. */
-export async function gemini(system: string, history: { role: "user" | "model"; text: string }[]): Promise<string | null> {
-  if (KEY.length < 20) return null;
+export async function gemini(system: string, history: { role: "user" | "model"; text: string }[], key = KEY): Promise<string | null> {
+  if (key.length < 20) return null;
   const r = await fetch(`${BASE}/v1beta/models/${MODEL}:generateContent`, {
-    method: "POST", headers: { "x-goog-api-key": KEY, "Content-Type": "application/json" }, signal: AbortSignal.timeout(30_000),
+    method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: history.map((h) => ({ role: h.role, parts: [{ text: h.text.slice(0, 2000) }] })), generationConfig: { temperature: 0.3, maxOutputTokens: 600 } }),
   }).catch(() => null);
   const j = (await r?.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
@@ -98,7 +104,7 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   // Cota diária reservada no banco ANTES de chamar o modelo (atômica: chamadas concorrentes não passam do limite).
   const { data: quota } = await db.rpc("ai_quota_take", { p_org: org, p_limit: DAILY_LIMIT });
   if (quota !== true) { await toHuman(org, conv, jobId, "limite diário da assistente atingido"); return "encaminhado"; }
-  const out = await deps.gemini(systemPrompt(o.name, agent), hist);
+  const out = await deps.gemini(systemPrompt(o.name, agent), hist, await geminiKeyFor(org));
   await db.from("ai_usage").insert({ organization_id: org, actor_id: null, purpose: "atendimento", model: MODEL, input_chars: hist.reduce((s, h) => s + h.text.length, 0), output_chars: out?.length ?? 0 });
   if (!out) { await toHuman(org, conv, jobId, "assistente sem resposta (falha ou tempo)"); return "encaminhado"; }
   const { wantsHuman, reply } = handoffOut(out);

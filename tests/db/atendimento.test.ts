@@ -130,3 +130,12 @@ describe("Atendimento — fila de eventos", () => {
     await db.query("insert into public.ai_usage (organization_id, purpose, model, input_chars, output_chars) values ($1,'atendimento','m',1,1), ($1,'simulador','m',1,1)", [orgA]);
   });
 });
+
+describe("Chaves de integração do escritório", () => {
+  it("nenhum papel do navegador lê ou grava org_credentials (só o servidor)", async () => {
+    await db.query("insert into public.org_credentials (organization_id, provider, sealed, hint) values ($1,'asaas','cifrado','••••1234')", [orgA]);
+    expect(await denied(U.adminA, "select sealed from public.org_credentials")).toMatch(/permission denied/);
+    expect(await denied(U.adminA, "insert into public.org_credentials (organization_id, provider, sealed, hint) values ($1,'gemini','x','x')", [orgA])).toMatch(/permission denied/);
+    expect(await denied(null, "select 1 from public.org_credentials")).toMatch(/permission denied/);
+  });
+});

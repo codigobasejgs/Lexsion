@@ -6,6 +6,7 @@ import { useCollection, useSession } from "@/components/providers";
 import { Badge, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
 import { INT_STATUS } from "@/modules/integrations/labels";
 import { RealIntegrations } from "@/modules/integrations/real-list";
+import { OfficeKeys } from "@/modules/integrations/office-keys";
 
 export default function IntegracoesPage() {
   const { mode } = useSession();
@@ -14,6 +15,7 @@ export default function IntegracoesPage() {
       <div className="mx-auto max-w-[1200px]">
         <PageHeader title="Integrações" description="Estado verificado agora no servidor, para o seu escritório. “Funcionando” só aparece quando a conexão foi confirmada; nenhuma chave é exibida." />
         <RealIntegrations />
+        <OfficeKeys />
       </div>
     </Guard>
   );
