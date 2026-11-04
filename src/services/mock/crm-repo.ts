@@ -1,5 +1,5 @@
 // Adapter mock do CRM, clientes e casos. Operações encadeadas gravam numa única transação.
-import { readAll, writeAll, writeMany } from "./db";
+import { isRealMode, readAll, writeAll, writeMany } from "./db";
 import type { RequestContext, Result } from "../contracts";
 import type { AuditEvent, Case, Client, Conversation, Lead, Message, StageKey } from "@/domain/types";
 import { applyStageChange, buildTouch, findClientMatches, formatPhone, normalizePhone, STAGE_ERROR_MSG } from "@/domain/crm";
@@ -163,8 +163,9 @@ function buildClient(ctx: RequestContext, input: ClientInput, extra: Partial<Cli
 
 export const clientService = {
   create: async (input: ClientInput, ctx: RequestContext): Promise<Result<Client>> => {
-    // Valida quota do tenant (demo)
-    const tenant = await tenantRepo.getById(ctx.organizationId);
+    // Cota de clientes da DEMONSTRAÇÃO (planos fictícios). Na operação real os planos LexSion não limitam clientes
+    // e o plano do escritório (solo/profissional/elite) não existe nesta tabela: aplicar aqui quebrava o salvamento.
+    const tenant = isRealMode() ? null : await tenantRepo.getById(ctx.organizationId);
     if (tenant) {
       const usage = await tenantRepo.getUsage(tenant.id);
       if (usage) {

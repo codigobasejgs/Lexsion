@@ -59,7 +59,8 @@ export function ClientForm({ defaults, submitLabel, onSubmit, onCancel, onPickEx
     }
     setErrors({});
     setSubmitting(true);
-    const err = await onSubmit(parsed.data);
+    // Qualquer falha inesperada vira mensagem na tela: o botão nunca fica preso em "Salvando…" e os dados digitados ficam.
+    const err = await onSubmit(parsed.data).catch((x: Error) => `Não foi possível salvar agora (${x?.message ?? "erro desconhecido"}). Seus dados continuam no formulário; tente de novo.`);
     setSubmitting(false);
     if (err) setFormError(err);
     else setDirty(false);

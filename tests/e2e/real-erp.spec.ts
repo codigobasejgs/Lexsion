@@ -42,7 +42,7 @@ test.beforeAll(async () => {
   people.outro = await mkUser("outro", "QA Outro Escritório");
   people.cli = await mkUser("cli", "QA Cliente Portal");
   const org = async (slug: string, owner: string) => {
-    const { data } = await admin.from("organizations").insert({ slug, name: `QA Teste Operacional ${slug.slice(-6)}`, status: "trial" }).select("id").single().throwOnError();
+    const { data } = await admin.from("organizations").insert({ slug, name: `QA Teste Operacional ${slug.slice(-6)}`, status: "trial", plan: "profissional" }).select("id").single().throwOnError();
     await admin.from("organization_memberships").insert({ organization_id: data!.id, user_id: owner, role: "admin" }).throwOnError();
     return data!.id as string;
   };
@@ -191,3 +191,24 @@ test("REAL-ERP-05:módulo dependente de provedor sem credencial fica bloqueado c
   await expect(page.getByText(/Nenhuma cobrança é emitida/)).toBeVisible();
   await expect(page.getByRole("button", { name: /cobrança/i })).toHaveCount(0);
 });
+
+// Regressão (04/11/2026): com plano real (solo/profissional/elite) o salvamento quebrava ("reading 'clients'") e o
+// botão ficava em "Salvando…". Escritórios reais têm plano; os de teste anteriores não tinham.
+for (const plan of ["solo", "elite"] as const) {
+  test(`REAL-ERP-07 (${plan}): cadastrar cliente com plano real salva e abre a ficha`, async ({ page }) => {
+    await admin.from("organizations").update({ plan }).eq("id", orgA).throwOnError();
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await login(page, people.tit);
+    await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
+    await page.goto("/app/clientes/novo");
+    await page.getByLabel("Nome completo").fill(`Cliente Plano ${plan} ${tag}`);
+    await page.getByLabel("CPF").pressSequentially(plan === "solo" ? "11144477735" : "39053344705");
+    await page.getByLabel("Telefone (WhatsApp)").fill("(71) 99999-0007");
+    await page.getByLabel("Cidade").fill("Salvador");
+    await page.getByRole("button", { name: "Salvar cliente" }).click();
+    await page.waitForURL(/\/app\/clientes\/[\w-]+\?criado=1/, { timeout: Number(process.env.SLOW ?? 20_000) });
+    expect(errors).toEqual([]);
+    expect((await admin.from("org_records").select("id").eq("organization_id", orgA).eq("collection", "clients").contains("data", { name: `Cliente Plano ${plan} ${tag}` })).data).toHaveLength(1);
+  });
+}
