@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
   const sb = await supabaseServer();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return err(401, "Sessão expirada. Entre novamente.");
+  // Ações sobre contratantes exigem o módulo "contratantes" liberado para esta pessoa (além do papel, no banco).
+  const { data: modOk } = await sb.rpc("platform_module_ok", { p_module: "contratantes" });
+  if (modOk !== true) return err(403, "O Super Admin não liberou o módulo Contratantes para você.");
   const reason = String(b.reason ?? "").trim().slice(0, 500);
   const expected = b.expected ?? null;
   const key = b.key && /^[\w-]{8,80}$/.test(b.key) ? b.key : null; // duplo clique: mesma chave ⇒ uma aplicação

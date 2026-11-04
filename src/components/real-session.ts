@@ -13,6 +13,7 @@ import { setPeople } from "./people";
 type Access = {
   name: string | null;
   platform: Role | null;
+  platformDenied?: string[];
   memberships: { organizationId: string; name: string; slug: string; status: TenantStatus; role: Role }[];
   portal: { organizationId: string; name: string; slug: string; status: TenantStatus; clientId: string }[];
 };
@@ -52,7 +53,7 @@ async function loadOnce(): Promise<RealSession | null> {
 
   let s: RealSession;
   if (a.platform) {
-    s = { user: { id: auth.user.id, name, role: a.platform, organizationId: null }, org: null, tenant: null, orgs: [], team: [] };
+    s = { user: { id: auth.user.id, name, role: a.platform, organizationId: null, platformDenied: a.platformDenied ?? [] }, org: null, tenant: null, orgs: [], team: [] };
     configureReal({ userId: auth.user.id, organizationId: null, platform: true });
   } else if (a.memberships.length) {
     const m = a.memberships.find((x) => x.organizationId === pref) ?? a.memberships.find((x) => x.status === "ativa" || x.status === "trial") ?? a.memberships[0];

@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) return err(401, "Sessão expirada.");
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return err(403, "Somente a administração da plataforma.");
+  const { data: modOk } = await sb.rpc("platform_module_ok", { p_module: "contratos" }); // módulo liberado para a pessoa pelo Super Admin
+  if (isPlat !== true || modOk !== true) return err(403, "Somente a administração da plataforma.");
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const db = supabaseAdmin();
   const me = auth.user.id;

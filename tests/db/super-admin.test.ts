@@ -145,3 +145,47 @@ describe("RBAC interno e isolamento", () => {
     expect(Object.keys(t).sort()).toEqual(["contracts", "events", "grants", "orders", "overrides", "team"]);
   });
 });
+
+describe("Equipe da plataforma (Super Admin)", () => {
+  const staff = "00000000-0000-0000-0000-0000000000e1";
+  const email = (id: string) => db.query<{ e: string }>("select email e from auth.users where id = $1", [id]).then((r) => r.rows[0].e);
+  it("Super Admin concede papel com módulos restritos; a pessoa só usa o que foi liberado; não-superadmin não gerencia", async () => {
+    await db.query("insert into auth.users (id, email) values ($1, 'staff@teste.invalid') on conflict do nothing", [staff]);
+    await as(U.owner, "select public.platform_staff_set('staff@teste.invalid', 'platform_support', array['financeiro','auditoria'], null, 'suporte de novembro', false)");
+    const ok = async (m: string) => (await as<{ ok: boolean }>(staff, "select public.platform_module_ok($1) ok", [m]))[0].ok;
+    expect(await ok("suporte")).toBe(true);
+    expect(await ok("financeiro")).toBe(false);
+    expect(await ok("equipe")).toBe(false);
+    expect((await as<{ a: { platform: string; platformDenied: string[] } }>(staff, "select public.my_access() a"))[0].a).toMatchObject({ platform: "platform_support", platformDenied: ["financeiro", "auditoria"] });
+    expect(await fails(staff, "select public.platform_staff_set('staff@teste.invalid', 'superadmin', null, null, 'me promovendo', false)")).toMatch(/somente o Super Admin/);
+    expect(await fails(U.ops, "select * from public.platform_staff()")).toMatch(/somente o Super Admin/);
+    expect(await fails(null, "select * from public.platform_staff()")).toMatch(/permission denied|somente/);
+    const a = (await db.query<{ action: string; reason: string }>("select action, reason from public.audit_logs where entity = 'platform_members' and entity_id = $1 order by id desc limit 1", [staff])).rows[0];
+    expect(a).toEqual({ action: "plataforma.acesso_concedido", reason: "suporte de novembro" });
+    expect((await as(U.owner, "select * from public.platform_staff()")).length).toBeGreaterThan(5);
+  });
+  it("alterar e revogar; validade vencida corta o acesso", async () => {
+    await as(U.owner, "select public.platform_staff_set('staff@teste.invalid', 'platform_finance', '{}', now() + interval '1 day', 'mudou para financeiro', false)");
+    expect((await as<{ ok: boolean }>(staff, "select public.platform_module_ok('financeiro') ok"))[0].ok).toBe(true);
+    await db.query("update public.platform_members set expires_at = now() - interval '1 minute' where user_id = $1", [staff]);
+    expect((await as<{ ok: boolean }>(staff, "select public.platform_module_ok('suporte') ok"))[0].ok).toBe(false);
+    expect((await as<{ a: { platform: string | null } }>(staff, "select public.my_access() a"))[0].a.platform).toBeNull();
+    await as(U.owner, "select public.platform_staff_set('staff@teste.invalid', null, null, null, 'fim do contrato', true)");
+    expect((await db.query("select 1 from public.platform_members where user_id = $1", [staff])).rows).toEqual([]);
+  });
+  it("não altera a si mesmo, exige conta cadastrada, motivo e módulo válido; nunca deixa a plataforma sem Super Admin", async () => {
+    expect(await fails(U.owner, "select public.platform_staff_set($1, 'superadmin', null, null, 'auto alteração', true)", [await email(U.owner)])).toMatch(/próprio/);
+    expect(await fails(U.owner, "select public.platform_staff_set('nao-existe@teste.invalid', 'platform_support', null, null, 'conta inexistente', false)")).toMatch(/não há conta/);
+    expect(await fails(U.owner, "select public.platform_staff_set('staff@teste.invalid', 'platform_admin', null, null, 'x', false)")).toMatch(/motivo/);
+    expect(await fails(U.owner, "select public.platform_staff_set('staff@teste.invalid', 'platform_admin', array['inexistente'], null, 'módulo errado', false)")).toMatch(/módulo desconhecido/);
+    // Dois Super Admins (owner e nomfa): owner rebaixa nomfa; depois ninguém consegue tirar o último.
+    await as(U.owner, "select public.platform_staff_set($1, 'platform_admin', null, null, 'rebaixado para operação', false)", [await email(U.nomfa)]);
+    await db.query("insert into public.platform_members (user_id, role) values ($1, 'superadmin') on conflict (user_id) do update set role = 'superadmin'", [staff]);
+    await as(staff, "select public.platform_staff_set($1, null, null, null, 'troca de responsável', true)", [await email(U.owner)]);
+    expect(await fails(staff, "select public.platform_staff_set($1, 'superadmin', null, null, 'tentativa', false)", [await email(staff)])).toMatch(/próprio/);
+    expect((await db.query<{ n: number }>("select count(*)::int n from public.platform_members where role = 'superadmin'")).rows[0].n).toBe(1);
+    await db.query("insert into public.platform_members (user_id, role) values ($1,'superadmin') on conflict (user_id) do update set role='superadmin'", [U.owner]);
+    await db.query("update public.platform_members set role = 'superadmin' where user_id = $1", [U.nomfa]);
+    await db.query("delete from public.platform_members where user_id = $1", [staff]);
+  });
+});

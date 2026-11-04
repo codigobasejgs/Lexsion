@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user?.email) return err(401, "Sessão expirada.");
   const { data: owner } = await sb.rpc("is_platform", { roles: ["superadmin"] });
-  if (owner !== true) return err(403, "Somente o proprietário da plataforma elimina dados de um escritório.");
+  const { data: modOk } = await sb.rpc("platform_module_ok", { p_module: "dados" }); // módulo liberado para a pessoa pelo Super Admin
+  if (owner !== true || modOk !== true) return err(403, "Somente o proprietário da plataforma elimina dados de um escritório.");
   const b = (await req.json().catch(() => ({}))) as { org?: string; confirm?: string; reason?: string; password?: string };
   const orgId = String(b.org ?? ""), reason = String(b.reason ?? "").trim();
   if (!/^[0-9a-f-]{36}$/.test(orgId)) return err(400, "Escritório inválido.");

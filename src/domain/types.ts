@@ -23,6 +23,7 @@ export interface User {
   role: Role;
   organizationId: ID | null; // superadmin não pertence a um escritório
   clientId?: ID; // perfil cliente do portal
+  platformDenied?: string[]; // módulos do /admin retirados desta pessoa pelo Super Admin
 }
 
 interface OrgEntity {

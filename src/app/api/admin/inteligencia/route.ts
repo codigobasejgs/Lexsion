@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
   if (!auth.user) return NextResponse.json({ ok: false, error: { message: "Sessão expirada." } }, { status: 401 });
   // Mesma regra do banco: vínculo de plataforma vigente (is_platform).
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return NextResponse.json({ ok: false, error: { message: "Somente a administração da plataforma." } }, { status: 403 });
+  const { data: modOk } = await sb.rpc("platform_module_ok", { p_module: "integracoes" }); // módulo liberado para a pessoa pelo Super Admin
+  if (isPlat !== true || modOk !== true) return NextResponse.json({ ok: false, error: { message: "Somente a administração da plataforma." } }, { status: 403 });
   const b = (await req.json().catch(() => ({}))) as { provider?: string; maxItems?: number };
   if (!SOURCES.includes(b.provider as SourceId)) return NextResponse.json({ ok: false, error: { message: "Fonte não habilitada para execução." } }, { status: 400 });
   const r = await syncSource(b.provider as SourceId, "manual", { maxItems: Math.min(Math.max(Number(b.maxItems) || 150, 1), 300) });

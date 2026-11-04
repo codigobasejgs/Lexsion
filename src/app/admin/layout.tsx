@@ -3,23 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Building2, Compass, CreditCard, Database, FileSignature, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, ShieldCheck, X } from "lucide-react";
+import { BarChart3, Building2, Compass, CreditCard, Database, FileSignature, FlaskConical, Layers, LifeBuoy, LogOut, Menu, Plug, ScrollText, ShieldCheck, UsersRound, X } from "lucide-react";
 import { lastWasDemo, useSession } from "@/components/providers";
 import { LexSionLogo } from "@/components/brand";
 import { isPlatformRole } from "@/domain/permissions";
+import { PLATFORM_MODULES, canSeeModule, moduleForPath, type PlatformModule } from "@/domain/platform-modules";
 import { useTour } from "@/tours/runner";
 
-const NAV = [
-  { href: "/admin", label: "Painel geral", icon: BarChart3 },
-  { href: "/admin/organizacoes", label: "Contratantes", icon: Building2 },
-  { href: "/admin/planos", label: "Planos e assinaturas", icon: Layers },
-  { href: "/admin/faturamento", label: "Financeiro da plataforma", icon: CreditCard },
-  { href: "/admin/contratos", label: "Contratos SaaS", icon: FileSignature },
-  { href: "/admin/integracoes", label: "Integrações", icon: Plug },
-  { href: "/admin/suporte", label: "Suporte", icon: LifeBuoy },
-  { href: "/admin/dados", label: "Dados e LGPD", icon: ShieldCheck },
-  { href: "/admin/auditoria", label: "Auditoria", icon: ScrollText },
-];
+const ICON: Record<PlatformModule, typeof BarChart3> = { painel: BarChart3, contratantes: Building2, planos: Layers, financeiro: CreditCard, contratos: FileSignature, integracoes: Plug, suporte: LifeBuoy, dados: ShieldCheck, auditoria: ScrollText, equipe: UsersRound };
 
 // Shell do Super Admin: marca LexSion, sem identidade de escritório, sem acesso a conteúdo sigiloso dos escritórios.
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
@@ -41,6 +32,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
     return () => removeEventListener("keydown", onKey);
   }, [open]);
   if (!ready || !isPlatformRole(user?.role)) return <div className="min-h-dvh bg-canvas" aria-busy="true" />;
+  const denied = user?.platformDenied ?? [];
+  const NAV = PLATFORM_MODULES.filter((m) => canSeeModule(user?.role, denied, m.id)).map((m) => ({ href: m.href, label: m.label, icon: ICON[m.id] }));
+  const blocked = !canSeeModule(user?.role, denied, moduleForPath(path));
   const active = (href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));
   const nav = (
     <nav aria-label="Super Admin" className="space-y-0.5">
@@ -78,7 +72,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
             </div>
           </div>
         )}
-        <main id="conteudo" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 py-6 outline-none sm:px-6">{children}</main>
+        <main id="conteudo" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 py-6 outline-none sm:px-6">{blocked ? <div className="panel max-w-xl p-6 text-sm" role="alert" data-testid="modulo-bloqueado"><h1 className="mb-2 text-lg font-semibold">Sem acesso a este módulo</h1><p className="text-fg-muted">O Super Admin não liberou este módulo para você. Use os itens do menu ou peça a liberação.</p></div> : children}</main>
       </div>
     </div>
   );

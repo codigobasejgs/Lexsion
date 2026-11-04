@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
   if (!auth.user) return err(401, "unauthenticated", "Sessão expirada. Entre novamente.");
   // Mesma regra do banco: vínculo de plataforma vigente (is_platform). Sem vínculo, 403.
   const { data: isPlat } = await sb.rpc("is_platform", { roles: ["superadmin", "platform_admin"] });
-  if (isPlat !== true) return err(403, "forbidden", "Somente a plataforma cria escritórios.");
+  const { data: modOk } = await sb.rpc("platform_module_ok", { p_module: "contratantes" }); // módulo liberado para a pessoa pelo Super Admin
+  if (isPlat !== true || modOk !== true) return err(403, "forbidden", "Somente a plataforma cria escritórios.");
   const { data: taken } = await sb.from("organizations").select("id").eq("slug", slug).maybeSingle();
   if (taken) return err(409, "slug_taken", "Endereço já em uso por outro escritório.");
 
