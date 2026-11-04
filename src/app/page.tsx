@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Building2, Check, Fingerprint, Layers, Smartphone, Users } from "lucide-react";
 import { SiteShell } from "@/components/marketing/site-shell";
 import { ShotCard } from "@/components/marketing/shot-gallery";
+import { DemoVideo } from "@/components/marketing/demo-video";
 import { LANDING_SHOTS } from "@/content/landing-shots";
 import { AREAS, FAQ, FLOW, MODULES } from "@/content/marketing";
 
@@ -32,6 +33,15 @@ export default function Landing() {
             <p className="mt-4 text-sm text-[#b9b4aa]">Demonstração com dados fictícios, sem cadastro.</p>
           </div>
           <div className="text-fg"><ShotCard shot={shot("meu-dia")} priority /></div>
+        </div>
+      </section>
+
+      {/* Vídeo demonstrativo */}
+      <section aria-labelledby="video" className="bg-[#0e1014] text-[#f7f2e8]">
+        <div className="mx-auto max-w-4xl px-5 pb-14 pt-4">
+          <h2 id="video" className="text-center text-2xl font-semibold sm:text-3xl">A LexSion em 1 minuto</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-[#c9c3b8]">Atendimento, casos, prazos, financeiro e portal do cliente, nas telas reais do sistema com dados fictícios.</p>
+          <div className="mt-6"><DemoVideo src="/landing/video/lexsion-demonstracao-60s.mp4" poster="/landing/video/lexsion-demonstracao-capa.jpg" title="Demonstração da LexSion" duration="1 min" /></div>
         </div>
       </section>
 

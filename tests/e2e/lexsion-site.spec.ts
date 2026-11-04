@@ -129,3 +129,20 @@ test("QA-DEMO-01: demonstração agrupada por escritório, com busca e prévia d
   await expect(page).toHaveURL(/\/app\/inicio/);
   expect(await overflow(page)).toBeLessThanOrEqual(0);
 });
+
+test("QA-VIDEO: vídeo demonstrativo da landing não baixa sozinho, toca ao clicar e não quebra a página", async ({ page }) => {
+  const videoRequests: string[] = [];
+  page.on("request", (r) => { if (r.url().endsWith(".mp4")) videoRequests.push(r.url()); });
+  await page.goto("/");
+  const play = page.getByTestId("assistir-video");
+  await play.scrollIntoViewIfNeeded();
+  await expect(play).toBeVisible();
+  await page.waitForTimeout(800);
+  expect(videoRequests).toEqual([]); // página leve: nada de vídeo antes do clique
+  await play.click();
+  const v = page.getByTestId("video-demonstracao");
+  await expect(v).toBeVisible();
+  await expect.poll(() => v.evaluate((el: HTMLVideoElement) => el.readyState >= 2 && el.duration > 50), { timeout: 20_000 }).toBe(true);
+  expect(await overflow(page)).toBeLessThanOrEqual(0);
+  expect(await serious(page)).toEqual([]);
+});
