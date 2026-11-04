@@ -1,6 +1,13 @@
 # Progresso — conclusão, QA e produção (checkpoint)
 
-> **Alerta de revisão:** as afirmações abaixo de conclusão e cancelamento imediato do atendimento são históricas e não comprovam segurança para ativação. Há uma corrida entre `ai_job_claim_send` e o envio externo: um takeover pode ocorrer entre eles. Limites concorrentes e recuperação também precisam de validação. IA e WhatsApp permanecem bloqueados para ativação. Consulte `integracoes.md` e `operacao.md` para os riscos atuais.
+## 04/11/2026 — integrações no painel e ativação
+- Em produção (`8d7ea71` reimplantado; smoke `002186f`): `WHATSAPP_ENABLED=1`, `AI_ENABLED=1`, `SITE_URL`. Contrato 2026.11-2 publicado (Tubarão Empréstimos LTDA como operador do Evolution).
+- `/app/integracoes` real: estado verificado no servidor por integração, com a ação que resolve; telas próprias de WhatsApp (QR) e IA.
+- Corridas fechadas: reserva de envio + confirmação final; cota atômica; fila encaminhada com WhatsApp desligado.
+- Provas: banco 117/117; real 25/25 (atendimento + privilégios); Evolution real 2/2 (QR e webhook em instância `lexsion-qa`, removida; nenhum aparelho pareado, nada enviado); E2E 48 aprovados/6 pulados; smoke produção 5/5 (QA35).
+- **Bloqueio externo:** Gemini responde 402 “prepayment credits are depleted”. Recarregar créditos do projeto no Google AI Studio. Até lá, respostas automáticas vão para a equipe com aviso.
+- Escritório adv-santos: WhatsApp não conectado, IA não habilitada, nenhuma assistente (ações do titular).
+- Pendente: matriz dos 23 módulos e relatório das 35 jornadas (`inventario.md`, `matriz-requisitos.md`, `relatorio-qa.md`).
 
 Retomar daqui. Ordem combinada com o titular (03/11/2026): **atendimento primeiro**; importação do IndexedDB e conectores de honorários depois.
 
