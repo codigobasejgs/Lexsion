@@ -9,6 +9,7 @@ import { ACTION_LABEL, ALL_ROLES, ROLE_LABEL, allowed, can, isPlatformRole, type
 import { people as users } from "@/components/people";
 import type { Role } from "@/domain/types";
 import { TeamGovernance } from "@/modules/team/governance";
+import { TeamAccess } from "@/modules/team/access";
 
 const AREAS: Area[] = ["atendimento", "crm", "clientes", "casos", "documentos", "previdenciario", "financeiro", "pagamentos", "minutas", "integracoes", "configuracoes"];
 const ACTIONS: Action[] = ["aprovar_peca", "publicar_portal", "aprovar_proposta", "ver_honorarios", "ver_casos_sigilosos", "exportar", "gerir_equipe", "gerir_marca"];
@@ -46,7 +47,7 @@ export default function EquipePage() {
           </table>
           <p className="mt-2 text-xs text-fg-muted">Papéis da plataforma (Superadmin, administrador e suporte LexSion) não acessam dados dos escritórios. Presentes nesta equipe: {roles.map((r) => ROLE_LABEL[r]).join(", ")}.</p>
         </section>
-        {mode === "real" ? (user && allowed(user.role, "gerir_equipe") && org && <div className="space-y-6"><InviteReal organizationId={org.id} canGrantAdmin={user.role === "admin"} /><TeamGovernance organizationId={org.id} myRole={user.role} /></div>) : (
+        {mode === "real" ? (user && allowed(user.role, "gerir_equipe") && org && <div className="space-y-6"><TeamAccess organizationId={org.id} myRole={user.role} myId={user.id} /><InviteReal organizationId={org.id} canGrantAdmin={user.role === "admin"} /><TeamGovernance organizationId={org.id} myRole={user.role} /></div>) : (
           <section className="panel space-y-2 p-4 text-sm">
             <div className="flex items-center gap-2"><h2 className="flex-1 font-semibold">Convidar membro</h2><SimulatedBadge /></div>
             <div className="flex flex-wrap gap-2"><input type="email" className="field max-w-sm" aria-label="E-mail do convidado" placeholder="nome@exemplo.test" value={email} onChange={(e) => setEmail(e.target.value)} /><button className="btn btn-secondary" disabled={!/^\S+@\S+\.\S+$/.test(email)} onClick={() => { setInvited(email); setEmail(""); }}><MailPlus aria-hidden className="size-4" /> Enviar convite (simulado)</button></div>
@@ -77,7 +78,8 @@ function InviteReal({ organizationId, canGrantAdmin }: { organizationId: string;
   };
   return (
     <section className="panel space-y-3 p-4 text-sm" aria-labelledby="convite-h">
-      <h2 id="convite-h" className="font-semibold">Convidar membro</h2>
+      <h2 id="convite-h" className="font-semibold">Convidar membro por e-mail</h2>
+      <p className="text-fg-muted">Alternativa para quem já tem e-mail ativo: a pessoa recebe um link e define a própria senha.</p>
       <div className="grid gap-2 sm:grid-cols-3">
         <label className="block"><span className="label">Nome</span><input className="field" autoComplete="off" value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></label>
         <label className="block"><span className="label">E-mail</span><input type="email" inputMode="email" autoComplete="off" className="field" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value.trim() })} /></label>

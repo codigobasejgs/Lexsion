@@ -139,3 +139,4 @@ describe("Chaves de integração do escritório", () => {
     expect(await denied(null, "select 1 from public.org_credentials")).toMatch(/permission denied/);
   });
 });
+

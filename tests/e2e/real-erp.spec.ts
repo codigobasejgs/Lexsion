@@ -68,7 +68,7 @@ test("REAL-ERP-01: titular entra, vê a equipe real, cadastra cliente e abre cas
   await page.waitForURL(/\/app\/inicio/, { timeout: Number(process.env.SLOW ?? 20_000) });
   await expect(page.getByText("Ambiente demonstrativo")).toHaveCount(0);
   await page.goto("/app/equipe");
-  await expect(page.getByText("QA Advogada")).toBeVisible({ timeout: 30_000 }); // sessão real carrega pela rede
+  await expect(page.getByText("QA Advogada").first()).toBeVisible({ timeout: 30_000 }); // sessão real carrega pela rede (cartão e lista de acessos)
   await expect(page.getByText("Rafael", { exact: false })).toHaveCount(0); // nenhum perfil fictício
 
   await page.goto("/app/clientes/novo");
