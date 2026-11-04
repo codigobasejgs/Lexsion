@@ -64,10 +64,34 @@ describe("Atendimento — controle IA × humano", () => {
     expect((await db.query<{ ok: boolean }>("select public.ai_job_claim_send($1) as ok", [j])).rows[0].ok).toBe(false);
     expect((await db.query<{ status: string }>("select status from public.ai_jobs where id = $1", [j])).rows[0].status).toBe("descartado");
   });
-  it("sem mudança de modo, o portão libera uma única vez", async () => {
+  it("sem mudança de modo, o portão libera uma única vez e a confirmação final passa", async () => {
     const j = await job("c1", "wa-m3");
     expect(await claim(j)).toBe(true);
     expect((await db.query<{ ok: boolean }>("select public.ai_job_claim_send($1) as ok", [j])).rows[0].ok).toBe(false); // já "enviando"
+    expect((await db.query<{ ok: boolean }>("select public.ai_job_confirm_send($1) as ok", [j])).rows[0].ok).toBe(true);
+    await db.query("select public.ai_job_release_send($1)", [j]);
+    await db.query("update public.ai_jobs set status = 'enviado' where id = $1", [j]);
+  });
+  it("corrida residual: humano assume DEPOIS do portão e ANTES do envio ⇒ confirmação final recusa (nada sai)", async () => {
+    const j = await job("c1", "wa-m4");
+    expect(await claim(j)).toBe(true); // portão passou; geração terminou; envio ainda não começou
+    await as(U.atdA, "select public.conversation_set_mode($1,'c1','humano')", [orgA]);
+    expect((await db.query<{ ok: boolean }>("select public.ai_job_confirm_send($1) as ok", [j])).rows[0].ok).toBe(false);
+    expect((await db.query<{ status: string }>("select status from public.ai_jobs where id = $1", [j])).rows[0].status).toBe("cancelado");
+    expect((await db.query<{ s: number | null }>("select sending_job s from public.conversation_control where organization_id = $1 and conversation_id = 'c1'", [orgA])).rows[0].s).toBeNull();
+    await as(U.atdA, "select public.conversation_set_mode($1,'c1','ia')", [orgA]);
+  });
+  it("dois trabalhos na mesma conversa: só um ganha a reserva de envio", async () => {
+    const [a, b] = [await job("c1", "wa-m5"), await job("c1", "wa-m6")];
+    expect(await claim(a)).toBe(true);
+    expect(await claim(b)).toBe(false);
+    await db.query("select public.ai_job_release_send($1)", [a]);
+  });
+  it("cota diária atômica: com limite 3, a 4ª reserva é recusada", async () => {
+    const r: boolean[] = [];
+    for (let i = 0; i < 4; i++) r.push((await db.query<{ ok: boolean }>("select public.ai_quota_take($1, 3) as ok", [orgA])).rows[0].ok);
+    expect(r).toEqual([true, true, true, false]);
+    expect(await denied(U.adminA, "select public.ai_quota_take($1, 1000)", [orgA])).toMatch(/permission denied/);
   });
   it("grupo nunca entra em modo IA e o portão recusa trabalho de grupo", async () => {
     await conv("g1", { aiActive: false });

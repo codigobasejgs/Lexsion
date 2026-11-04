@@ -11,11 +11,21 @@ export const maxDuration = 120;
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET ?? "";
   if (secret.length < 24 || req.headers.get("authorization") !== `Bearer ${secret}`) return new NextResponse(null, { status: 401 });
-  if (!whatsappEnabled()) return NextResponse.json({ ok: true, desligado: true });
   const db = supabaseAdmin();
+  // Integração desligada: nada é enviado; respostas que estavam na fila passam para a equipe (não ficam esquecidas).
+  if (!whatsappEnabled()) {
+    const { data: off } = await db.from("ai_jobs").update({ status: "encaminhado", reason: "WhatsApp desligado na plataforma", finished_at: new Date().toISOString() }).in("status", ["pendente", "gerando", "enviando"]).select("id,organization_id,conversation_id");
+    for (const s of off ?? []) {
+      await db.from("conversation_control").update({ mode: "humano", sending_job: null, updated_at: new Date().toISOString() }).eq("organization_id", s.organization_id).eq("conversation_id", s.conversation_id).eq("mode", "ia");
+    }
+    return NextResponse.json({ ok: true, desligado: true, encaminhados: off?.length ?? 0 });
+  }
   const stale = new Date(Date.now() - 3 * 60_000).toISOString();
-  const { data: stuck } = await db.from("ai_jobs").update({ status: "encaminhado", reason: "geração interrompida", finished_at: new Date().toISOString() }).in("status", ["gerando", "enviando"]).lt("created_at", stale).select("organization_id,conversation_id");
-  for (const s of stuck ?? []) await db.from("conversation_control").update({ mode: "humano", updated_at: new Date().toISOString() }).eq("organization_id", s.organization_id).eq("conversation_id", s.conversation_id).eq("mode", "ia");
+  const { data: stuck } = await db.from("ai_jobs").update({ status: "encaminhado", reason: "geração interrompida", finished_at: new Date().toISOString() }).in("status", ["gerando", "enviando"]).lt("created_at", stale).select("id,organization_id,conversation_id");
+  for (const s of stuck ?? []) {
+    await db.from("conversation_control").update({ sending_job: null }).eq("sending_job", s.id);
+    await db.from("conversation_control").update({ mode: "humano", updated_at: new Date().toISOString() }).eq("organization_id", s.organization_id).eq("conversation_id", s.conversation_id).eq("mode", "ia");
+  }
   await db.from("wa_events").update({ status: "erro", reason: "processamento interrompido" }).eq("status", "processando").lt("received_at", stale);
   const eventos = await drainEvents(undefined, 100);
   const ia = await drainJobs(20);

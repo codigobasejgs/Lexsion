@@ -34,8 +34,8 @@ Alertas: `src/lib/ops-alert.ts` envia e-mail aos Super Admins (Resend), no máxi
 
 ## Ligar e desligar integrações
 - `WHATSAPP_ENABLED=1` / `AI_ENABLED=1` na Vercel (produção) e redeploy. Vazio = desligado: o webhook responde 503 e não grava nada; IA e simulador respondem 503; a tela mostra o aviso.
-- Por escritório: a IA só atua com `organizations.ai_enabled_at` (consentimento do titular, auditado), com assistente publicada e com a conversa em modo `ia`. Assumir a conversa interrompe a IA na hora.
-- Desligamento de emergência: remover a variável e fazer redeploy. Conversas em modo `ia` deixam de gerar resposta. Os trabalhos pendentes são encaminhados ao humano no próximo minuto.
+- Por escritório: a IA exige `organizations.ai_enabled_at`, assistente publicada e conversa em modo `ia`. **Bloqueio de ativação:** o portão de envio não garante interrupção imediata após a tomada humana: o envio externo ocorre depois da transação e pode correr após o takeover. O limite de consumo também não é atômico. Não habilitar até corrigir e testar essas corridas.
+- Desligamento de emergência: remover a variável e fazer redeploy. O cron retorna imediatamente quando WhatsApp está desligado; portanto, não há garantia de encaminhamento dos trabalhos pendentes ao humano. Conferir e tratar a fila antes de reativar.
 
 ## Rotação de credenciais (pendente: valores foram expostos em conversa)
 Ordem para não derrubar o serviço. Para cada credencial: gerar a nova no provedor, gravar na Vercel (e no Vault, quando for o caso), redeploy, smoke, revogar a antiga.

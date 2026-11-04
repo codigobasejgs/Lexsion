@@ -87,8 +87,6 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   // Grupo/status/broadcast: segunda barreira antes de chamar o Gemini (nenhum consumo).
   if (!cd?.jid || jidKind(cd.jid) !== "pessoa") { await db.from("ai_jobs").update({ status: "descartado", reason: "não é conversa individual", finished_at: new Date().toISOString() }).eq("id", jobId); return "descartado"; }
   if (!o?.ai_enabled_at || !inst) { await toHuman(org, conv, jobId, "assistente não habilitada pelo titular"); return "encaminhado"; }
-  const { count } = await db.from("ai_usage").select("id", { count: "exact", head: true }).eq("organization_id", org).eq("purpose", "atendimento").gte("at", new Date(Date.now() - 86_400_000).toISOString());
-  if ((count ?? 0) >= DAILY_LIMIT) { await toHuman(org, conv, jobId, "limite diário da assistente atingido"); return "encaminhado"; }
   const { data: agents } = await db.from("org_records").select("data").eq("organization_id", org).eq("collection", "agents");
   const agent = pickAgent((agents ?? []).map((a) => a.data as Agent));
   if (!agent) { await toHuman(org, conv, jobId, "nenhuma assistente publicada"); return "encaminhado"; }
@@ -97,6 +95,9 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
     .map((m) => ({ role: (m.author === "contato" ? "user" : "model") as "user" | "model", text: m.text }));
   const last = hist.filter((h) => h.role === "user").at(-1)?.text ?? "";
   if (HANDOFF_ASK.test(last)) { await toHuman(org, conv, jobId, "contato pediu atendente"); return "encaminhado"; }
+  // Cota diária reservada no banco ANTES de chamar o modelo (atômica: chamadas concorrentes não passam do limite).
+  const { data: quota } = await db.rpc("ai_quota_take", { p_org: org, p_limit: DAILY_LIMIT });
+  if (quota !== true) { await toHuman(org, conv, jobId, "limite diário da assistente atingido"); return "encaminhado"; }
   const out = await deps.gemini(systemPrompt(o.name, agent), hist);
   await db.from("ai_usage").insert({ organization_id: org, actor_id: null, purpose: "atendimento", model: MODEL, input_chars: hist.reduce((s, h) => s + h.text.length, 0), output_chars: out?.length ?? 0 });
   if (!out) { await toHuman(org, conv, jobId, "assistente sem resposta (falha ou tempo)"); return "encaminhado"; }
@@ -104,12 +105,17 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   // Portão: trava a conversa e confere modo + versão. Humano assumiu durante a geração ⇒ descartado aqui.
   const { data: can } = await db.rpc("ai_job_claim_send", { p_job: jobId });
   if (can !== true) return "descartado";
-  if ((await deps.connectionState(inst.instance_name)) !== "open") { await toHuman(org, conv, jobId, "WhatsApp desconectado: responder quando reconectar"); return "encaminhado"; }
+  if ((await deps.connectionState(inst.instance_name)) !== "open") { await db.rpc("ai_job_release_send", { p_job: jobId }); await toHuman(org, conv, jobId, "WhatsApp desconectado: responder quando reconectar"); return "encaminhado"; }
   const mid = `ia-${jobId}`;
   const at = new Date().toISOString();
-  await db.from("org_records").insert({ organization_id: org, collection: "messages", id: mid, data: { id: mid, organizationId: org, conversationId: conv, author: "ia", text: reply, at, status: "enviando" } });
   const to = waTarget(cd);
+  // Última conferência imediatamente antes do provedor: humano que assumiu depois do portão derruba a reserva aqui.
+  // Janela residual = só a duração da chamada HTTP ao provedor (mensagem já em trânsito não tem como ser recolhida).
+  const { data: still } = await db.rpc("ai_job_confirm_send", { p_job: jobId });
+  if (still !== true) return "descartado";
+  await db.from("org_records").insert({ organization_id: org, collection: "messages", id: mid, data: { id: mid, organizationId: org, conversationId: conv, author: "ia", text: reply, at, status: "enviando" } });
   const s = reply && to ? await deps.sendText(inst.instance_name, to, reply) : { ok: false as const, status: 0 };
+  await db.rpc("ai_job_release_send", { p_job: jobId });
   await db.from("org_records").update({ data: { id: mid, organizationId: org, conversationId: conv, author: "ia", text: reply, at, status: s.ok ? "enviada" : "erro", providerId: s.ok ? s.id : undefined } }).eq("organization_id", org).eq("collection", "messages").eq("id", mid);
   await db.from("ai_jobs").update({ status: s.ok ? "enviado" : "erro", reason: s.ok ? null : "provedor recusou o envio", finished_at: new Date().toISOString() }).eq("id", jobId);
   if (!s.ok) { await toHuman(org, conv, jobId, "envio da resposta falhou"); return "erro"; }

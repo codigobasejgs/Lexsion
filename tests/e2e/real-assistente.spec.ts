@@ -93,3 +93,23 @@ test("AST-03: simulador na operação real avisa que a IA está desligada e não
   await expect(page.getByRole("button", { name: "Enviar" })).toBeDisabled();
   expect((await page.request.post("/api/ia/simulador", { data: { organizationId: orgA, agentId: "x", history: [{ role: "user", text: "oi" }] } })).status()).toBe(503);
 });
+
+test("INT-01: integrações no escritório real mostram o estado verificado no servidor e levam à configuração", async ({ page }) => {
+  await login(page, people.tit);
+  await page.goto("/app/integracoes");
+  await expect(page.getByTestId("integracoes-reais")).toBeVisible({ timeout: SLOW });
+  for (const id of ["evolution", "gemini", "resend", "backup", "fontes", "zapsign", "pagamentos"]) await expect(page.getByTestId(`integracao-${id}`)).toBeVisible();
+  await expect(page.getByText(/operacional” significa simulado/)).toHaveCount(0); // nada do catálogo da demonstração
+  const wa = page.getByTestId("integracao-evolution");
+  if (env.WHATSAPP_ENABLED === "1") {
+    await wa.getByRole("link", { name: "Gerar QR e conectar" }).click();
+    await expect(page.getByRole("heading", { name: "WhatsApp do escritório" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Gerar QR" })).toBeVisible({ timeout: SLOW });
+  } else {
+    await expect(wa.getByText("Aguardando liberação")).toBeVisible();
+    await page.goto("/app/integracoes/evolution");
+    await expect(page.getByTestId("integracao-em-auditoria-whatsapp")).toBeVisible({ timeout: SLOW });
+  }
+  // Rota de saúde: sem sessão 401; de outro escritório 403.
+  expect((await page.context().request.get(`/api/integracoes/saude?org=${orgB}`)).status()).toBe(403);
+});

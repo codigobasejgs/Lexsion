@@ -11,11 +11,24 @@ import { INT_STATUS } from "@/modules/integrations/labels";
 import { messagingService } from "@/services/mock/ops-repo";
 import { createRow } from "@/services/mock/generic";
 import { formatInstant } from "@/lib/dates";
-import { WhatsAppReal } from "@/modules/integrations/real-panels";
+import { AiConsent, WhatsAppReal } from "@/modules/integrations/real-panels";
 
 export default function IntegracaoPage({ params }: PageProps<"/app/integracoes/[provider]">) {
-  const live = useLive();
   const { provider } = use(params);
+  const live = useLive();
+  // Operação: WhatsApp e IA têm tela própria ligada ao servidor (o catálogo da demonstração não existe no escritório real).
+  if (live && (provider === "evolution" || provider === "gemini")) return (
+    <Guard area="integracoes">
+      <div className="mx-auto max-w-[800px] space-y-4">
+        <PageHeader breadcrumb={[{ href: "/app/integracoes", label: "Integrações" }]} title={provider === "evolution" ? "WhatsApp do escritório" : "Assistente de IA (Gemini)"} description={provider === "evolution" ? "Conecte o número do escritório lendo o QR no celular. Grupos, status e listas nunca entram nem recebem resposta automática." : "Habilite a IA para o escritório. Depois, crie e publique a assistente que responde no WhatsApp."} />
+        {provider === "evolution" ? <WhatsAppReal /> : <><AiConsent /><Link className="btn btn-secondary w-fit" href="/app/ia/agentes">Configurar assistente</Link></>}
+      </div>
+    </Guard>
+  );
+  return <CatalogPage provider={provider} live={live} />;
+}
+
+function CatalogPage({ provider, live }: { provider: string; live: boolean }) {
   const { user } = useSession();
   const ints = useCollection("integrations");
   const outbox = useCollection("outbox");

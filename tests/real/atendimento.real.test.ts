@@ -24,6 +24,7 @@ const sent: { path: string; body: { number?: string; text?: string } }[] = [];
 const geminiCalls: string[] = [];
 let geminiMode: "ok" | "lento" | "erro" | "encaminha" = "ok";
 let state: "open" | "close" = "open";
+let holdState = 0; // ms de atraso na consulta de estado: abre a janela entre o portão e o envio
 const mocks: http.Server[] = [];
 const listen = (port: number, h: http.RequestListener) => new Promise<void>((r) => { const s = http.createServer(h); mocks.push(s); s.listen(port, "127.0.0.1", () => r()); });
 const body = (req: http.IncomingMessage) => new Promise<string>((r) => { let s = ""; req.on("data", (d) => (s += d)).on("end", () => r(s)); });
@@ -57,7 +58,7 @@ describe.skipIf(!ON)("REAL — atendimento WhatsApp (servidor + Supabase real; p
     admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
     await listen(EVO, async (req, res) => {
       const b = await body(req);
-      if (req.url?.startsWith("/instance/connectionState/")) return res.end(JSON.stringify({ instance: { state } }));
+      if (req.url?.startsWith("/instance/connectionState/")) { if (holdState) await new Promise((r) => setTimeout(r, holdState)); return res.end(JSON.stringify({ instance: { state } })); }
       if (req.url?.startsWith("/message/sendText/")) { const j = JSON.parse(b); sent.push({ path: req.url, body: j }); return res.end(JSON.stringify({ key: { id: `SENT${sent.length}${tag}` } })); }
       res.statusCode = 404; res.end("{}");
     });
@@ -161,6 +162,20 @@ describe.skipIf(!ON)("REAL — atendimento WhatsApp (servidor + Supabase real; p
     expect((await mode(cookieAtd, orgA, conv, "ia")).status).toBe(200);
     await hook(orgA, msg(orgA, `T2${tag}`, jid, "Ainda está aí?"));
     expect(await until(async () => (await msgs(orgA, conv)).find((m) => m.author === "ia" && m.status === "enviada"))).not.toBeNull();
+  });
+
+  it("QA11 residual: humano assume DEPOIS do portão de envio e antes do provedor ⇒ nada é enviado", async () => {
+    const jid = "5511900000010@s.whatsapp.net", conv = convId(orgA, jid);
+    holdState = 3_000; // a resposta já passou pelo portão; o envio espera a consulta de estado
+    const sentBefore = sent.length;
+    await hook(orgA, msg(orgA, `R1${tag}`, jid, "Bom dia, tudo bem?"));
+    expect(await until(async () => (await jobs(orgA, conv)).some((j) => j.status === "enviando"))).toBeTruthy();
+    expect((await mode(cookieAtd, orgA, conv, "humano")).status).toBe(200);
+    await new Promise((r) => setTimeout(r, 4_000));
+    holdState = 0;
+    expect(sent.length).toBe(sentBefore);
+    expect((await msgs(orgA, conv)).filter((m) => m.author === "ia")).toHaveLength(0);
+    expect((await jobs(orgA, conv)).at(-1)?.status).toMatch(/cancelado|descartado/);
   });
 
   it("financeiro não muda o modo da conversa (403)", async () => {

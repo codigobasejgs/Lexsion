@@ -1,5 +1,7 @@
 # Progresso — conclusão, QA e produção (checkpoint)
 
+> **Alerta de revisão:** as afirmações abaixo de conclusão e cancelamento imediato do atendimento são históricas e não comprovam segurança para ativação. Há uma corrida entre `ai_job_claim_send` e o envio externo: um takeover pode ocorrer entre eles. Limites concorrentes e recuperação também precisam de validação. IA e WhatsApp permanecem bloqueados para ativação. Consulte `integracoes.md` e `operacao.md` para os riscos atuais.
+
 Retomar daqui. Ordem combinada com o titular (03/11/2026): **atendimento primeiro**; importação do IndexedDB e conectores de honorários depois.
 
 ## Decisões em vigor

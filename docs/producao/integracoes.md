@@ -16,16 +16,16 @@ Regra: Evolution, Resend e Gemini são da **plataforma** (uma conta, chaves só 
 1. A Evolution chama `/api/whatsapp/webhook?org=…&s=…`. O segredo é próprio do escritório (só o hash fica no banco) e é comparado em tempo constante.
 2. O evento é gravado em `wa_events` (único por instância + tipo + id) **antes** do 200. Se a gravação falha, a resposta é 500 e a Evolution reenvia.
 3. O processamento roda depois da resposta (`after`). O cron `lexsion-atendimento` (1 min) repete o que falhou e devolve ao humano trabalho preso há mais de 3 minutos.
-4. Grupo, status, broadcast, canal e mensagem própria são descartados antes de qualquer gravação de conversa ou chamada de IA.
+4. Grupo, status, broadcast e canal são ignorados antes de criar conversa. Mensagens próprias podem ser registradas como resposta da equipe e suspender a IA; não acionam geração.
 5. Uma mensagem do contato numa conversa em modo `ia` gera um `ai_jobs` com debounce de 8 s. A geração usa a versão **publicada** da assistente.
-6. `ai_job_claim_send` trava a conversa e confere modo e versão. Se o humano assumiu, a resposta é descartada.
-7. Falha, limite diário (`AI_DAILY_LIMIT_PER_ORG`, padrão 200), pedido de atendente ou marcador da assistente fazem a conversa passar para humano, com notificação à equipe.
+6. `ai_job_claim_send` confere modo e versão em transação, mas a chamada ao provedor ocorre depois. **Corrida aberta:** takeover após a confirmação do portão ainda pode preceder o envio externo; não há garantia de cancelamento imediato.
+7. Falha ou pedido de atendente tenta encaminhar à equipe. O limite diário é consultado antes da chamada, sem reserva atômica; concorrência pode ultrapassá-lo. Recuperação de falhas e alterações concorrentes exigem validação adicional.
 
 ## Para ligar IA e WhatsApp (ordem)
 1. Titular confirma: (a) quem opera o servidor Evolution e onde ele está; (b) que a chave Gemini é de projeto **com faturamento ativo** (plano pago: o conteúdo não é usado para melhorar produtos do Google).
 2. Publicar o contrato 2026.11-2 (minuta abaixo) pelo painel Super Admin (Contratos → nova versão).
-3. Vercel: `WHATSAPP_ENABLED=1`, `AI_ENABLED=1`, depois redeploy.
-4. Smoke: webhook sem segredo → 401; evento sintético de grupo → ignorado; simulador responde.
+3. Corrigir e testar as corridas de envio, retomada humana, limite e recuperação. Os testes com provedores simulados não homologam Evolution ou Gemini.
+4. Só então considerar as variáveis de ativação e homologar por escritório, com testes controlados e sem envio real não autorizado.
 
 ## Minuta 2026.11-2 (substitui os trechos indicados; o restante segue igual a 2026.11-1)
 - **13.1** (troca da última frase): "Integram também o serviço, quando ativados pela CONTRATANTE: o servidor de WhatsApp (Evolution API), operado por [OPERADOR] em [LOCAL], que recebe e envia as mensagens do número conectado pelo escritório; e a inteligência artificial Google Gemini (Google LLC), contratada em plano pago, que gera respostas e sugestões a partir do texto enviado. A ativação da inteligência artificial depende de consentimento do titular do escritório na plataforma."

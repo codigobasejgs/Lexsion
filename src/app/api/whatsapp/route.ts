@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { GATE_MESSAGE, whatsappEnabled } from "@/lib/feature-gates";
-import { connectionState, createOrConnect, evolutionConfigured, instanceFor, logout, sendText } from "@/lib/evolution";
+import { connectionState, createOrConnect, evolutionConfigured, instanceFor, logout, sendText, setWebhook } from "@/lib/evolution";
 import { waTarget } from "@/lib/wa-inbox";
 
 const err = (status: number, code: string, message: string) => NextResponse.json({ ok: false, error: { code, message } }, { status });
@@ -46,14 +46,17 @@ export async function POST(req: NextRequest) {
     }
     // Segredo do webhook: só o hash fica no banco; o segredo vai na URL do webhook registrada na Evolution.
     const secret = crypto.randomBytes(24).toString("base64url");
-    const proto = req.headers.get("host")?.startsWith("localhost") ? "http" : "https";
-    const hook = `${proto}://${req.headers.get("host")}/api/whatsapp/webhook?org=${b.organizationId}&s=${secret}`;
+    // Endereço público fixo da plataforma (SITE_URL); sem ele, o host do pedido. Evita webhook apontando para preview.
+    const site = /^https:\/\/[a-z0-9.-]+$/.test(process.env.SITE_URL ?? "") ? process.env.SITE_URL! : `${req.headers.get("host")?.startsWith("localhost") ? "http" : "https"}://${req.headers.get("host")}`;
+    const hook = `${site}/api/whatsapp/webhook?org=${b.organizationId}&s=${secret}`;
     const { data: existing } = await admin.from("whatsapp_instances").select("webhook_secret_hash").eq("organization_id", b.organizationId).maybeSingle();
     const r = await createOrConnect(instance, hook);
     if (!r.ok) return err(502, "evolution", `O servidor do WhatsApp recusou a conexão (${r.error}).`);
+    // Toda conexão regrava o webhook com um segredo novo e só então guarda o hash: banco e servidor sempre batem,
+    // inclusive depois de uma tentativa anterior interrompida (instância criada sem registro no banco).
+    if (!(await setWebhook(instance, hook))) return err(502, "evolution", "O servidor do WhatsApp não aceitou o endereço de recebimento. Tente de novo.");
     if (!existing) await admin.from("whatsapp_instances").insert({ organization_id: b.organizationId, instance_name: instance, status: "conectando", webhook_secret_hash: sha(secret) });
-    else await admin.from("whatsapp_instances").update({ status: "conectando", updated_at: new Date().toISOString() }).eq("organization_id", b.organizationId);
-    // Instância já existente mantém o webhook e o segredo registrados na criação.
+    else await admin.from("whatsapp_instances").update({ status: "conectando", webhook_secret_hash: sha(secret), updated_at: new Date().toISOString() }).eq("organization_id", b.organizationId);
     await admin.from("audit_logs").insert({ organization_id: b.organizationId, actor_id: auth.user.id, action: "whatsapp.connect", entity: "whatsapp_instances", entity_id: instance, detail: existing ? "Novo QR solicitado" : "Instância criada; aguardando leitura do QR" });
     return NextResponse.json({ ok: true, data: { status: "conectando", qr: r.qr } });
   }
