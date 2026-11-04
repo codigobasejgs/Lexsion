@@ -5,11 +5,11 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { GATE_MESSAGE, whatsappEnabled } from "@/lib/feature-gates";
-import { connectionState, createOrConnect, evolutionConfigured, instanceFor, logout, sendText, setWebhook } from "@/lib/evolution";
+import { connectionState, createOrConnect, currentQr, evolutionConfigured, instanceFor, logout, sendText, setWebhook } from "@/lib/evolution";
 import { waTarget } from "@/lib/wa-inbox";
 
 const err = (status: number, code: string, message: string) => NextResponse.json({ ok: false, error: { code, message } }, { status });
-type Body = { organizationId?: string; action?: "status" | "connect" | "disconnect" | "send" | "mode"; conversationId?: string; messageId?: string; mode?: string; expectedVersion?: number };
+type Body = { organizationId?: string; action?: "status" | "connect" | "disconnect" | "send" | "mode" | "qr"; conversationId?: string; messageId?: string; mode?: string; expectedVersion?: number };
 
 /**
  * WhatsApp do escritório (Evolution). Toda ação confere com a sessão do PEDINTE (RLS) o vínculo e o papel.
@@ -36,6 +36,14 @@ export async function POST(req: NextRequest) {
     const status = st === "open" ? "operacional" : st === "connecting" ? "conectando" : st === "missing" ? "desconectado" : st === "close" ? "desconectado" : "erro";
     await admin.from("whatsapp_instances").update({ status, updated_at: new Date().toISOString() }).eq("organization_id", b.organizationId);
     return NextResponse.json({ ok: true, data: { status, instance } });
+  }
+  if (b.action === "qr") {
+    // QR muda a cada ~25 s no WhatsApp (medido no servidor): a tela pede o atual enquanto espera a leitura.
+    if (me.role !== "admin") return err(403, "forbidden", "Somente o titular conecta o WhatsApp do escritório.");
+    const st = await connectionState(instance);
+    if (st === "open") return NextResponse.json({ ok: true, data: { status: "operacional" } });
+    if (st === "missing") return err(409, "missing", "A conexão expirou. Toque em “Gerar QR” de novo.");
+    return NextResponse.json({ ok: true, data: { status: "conectando", qr: await currentQr(instance) } });
   }
   if (b.action === "connect" || b.action === "disconnect") {
     if (me.role !== "admin") return err(403, "forbidden", "Somente o titular conecta ou desconecta o WhatsApp do escritório.");

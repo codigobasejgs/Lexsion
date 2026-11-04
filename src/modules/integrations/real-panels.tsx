@@ -31,20 +31,35 @@ function WhatsAppPanel() {
   const [qr, setQr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [age, setAge] = useState(0); // segundos desde o último QR recebido
   const isOwner = user?.role === "admin";
+  const waiting = !!qr;
   const refresh = async () => {
     if (!ctx) return;
     const r = await post<{ status: string }>("/api/whatsapp", { organizationId: ctx.organizationId, action: "status" });
     setStatus(r.ok ? r.data!.status : "erro");
-    if (r.ok && r.data!.status === "operacional") setQr(null);
+    if (r.ok && r.data!.status === "operacional") { setQr(null); setMsg("WhatsApp conectado. As conversas novas aparecem em Conversas."); }
+    // O celular recusou a leitura (QR vencido, limite de aparelhos) e o servidor encerrou a tentativa.
+    if (r.ok && r.data!.status === "desconectado" && qr) { setQr(null); setMsg("O celular não concluiu a conexão e a tentativa foi encerrada. Toque em “Gerar QR” e leia o código novo logo em seguida."); }
   };
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- estado lido do servidor ao abrir
     refresh();
-    const t = setInterval(refresh, qr ? 5000 : 30000);
+    const t = setInterval(refresh, waiting ? 4000 : 30000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh depende só do escritório
-  }, [ctx?.organizationId, qr]);
+  }, [ctx?.organizationId, waiting]);
+  // O WhatsApp troca o QR a cada ~20 s; um QR velho dá erro no celular. Enquanto espera, busca o atual a cada 15 s.
+  useEffect(() => {
+    if (!qr || !ctx) return;
+    const tick = setInterval(() => setAge((a) => a + 1), 1000);
+    const renew = setInterval(async () => {
+      const r = await post<{ status: string; qr?: string | null }>("/api/whatsapp", { organizationId: ctx.organizationId, action: "qr" });
+      if (r.ok && r.data!.qr) { setQr(r.data!.qr); setAge(0); }
+      else if (!r.ok) { setQr(null); setMsg(r.error?.message ?? "A conexão expirou. Toque em “Gerar QR” de novo."); }
+    }, 15000);
+    return () => { clearInterval(tick); clearInterval(renew); };
+  }, [qr === null, ctx?.organizationId]); // eslint-disable-line react-hooks/exhaustive-deps -- reinicia só ao abrir/fechar o QR
   const act = async (action: "connect" | "disconnect") => {
     if (!ctx) return;
     setBusy(true);
@@ -54,18 +69,36 @@ function WhatsAppPanel() {
     if (!r.ok) return setMsg(r.error?.message ?? "Falhou.");
     setStatus(r.data!.status);
     setQr(r.data!.qr ?? null);
+    setAge(0);
     if (action === "connect" && !r.data!.qr) setMsg("Instância criada. Se o QR não aparecer, toque em “Gerar QR” de novo em alguns segundos.");
   };
   const label = { operacional: "Conectado", conectando: "Aguardando leitura do QR", desconectado: "Desconectado", erro: "Erro de comunicação", "…": "Verificando…" }[status] ?? status;
   return (
     <section className="panel space-y-3 p-4 text-sm" aria-labelledby="wa-h">
       <div className="flex flex-wrap items-center gap-2"><h2 id="wa-h" className="flex-1 font-semibold">WhatsApp do escritório</h2><span role="status" className={status === "operacional" ? "text-success" : "text-fg-muted"}>{label}</span><button className="btn btn-ghost min-h-9 px-2" aria-label="Atualizar estado" onClick={refresh}><RefreshCw aria-hidden className="size-4" /></button></div>
-      <p className="text-fg-muted">Conecte o número do escritório lendo o QR no aparelho (WhatsApp → Aparelhos conectados). As mensagens recebidas entram em Conversas; as respostas da equipe saem por este número. Nenhum envio em massa.</p>
-      {qr && <img src={qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`} alt="QR para conectar o WhatsApp do escritório" className="size-56 rounded bg-white p-2" />}
+      <p className="text-fg-muted">No celular do escritório: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho → aponte a câmera para o QR. As mensagens recebidas entram em Conversas; as respostas saem por este número. Nenhum envio em massa.</p>
+      {qr && (
+        <div className="space-y-1">
+          <img src={qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`} alt="QR para conectar o WhatsApp do escritório" className="size-60 rounded bg-white p-2" />
+          <p className="text-xs text-fg-muted" aria-live="polite">O código muda sozinho a cada poucos segundos (atualizado há {age} s). Leia o que estiver na tela agora.</p>
+        </div>
+      )}
       {isOwner ? (
-        <div className="flex flex-wrap gap-2">
-          {status !== "operacional" && <button className="btn btn-primary min-h-9" disabled={busy} onClick={() => act("connect")}><QrCode aria-hidden className="size-4" /> {busy ? "Gerando…" : "Gerar QR"}</button>}
-          {status === "operacional" && <button className="btn btn-danger min-h-9" disabled={busy} onClick={() => act("disconnect")}><Unplug aria-hidden className="size-4" /> Desconectar</button>}
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {status !== "operacional" && <button className="btn btn-primary min-h-9" disabled={busy} onClick={() => act("connect")}><QrCode aria-hidden className="size-4" /> {busy ? "Gerando…" : qr ? "Gerar novo QR" : "Gerar QR"}</button>}
+            {status === "operacional" && <button className="btn btn-danger min-h-9" disabled={busy} onClick={() => act("disconnect")}><Unplug aria-hidden className="size-4" /> Desconectar</button>}
+          </div>
+          {status !== "operacional" && (
+            <details className="rounded border border-line p-3">
+              <summary className="cursor-pointer font-medium">O celular mostrou “Algo deu errado” ou o QR não lê?</summary>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-fg-muted">
+                <li>O QR expira em segundos. Toque em “Gerar novo QR” e leia logo em seguida, sem fechar esta tela.</li>
+                <li>No celular, apague aparelhos conectados antigos sem uso (o limite é 4) e confira se o WhatsApp está atualizado e com internet.</li>
+                <li>Se aparecer “redefinir o aparelho”, não redefina: feche o leitor, toque em “Gerar novo QR” aqui e leia de novo.</li>
+              </ul>
+            </details>
+          )}
         </div>
       ) : <p className="text-xs text-fg-muted">Somente o titular conecta ou desconecta o número.</p>}
       {msg && <p role="alert" className="text-xs">{msg}</p>}

@@ -36,6 +36,11 @@ export async function createOrConnect(instance: string, webhookUrl: string) {
   const q = await call<{ base64?: string; code?: string }>("GET", `/instance/connect/${instance}`);
   return q.ok ? { ok: true as const, qr: q.data?.base64 ?? null } : { ok: false as const, error: `conexão recusada (HTTP ${q.status})` };
 }
+/** QR ATUAL da instância em conexão (o WhatsApp troca o código a cada ~20 s; QR antigo é recusado pelo celular). */
+export async function currentQr(instance: string) {
+  const q = await call<{ base64?: string }>("GET", `/instance/connect/${instance}`);
+  return q.ok ? (q.data?.base64 ?? null) : null;
+}
 /** Regrava o webhook da instância (segredo atual). Evolution 2.x: POST /webhook/set/{instance}. */
 export async function setWebhook(instance: string, webhookUrl: string) {
   const r = await call("POST", `/webhook/set/${instance}`, { webhook: { enabled: true, url: webhookUrl, byEvents: false, base64: false, events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "SEND_MESSAGE"] } });

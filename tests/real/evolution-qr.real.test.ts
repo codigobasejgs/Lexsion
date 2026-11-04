@@ -23,6 +23,8 @@ describe.skipIf(!ON)("REAL — Evolution: QR de instância de teste (sem parear)
       expect(typeof qr === "string" && /^data:image\/png;base64,|^[A-Za-z0-9+/=]{200,}/.test(qr)).toBe(true);
       expect(["connecting", "close"]).toContain(await ev.connectionState(name));
       expect(await ev.setWebhook(name, "https://lexsion.com.br/api/whatsapp/webhook?org=00000000-0000-0000-0000-000000000000&s=segredo-novo-de-homologacao")).toBe(true);
+      // QR atual (a tela renova enquanto espera a leitura).
+      expect(typeof (await ev.currentQr(name))).toBe("string");
     } finally {
       expect(await ev.deleteInstance(name)).toBe(true);
       expect(await ev.connectionState(name)).toBe("missing");
