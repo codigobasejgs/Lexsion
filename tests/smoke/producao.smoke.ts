@@ -64,10 +64,10 @@ test("PROD-03: login real, escrita/leitura controlada, isolamento e saúde das i
     await expect(page.getByText("Ambiente demonstrativo")).toHaveCount(0);
     await page.goto("/app/clientes/novo");
     await page.getByLabel("Nome completo").fill(`Cliente Smoke ${tag}`);
-    await page.getByLabel("CPF").fill("529.982.247-25"); // CPF de teste válido (dígitos verificadores), fictício
+    await page.getByLabel("CPF").pressSequentially("52998224725"); // fictício com dígitos válidos; campo com máscara
     await page.getByLabel("Telefone (WhatsApp)").fill("(71) 99999-0002");
     await page.getByLabel("Cidade").fill("Salvador");
-    await page.getByLabel("Responsável").selectOption({ index: 1 });
+    // Escritório novo: o único responsável possível é o próprio titular (já selecionado por padrão).
     await page.getByRole("button", { name: /Salvar|Cadastrar/ }).first().click();
     await expect.poll(async () => (await admin.from("org_records").select("id").eq("organization_id", org).eq("collection", "clients").contains("data", { name: `Cliente Smoke ${tag}` })).data?.length ?? 0, { timeout: 45_000 }).toBe(1);
     // Leitura em outro contexto (nova sessão) e isolamento: anônimo não lê; o escritório só vê o próprio registro.
