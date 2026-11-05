@@ -70,10 +70,7 @@ Teto: 2012 a 2021 e 2026 conferidos na página do INSS (`verified: true`). 1994 
 - Real:
   - coleta do STJ no Supabase de produção (2.369 registros; segunda execução idempotente);
   - cobertura do backup.
-- Coleta do BCB:
-  - comprovada via curl no script de geração;
-  - o teste em Node só roda com `BCB_DIRECT=1`, porque o túnel da rede de teste recusa conexão do Node com o BCB;
-  - a prova em produção é a rota de cron.
+- Coleta do BCB comprovada em produção em 05/11/2026: a rotina diária gravou 216 valores das 9 séries (INPC/IPCA/IPCA-E/IGP-DI até 09/2026; IGP-M até 10/2026; Selic, TR, taxa legal e salário mínimo até 11/2026). A API recusa "ultimos/N" acima de 20; a coleta usa intervalo de datas.
 - E2E real: JUR-01 a JUR-04, no computador e no celular:
   - leitura do CNIS;
   - planejamento com salários;
