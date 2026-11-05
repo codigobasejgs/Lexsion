@@ -25,10 +25,13 @@ export async function syncBcb() {
   const db = supabaseAdmin();
   const errors: string[] = [];
   let rows = 0;
+  // Janela por data: a API recusa "ultimos/N" acima de 20 (HTTP 400). Datas no formato dd/mm/aaaa, ordem crescente.
+  const br = (d: Date) => `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+  const now = new Date(), from = new Date(Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth(), 1));
   // Em paralelo: a API do BCB demora para aceitar conexões; em série estouraria o tempo da função.
   await Promise.all(Object.entries(SGS).map(async ([series, code]) => {
     try {
-      const data = (await (await get(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados/ultimos/24?formato=json`)).json()) as { data: string; valor: string }[];
+      const data = (await (await get(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados?formato=json&dataInicial=${br(from)}&dataFinal=${br(now)}`)).json()) as { data: string; valor: string }[];
       const up = data.filter((d) => /^\d{2}\/\d{2}\/\d{4}$/.test(d.data) && Number.isFinite(Number(d.valor))).map((d) => ({ series, month: `${d.data.slice(6, 10)}-${d.data.slice(3, 5)}`, value: Number(d.valor), source_url: `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados?formato=json`, fetched_at: new Date().toISOString() }));
       // Séries diárias (taxa legal) trazem várias datas por mês: fica a última publicada no mês.
       const byMonth = new Map(up.map((u) => [u.month, u]));
