@@ -18,7 +18,7 @@ export const ROUTE_HELP: { prefix: string; article: string; title: string; tour?
   { prefix: "/app/documentos", article: "solicitar-documento", title: "Solicitar documento ao cliente", tour: "documentos" },
   { prefix: "/app/inteligencia", article: "inteligencia-juridica", title: "Analisar CNIS, CTPS e PPP na Inteligência Jurídica" },
   { prefix: "/app/previdenciario", article: "comparar-cenarios", title: "Revisar vínculos e comparar cenários previdenciários", tour: "previdenciario" },
-  { prefix: "/app/calculos", article: "usar-calculos", title: "Fazer um cálculo demonstrativo" },
+  { prefix: "/app/calculos", article: "usar-calculos", title: "Fazer um cálculo com índices oficiais" },
   { prefix: "/app/requisitorios", article: "acompanhar-rpv", title: "Acompanhar RPV e precatórios" },
   { prefix: "/app/pesquisa", article: "usar-jornal-pesquisa", title: "Pesquisa jurídica e Jornal do Advogado" },
   { prefix: "/app/jornal", article: "usar-jornal-pesquisa", title: "Pesquisa jurídica e Jornal do Advogado" },

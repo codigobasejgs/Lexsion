@@ -3,6 +3,8 @@
 import { PDFDocument, rgb, StandardFonts, type PDFFont } from "pdf-lib";
 import type { Derived, IntelData } from "./analysis";
 import { CLASSIFICATION_LABEL } from "./rules";
+import { brl, RMI_VERSION } from "./rmi";
+import type { runPlanning } from "./planning";
 
 const A4 = { w: 595.28, h: 841.89 }, M = 50;
 const SAFE: Record<string, string> = { "—": "-", "–": "-", "“": '"', "”": '"', "‘": "'", "’": "'", "…": "...", "→": "->", "·": "-", "≥": ">=", "×": "x", "−": "-", " ": " " };
@@ -23,7 +25,7 @@ function wrap(text: string, font: PDFFont, size: number, max: number): string[] 
   return out;
 }
 
-export async function intelReportPdf(o: { office: string; client: string; title: string; d: IntelData; r: Derived; reviewed: string | null; generatedBy: string }): Promise<Uint8Array> {
+export async function intelReportPdf(o: { office: string; client: string; title: string; d: IntelData; r: Derived; reviewed: string | null; generatedBy: string; planning?: ReturnType<typeof runPlanning> | null }): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(clean(`Relatório previdenciário - ${o.client}`)); pdf.setProducer("LexSion"); pdf.setCreator("LexSion");
   const reg = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -73,6 +75,22 @@ export async function intelReportPdf(o: { office: string; client: string; title:
     for (const t of r.accident.weaken) li(`Enfraquece: ${t}`);
     for (const t of r.accident.missing) li(`Falta: ${t}`);
     p(r.accident.noCarencia, 8);
+  }
+  const pl = o.planning && !("error" in o.planning) ? o.planning : null;
+  if (pl) {
+    h(`Planejamento e RMI (${RMI_VERSION}, aguardando validação)`);
+    const b = pl.plan.current.best;
+    p(b ? `Hoje: tem direito a ${b.name}, RMI estimada ${b.rmi != null ? brl(b.rmi) : "-"}.` : "Hoje: ainda não cumpre requisitos de aposentadoria.");
+    for (const m of b?.memo ?? []) p(`   ${m}`, 8);
+    for (const pt of pl.plan.points) {
+      p(`${br(pt.date)} - ${pt.name}: RMI ${pt.rmi != null ? brl(pt.rmi) : "-"} (idade ${pt.ageAt})`, 9.5);
+      li(`Requisitos: ${pt.requirements.map((q) => `${q.label} ${q.needed} (terá ${q.has})`).join("; ")}`);
+      li(`Contribuições até lá: ${brl(pt.contribTotal)}${pt.gain != null ? `; aumento mensal ${brl(pt.gain)}; retorno em ${pt.paybackMonths ?? "-"} meses` : ""}${pt.lifetimeValue != null ? `; valor até a expectativa de vida ${brl(pt.lifetimeValue)}` : ""}`);
+      for (const m of pt.memo) p(`   ${m}`, 8);
+    }
+    for (const u of pl.plan.unreachable) li(`${u.name}: ${u.note ?? "inatingível"}`);
+    if (pl.others) for (const i of pl.others.items) li(`${i.name}: ${brl(i.value)} - ${i.memo}`);
+    for (const a of pl.plan.assumptions) p(`Premissa: ${a}`, 8);
   }
   h("8. Pendências e próximos passos");
   if (!r.pendencias.length) p("Nenhuma pendência apontada.");

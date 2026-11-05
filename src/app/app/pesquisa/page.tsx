@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { ExternalLink } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { Badge, EmptyState, PageHeader, SimulatedBadge } from "@/components/ui";
-import { SearchBox, useUrlState } from "@/modules/shared";
+import { SearchBox, useLive, useUrlState } from "@/modules/shared";
+import { PrecedentSearch } from "@/modules/research/precedents";
 
 // Fontes reais apontam para portais oficiais de pesquisa (abrir em nova aba).
 // Resultados "Exemplo fictício" NÃO são precedentes reais e não trazem número de processo.
@@ -30,11 +31,13 @@ export default function PesquisaPage() {
   const url = useUrlState();
   const q = url.get("q") ?? "";
   const area = url.get("area") ?? "";
+  const live = useLive();
   const results = useMemo(() => SAMPLES.filter((s) => (!area || s.area === area) && (!q || norm(`${s.title} ${s.text}`).includes(norm(q)))), [q, area]);
   return (
     <Guard area="pesquisa">
       <div className="mx-auto max-w-[1100px]">
-        <PageHeader title="Pesquisa jurídica" description="Pesquise nas fontes oficiais (abrem em nova aba). A busca interna usa apenas exemplos fictícios marcados — nenhum número de precedente é inventado." />
+        <PageHeader title="Pesquisa jurídica" description={live ? "Precedentes qualificados do STJ (base oficial aberta) e atalhos para os portais dos tribunais. Nenhum precedente é gerado: tudo vem da fonte, com link." : "Pesquise nas fontes oficiais (abrem em nova aba). A busca interna usa apenas exemplos fictícios marcados — nenhum número de precedente é inventado."} />
+        {live && <PrecedentSearch q={q} area={area} onQ={(v) => url.set("q", v || null)} onArea={(v) => url.set("area", v || null)} />}
         <section className="panel mb-6 p-4">
           <h2 className="mb-2 font-semibold">Fontes oficiais</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -43,6 +46,7 @@ export default function PesquisaPage() {
             ))}
           </ul>
         </section>
+        {!live && <>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <SearchBox label="Buscar nos exemplos" placeholder="Texto, tema…" value={q} onChange={(v) => url.set("q", v || null)} />
           <select aria-label="Área" className="field min-h-10 w-auto text-sm" value={area} onChange={(e) => url.set("area", e.target.value || null)}><option value="">Todas as áreas</option><option>Previdenciário</option><option>Trabalhista</option></select>
@@ -59,6 +63,7 @@ export default function PesquisaPage() {
             ))}
           </ul>
         )}
+        </>}
       </div>
     </Guard>
   );

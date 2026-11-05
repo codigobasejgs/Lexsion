@@ -26,6 +26,18 @@ for (const s of SHOTS) {
       await page.screenshot({ path: s.out, fullPage: false, animations: "disabled", caret: "hide" });
       return;
     }
+    if (s.article === "planejamento-previdenciario") {
+      await page.getByRole("button", { name: "Nova análise" }).first().click();
+      const d = page.getByRole("dialog", { name: "Nova análise" });
+      await d.getByLabel("Cliente").selectOption({ index: 1 });
+      await d.getByRole("button", { name: "Criar análise" }).click();
+      await page.waitForURL(/\/app\/inteligencia\/assessments-/);
+      await page.getByRole("tab", { name: "Planejamento e RMI" }).click();
+      await expect(page.getByText("Premissas do planejamento")).toBeVisible();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: s.out, fullPage: false, animations: "disabled", caret: "hide" });
+      return;
+    }
     if (s.article === "configurar-assistente" && s.step === 3) {
       await page.getByRole("button", { name: /Executar/ }).click();
       await expect(page.getByRole("region", { name: "Conversa de teste" })).toBeVisible();

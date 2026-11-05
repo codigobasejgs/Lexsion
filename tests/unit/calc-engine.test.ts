@@ -55,7 +55,9 @@ describe("central de cálculos (aritmética)", () => {
   });
   it("nenhum modelo se declara VALIDADO; todos têm premissas", () => {
     expect(CALC_MODELS.every((m) => m.status !== "VALIDADO")).toBe(true);
-    const r = CALC_MODELS[0].run!({ valorOriginal: "100", serie: "2025-01;1" });
-    expect("assumptions" in r && r.assumptions.length).toBeGreaterThan(0);
+    const r = CALC_MODELS.find((m) => m.name === "Correção monetária e juros")!.run!({ valorOriginal: "100", serie: "2025-01;1" });
+    expect("assumptions" in r ? r.assumptions.length : 0).toBeGreaterThan(0);
+    // Entrada vazia nunca quebra: devolve mensagem de erro.
+    for (const m of CALC_MODELS) expect(m.run!({}), m.name).toHaveProperty("error");
   });
 });

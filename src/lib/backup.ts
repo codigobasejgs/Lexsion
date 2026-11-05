@@ -20,7 +20,7 @@ export const TABLES = ["organizations", "platform_members", "profiles", "organiz
   "org_practice_profiles", "data_exports", "data_erasures", "security_incidents", "security_incident_updates",
   "saas_trial_grants", "saas_entitlement_overrides", "saas_signup_interests",
   "conversation_control", "ai_jobs", "wa_events", "ai_quota",
-  "org_credentials"]; // chaves do escritório já cifradas com CREDENTIALS_KEY (guardar essa chave junto com a do backup)
+  "org_credentials", "official_series", "legal_precedents"]; // chaves do escritório já cifradas com CREDENTIALS_KEY (guardar essa chave junto com a do backup)
 /** Tabelas públicas deliberadamente fora do backup (efêmeras e sem valor de recuperação). */
 export const NOT_BACKED_UP = ["saas_contract_otps"]; // códigos de aceite de 10 min, guardados só como hash
 const PREFIX = "backups/diario/";

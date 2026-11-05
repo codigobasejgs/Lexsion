@@ -141,3 +141,48 @@ test("JUR-02: outro escritório não lê o documento nem a análise; PDF sem tex
   expect(JSON.stringify(j)).not.toContain(path);
   await ctxA.close();
 });
+
+test("JUR-03: planejamento com salários informados calcula datas e RMI com índices oficiais", async ({ page, isMobile }) => {
+  const [a] = await intel(orgA);
+  await login(page, people.adv);
+  await page.goto(`/app/inteligencia/${a.id}`);
+  const go = async (v: string, name: string) => { if (isMobile) await page.getByLabel("Seção").selectOption(v); else await page.getByRole("tab", { name }).click(); };
+  await go("beneficios", "Possibilidades");
+  await page.getByLabel("Sexo").selectOption("M");
+  await page.getByRole("button", { name: "Salvar dados" }).click();
+  await expect.poll(async () => ((await intel(orgA))[0].data.data as unknown as { sex: string }).sex, { timeout: SLOW }).toBe("M");
+  await go("planejamento", "Planejamento e RMI");
+  await expect(page.getByText(/Sem salários de contribuição/)).toBeVisible({ timeout: SLOW });
+  await page.getByText(/Salários informados manualmente/).click();
+  for (const m of ["01/2005", "06/2005", "12/2005"]) {
+    await page.getByLabel("Competência").fill(m);
+    await page.getByLabel("Valor (R$)").fill("2.000,00");
+    await page.getByRole("button", { name: "Incluir salário" }).click();
+  }
+  await page.getByRole("button", { name: "Salvar e recalcular" }).click();
+  await expect(page.getByTestId("planejamento-hoje")).toBeVisible({ timeout: SLOW });
+  await expect(page.getByText("Datas em que cumprirá cada regra")).toBeVisible();
+  await expect(page.locator("[data-testid^='plano-']").first()).toContainText("RMI R$");
+  await expect(page.getByText(/tábua IBGE 2024/).first()).toBeVisible();
+});
+
+test("JUR-04: pesquisa traz precedentes reais do STJ com link oficial; cálculo usa índice oficial", async ({ page }) => {
+  await login(page, people.adv);
+  await page.goto("/app/pesquisa?q=aposentadoria%20especial");
+  await expect(page.getByRole("heading", { name: "Precedentes qualificados do STJ" })).toBeVisible({ timeout: SLOW });
+  const first = page.getByTestId("precedentes").locator("li").first();
+  await expect(first).toContainText("STJ ·", { timeout: SLOW });
+  await expect(first.getByRole("link", { name: "Abrir no STJ" })).toHaveAttribute("href", /^https:\/\/processo\.stj\.jus\.br/);
+  await expect(page.getByText("Referência fictícia")).toHaveCount(0);
+  await page.goto("/app/calculos");
+  await page.getByRole("button", { name: "Novo cálculo: Atualização de débito judicial (índices oficiais)" }).click();
+  await page.getByRole("dialog", { name: "Novo cálculo" }).getByRole("button", { name: "Criar" }).click();
+  await page.waitForURL(/\/app\/calculos\/calculations-/, { timeout: SLOW });
+  for (const [label, v] of [["Valor devido (R$)", "1.000,00"], ["Vencimento (mm/aaaa)", "01/2024"], ["Data do cálculo (mm/aaaa)", "06/2024"]]) {
+    await page.getByLabel(label).fill(v);
+    await page.getByLabel(label).blur();
+    await page.waitForTimeout(400);
+  }
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText(/Correção IPCA-E de 02\/2024 a 06\/2024: fator 1\.0/)).toBeVisible({ timeout: SLOW });
+});

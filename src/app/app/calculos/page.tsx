@@ -38,7 +38,7 @@ export default function CalculosPage() {
   return (
     <Guard area="calculos">
       <div className="mx-auto max-w-[1200px]">
-        <PageHeader title="Cálculos" description="Catálogo por área. O motor jurídico completo é fase futura: aqui só a aritmética administrativa definida é calculada; o resto é cadastro, memória e revisão." />
+        <PageHeader title="Cálculos" description="Catálogo por área. Modelos com índices oficiais (BCB/IBGE) e memória por etapa; regras aguardando validação jurídica. Revisão profissional obrigatória." />
         <div className="mb-6 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CALC_CATALOG.map((g) => (
             <section key={g.area} className="panel p-4">

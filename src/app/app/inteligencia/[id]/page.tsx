@@ -8,12 +8,13 @@ import { useCollection, useSession } from "@/components/providers";
 import { Badge, EmptyState, LoadingBlock, PageHeader } from "@/components/ui";
 import { Feedback, useAction, userName } from "@/modules/shared";
 import { UploadDialog } from "@/modules/documents/upload";
+import { PlanningPanel } from "@/modules/pension/planning-panel";
 import { nowIso, updateRow } from "@/services/mock/generic";
 import { allowed } from "@/domain/permissions";
 import { derive, effectiveEnd, mergeCnis, mergeCtps, mergePpp, type Bond, type IntelData, type ReviewStatus, type SourceDoc } from "@/domain/pension/analysis";
 import { CNIS_INDICATORS } from "@/domain/pension/cnis-parser";
 import { CLASSIFICATION_LABEL, RULES_VERSION, type AccidentInput, type BondKindAtAccident, type SpecialKind } from "@/domain/pension/rules";
-import { formatCivil, parseCivilBR } from "@/lib/dates";
+import { civilFromInstant, formatCivil, parseCivilBR } from "@/lib/dates";
 import type { Assessment, DocType } from "@/domain/types";
 
 const fmt = (d: string | null | undefined) => (d ? formatCivil(d) : "—");
@@ -21,7 +22,7 @@ const STATUS: Record<ReviewStatus, { label: string; tone: "warning" | "success" 
   pendente: { label: "Aguardando revisão", tone: "warning" }, confirmado: { label: "Confirmado", tone: "success" }, corrigido: { label: "Corrigido", tone: "info" }, descartado: { label: "Descartado", tone: "neutral" },
 };
 const REQ = { atendido: { label: "Atendido", tone: "success" }, pendente: { label: "Pendente", tone: "warning" }, nao_verificavel: { label: "Não verificável", tone: "neutral" } } as const;
-const SECTIONS = [["documentos", "Documentos"], ["vinculos", "Vínculos"], ["linha", "Linha do tempo"], ["pendencias", "Pendências"], ["especial", "Atividade especial"], ["acidente", "Auxílio-acidente"], ["beneficios", "Possibilidades"], ["relatorio", "Relatório"]] as const;
+const SECTIONS = [["documentos", "Documentos"], ["vinculos", "Vínculos"], ["linha", "Linha do tempo"], ["pendencias", "Pendências"], ["especial", "Atividade especial"], ["acidente", "Auxílio-acidente"], ["beneficios", "Possibilidades"], ["planejamento", "Planejamento e RMI"], ["relatorio", "Relatório"]] as const;
 type Sec = (typeof SECTIONS)[number][0];
 
 export default function IntelPage({ params }: PageProps<"/app/inteligencia/[id]">) {
@@ -66,6 +67,7 @@ function View({ a }: { a: Assessment }) {
         {sec === "especial" && <Special d={d} r={r} onSave={save} />}
         {sec === "acidente" && <Accident d={d} r={r} onSave={save} />}
         {sec === "beneficios" && <Benefits d={d} r={r} onSave={save} />}
+        {sec === "planejamento" && <PlanningPanel d={d} onSave={save} />}
         {sec === "relatorio" && <Report a={a} d={d} r={r} office={org?.name ?? "Escritório"} client={client?.name ?? "Cliente"} who={user?.name ?? ""} canReview={canReview} reviewed={reviewed} act={act} />}
       </div>
       <div className="mt-4"><Feedback error={act.error} notice={act.notice} /></div>
@@ -339,8 +341,9 @@ function Report({ a, d, r, office, client, who, canReview, reviewed, act }: { a:
   const download = async () => {
     setBusy(true);
     try {
-      const { intelReportPdf } = await import("@/domain/pension/report-pdf");
-      const bytes = await intelReportPdf({ office, client, title: a.title, d, r, reviewed: reviewed ? `${userName(a.reviewerId)} (versão ${a.reviewedVersion})` : null, generatedBy: who });
+      const [{ intelReportPdf }, { runPlanning }] = await Promise.all([import("@/domain/pension/report-pdf"), import("@/domain/pension/planning")]);
+      const planning = d.planning ? runPlanning(d, d.planning, civilFromInstant(new Date().toISOString())) : null;
+      const bytes = await intelReportPdf({ office, client, title: a.title, d, r, reviewed: reviewed ? `${userName(a.reviewerId)} (versão ${a.reviewedVersion})` : null, generatedBy: who, planning });
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
       const link = document.createElement("a");
       link.href = url; link.download = `relatorio-previdenciario-${client.normalize("NFD").replace(/[^\w]+/g, "-").toLowerCase()}-v${a.inputsVersion}.pdf`;

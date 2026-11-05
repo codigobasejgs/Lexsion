@@ -3,6 +3,7 @@
 // validação profissional. Cada modelo declara seu status e premissas; a memória mostra cada passo.
 import type { Cents } from "@/lib/money";
 import { formatBRL, parseBRL } from "@/lib/money";
+import { alimonyArrears, dosimetry, fullSeverance, overtime, progression, updateDebt } from "./calc-official";
 
 export type CalcStatus = "VALIDADO" | "DEMONSTRATIVO" | "REGRAS_PARCIAIS" | "AGUARDA_TABELA" | "AGUARDA_REVISAO_JURIDICA";
 export const CALC_STATUS_LABEL: Record<CalcStatus, string> = {
@@ -211,6 +212,42 @@ export interface CalcModel {
 }
 
 export const CALC_MODELS: CalcModel[] = [
+  { name: "Atualização de débito judicial (índices oficiais)", area: "Cível", status: "AGUARDA_REVISAO_JURIDICA", run: updateDebt, fields: [
+    { key: "valor", label: "Valor devido (R$)" },
+    { key: "vencimento", label: "Vencimento (mm/aaaa)", placeholder: "01/2023" },
+    { key: "dataCalculo", label: "Data do cálculo (mm/aaaa)", placeholder: "10/2026" },
+    { key: "indice", label: "Índice de correção", kind: "select", options: ["IPCA-E", "IPCA", "INPC", "IGP-M"] },
+    { key: "marcoJuros", label: "Marco dos juros — citação/ajuizamento (mm/aaaa, opcional)" },
+    { key: "juros", label: "A partir do marco", kind: "select", options: ["Selic a partir do marco", "Juros simples de 1% a.m."] },
+    { key: "multa", label: "Multa (%)" },
+    { key: "honorarios", label: "Honorários (%)" },
+  ] },
+  { name: "Rescisão completa (CLT)", area: "Trabalhista", status: "AGUARDA_REVISAO_JURIDICA", run: fullSeverance, fields: [
+    { key: "salario", label: "Último salário (R$)" },
+    { key: "admissao", label: "Admissão (dd/mm/aaaa)" },
+    { key: "desligamento", label: "Desligamento (dd/mm/aaaa)" },
+    { key: "motivo", label: "Motivo", kind: "select", options: ["Dispensa sem justa causa", "Pedido de demissão", "Acordo (art. 484-A)", "Rescisão indireta", "Justa causa"] },
+    { key: "feriasVencidas", label: "Períodos de férias vencidas (0–2)" },
+    { key: "saldoFgts", label: "Saldo do FGTS para fins rescisórios (R$)" },
+  ] },
+  { name: "Horas extras com reflexos", area: "Trabalhista", status: "AGUARDA_REVISAO_JURIDICA", run: overtime, fields: [
+    { key: "salario", label: "Salário (R$)" }, { key: "horasMes", label: "Horas extras por mês" }, { key: "adicional", label: "Adicional (%)", placeholder: "50" },
+    { key: "divisor", label: "Divisor", placeholder: "220" }, { key: "meses", label: "Meses no período" }, { key: "diasUteis", label: "Dias úteis no mês", placeholder: "25" }, { key: "diasDescanso", label: "Domingos e feriados no mês", placeholder: "5" },
+  ] },
+  { name: "Pensão alimentícia em atraso (índice oficial)", area: "Família", status: "AGUARDA_REVISAO_JURIDICA", run: alimonyArrears, fields: [
+    { key: "inicio", label: "Primeira parcela devida (mm/aaaa)" }, { key: "fim", label: "Última parcela devida (mm/aaaa)" }, { key: "dataCalculo", label: "Data do cálculo (mm/aaaa)" },
+    { key: "percentualSalarioMinimo", label: "% do salário mínimo (ou deixe vazio)" }, { key: "valorFixo", label: "Valor fixo (R$, se não for % do mínimo)" },
+    { key: "indice", label: "Índice de correção", kind: "select", options: ["INPC", "IPCA-E", "IPCA"] }, { key: "mesesPagos", label: "Meses pagos (mm/aaaa separados por vírgula)", kind: "textarea" },
+  ] },
+  { name: "Dosimetria da pena (art. 68 do CP)", area: "Penal", status: "AGUARDA_REVISAO_JURIDICA", run: dosimetry, fields: [
+    { key: "penaMin", label: "Pena mínima em abstrato", placeholder: "2 anos" }, { key: "penaMax", label: "Pena máxima em abstrato", placeholder: "8 anos" },
+    { key: "circunstanciasNegativas", label: "Circunstâncias do art. 59 negativas (0–8)" }, { key: "agravantes", label: "Agravantes" }, { key: "atenuantes", label: "Atenuantes" },
+    { key: "aumento", label: "Causa de aumento (fração, ex.: 1/3)" }, { key: "diminuicao", label: "Causa de diminuição (fração, ex.: 2/3)" }, { key: "reincidente", label: "Reincidente", kind: "select", options: ["Não", "Sim"] },
+  ] },
+  { name: "Progressão de regime (art. 112 da LEP)", area: "Penal", status: "AGUARDA_REVISAO_JURIDICA", run: progression, fields: [
+    { key: "penaMeses", label: "Pena total (meses)" }, { key: "dataBase", label: "Data-base (dd/mm/aaaa)" }, { key: "diasRemidos", label: "Dias remidos" },
+    { key: "perfil", label: "Perfil", kind: "select", options: ["Primário, sem violência", "Reincidente, sem violência", "Primário, com violência ou grave ameaça", "Reincidente, com violência", "Hediondo, primário", "Hediondo com morte, primário", "Hediondo, reincidente", "Hediondo com morte, reincidente"] },
+  ] },
   { name: "Correção monetária e juros", area: "Cível", status: "AGUARDA_TABELA", run: monetaryCorrection, fields: [
     { key: "valorOriginal", label: "Valor original (R$)" },
     { key: "serie", label: "Índice mensal informado (AAAA-MM;taxa% por linha)", kind: "textarea", placeholder: "2025-01;0,16\n2025-02;1,31" },

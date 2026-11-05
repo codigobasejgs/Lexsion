@@ -43,6 +43,7 @@ export interface IntelData {
   ppp: (PppInput & { evidence?: DocEvidence })[];
   accident: AccidentInput | null;
   unread: DocEvidence[];
+  planning?: import("./planning").PlanningInput; // Fase 2 (opcional: análises antigas não têm)
 }
 
 export const emptyIntel = (baseDate: CivilDate): IntelData => ({ version: 1, sex: null, birthDate: null, baseDate, person: { name: null, nit: null, cpf: null, evidence: [] }, sources: [], bonds: [], ctps: [], contributions: [], ppp: [], accident: null, unread: [] });

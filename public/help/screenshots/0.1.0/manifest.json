@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-11-05T15:22:32.750Z",
+  "generatedAt": "2026-11-05T18:32:23.168Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -232,6 +232,17 @@
       "selector": "role=button[name=\"Nova análise\"]",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/inteligencia-juridica-1.png"
+    },
+    {
+      "article": "planejamento-previdenciario",
+      "step": 1,
+      "mobile": false,
+      "caption": "Aba Planejamento e RMI na análise",
+      "route": "/app/inteligencia",
+      "profile": "Helena Prado",
+      "selector": "role=button[name=\"Nova análise\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/planejamento-previdenciario-1.png"
     },
     {
       "article": "registrar-prazo",

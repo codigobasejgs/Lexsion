@@ -50,6 +50,7 @@ const WHERE: Record<string, { route: string; selector: string; profile?: string 
   "ler-relatorios:2": { route: "/app/relatorios", selector: "figure" },
   "gerir-equipe:2": { route: "/app/equipe", selector: "text=Matriz de acesso por perfil" },
   "conectar-whatsapp:2": { route: "/app/integracoes/evolution", selector: '[data-tour="conexao-whatsapp"]' },
+  "planejamento-previdenciario:1": { route: "/app/inteligencia", selector: 'role=button[name="Nova análise"]' },
   "inteligencia-juridica:1": { route: "/app/inteligencia", selector: 'role=button[name="Nova análise"]' },
   "configurar-assistente:2": { route: "/app/ia/agentes/ag-triagem-prev", selector: 'role=tab[name="Base de conhecimento"]' },
   "configurar-assistente:3": { route: "/app/ia/simulador?agente=ag-triagem-prev", selector: "role=button[name=/Executar/]" },

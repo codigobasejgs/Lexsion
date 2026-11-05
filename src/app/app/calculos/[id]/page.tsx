@@ -6,14 +6,15 @@ import { AlertTriangle, Download } from "lucide-react";
 import { Guard } from "@/components/guard";
 import { useCollection, useSession } from "@/components/providers";
 import { Badge, EmptyState, LoadingBlock, PageHeader, SimulatedBadge } from "@/components/ui";
-import { Feedback, useAction, userName } from "@/modules/shared";
+import { Feedback, useAction, useLive, userName } from "@/modules/shared";
 import { updateRow } from "@/services/mock/generic";
 import { formatBRL, parseBRL } from "@/lib/money";
 import { buildSchedule } from "@/domain/commercial";
 import { canApprove } from "@/domain/permissions";
 import { downloadText, toCsv } from "@/domain/csv";
 import { DEMO_TODAY } from "@/mocks/clock";
-import { formatCivil } from "@/lib/dates";
+import { civilFromInstant, formatCivil } from "@/lib/dates";
+
 import type { Calculation } from "@/domain/types";
 import { CALC_STATUS_LABEL, findModel } from "@/domain/calc-engine";
 
@@ -61,24 +62,29 @@ function compute(c: Calculation): { result: { label: string; value: string }[]; 
 export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">) {
   const { id } = use(params);
   const { user } = useSession();
+  const live = useLive();
   const calcs = useCollection("calculations");
   const cases = useCollection("cases");
   const act = useAction("calculations");
   const c = calcs.data?.find((x) => x.id === id);
   const [msg, setMsg] = useState<string | null>(null);
+  // Entradas ficam no formulário até Calcular: uma gravação só (entradas + resultado), sem corrida entre campos.
+  const [draft, setDraft] = useState<Record<string, string> | null>(null);
   if (calcs.isPending) return <LoadingBlock />;
   if (!c) return <EmptyState title="Cálculo não encontrado" text="" action={<Link href="/app/calculos" className="btn btn-secondary">Voltar</Link>} />;
   const model = findModel(c.model);
   const fields = model ? model.fields.map((f) => f.key) : FIELDS[c.model] ?? [];
   const fieldDef = (k: string) => model?.fields.find((f) => f.key === k);
-  const stale = c.resultsVersion !== null && c.resultsVersion !== c.inputsVersion;
+  const inputs = draft ?? c.inputs;
+  const dirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(c.inputs);
+  const stale = dirty || (c.resultsVersion !== null && c.resultsVersion !== c.inputsVersion);
 
-  const setInput = (k: string, v: string) => act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, inputs: { ...x.inputs, [k]: v }, inputsVersion: x.inputsVersion + 1, status: "rascunho" })));
+  const setInput = (k: string, v: string) => setDraft({ ...inputs, [k]: v });
   const run = () => {
-    const r = compute(c);
+    const r = compute({ ...c, inputs });
     if (typeof r === "string") return setMsg(r);
     setMsg(null);
-    act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, result: r.result, memory: r.memory, resultsVersion: x.inputsVersion, baseDate: DEMO_TODAY, rulesVersion: "modelo-demo-1", status: "aguardando_revisao" }), "Cálculo executado"));
+    act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, inputs, inputsVersion: dirty ? x.inputsVersion + 1 : x.inputsVersion, result: r.result, memory: r.memory, resultsVersion: dirty ? x.inputsVersion + 1 : x.inputsVersion, baseDate: live ? civilFromInstant(new Date().toISOString()) : DEMO_TODAY, rulesVersion: live ? "calc-2026.11-1" : "modelo-demo-1", status: "aguardando_revisao" }), "Cálculo executado")).then((ok) => { if (ok) setDraft(null); });
   };
 
   return (
@@ -89,18 +95,18 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
           <label className="block min-w-56 flex-1"><span className="label">Caso vinculado</span><select className="field" value={c.caseId ?? ""} onChange={(e) => act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, caseId: e.target.value || undefined }), e.target.value ? "Cálculo vinculado ao caso" : "Cálculo desvinculado do caso"))}><option value="">Sem caso</option>{cases.data?.map((k) => <option key={k.id} value={k.id}>{k.title}</option>)}</select></label>
           {c.caseId && <Link className="btn btn-ghost" href={`/app/casos/${c.caseId}?aba=calculos`}>Abrir caso</Link>}
         </div>
-        <p className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-accent/60 p-3 text-sm text-accent"><AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" /> Exemplo demonstrativo — cálculo jurídico não validado. Revisão profissional obrigatória.</p>
+        <p className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-accent/60 p-3 text-sm text-accent"><AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" /> {live ? "Aritmética determinística com índices oficiais versionados; regras aguardando validação jurídica. Revisão profissional obrigatória." : "Exemplo demonstrativo — cálculo jurídico não validado. Revisão profissional obrigatória."}</p>
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="panel space-y-3 p-4">
             <h2 className="font-semibold">Entradas</h2>
             {fields.length === 0 && <p className="text-sm text-fg-muted">Este modelo ainda não tem formulário de entradas.</p>}
-            {fields.map((f) => <Input key={`${f}-${c.inputs[f] ?? ""}`} label={fieldDef(f)?.label ?? FIELD_LABEL[f] ?? f} kind={fieldDef(f)?.kind} options={fieldDef(f)?.options} placeholder={fieldDef(f)?.placeholder} value={c.inputs[f] ?? ""} onSave={(v) => setInput(f, v)} />)}
+            {fields.map((f) => <Input key={f} label={fieldDef(f)?.label ?? FIELD_LABEL[f] ?? f} kind={fieldDef(f)?.kind} options={fieldDef(f)?.options} placeholder={fieldDef(f)?.placeholder} value={inputs[f] ?? ""} onSave={(v) => setInput(f, v)} />)}
             <button className="btn btn-primary" onClick={run} disabled={!fields.length}>Calcular</button>
             {msg && <p role="alert" className="text-sm text-warning">{msg}</p>}
           </section>
           <section className="panel space-y-3 p-4">
             <div className="flex items-center gap-2"><h2 className="flex-1 font-semibold">Resultado e memória</h2><Badge tone={c.status === "revisado" ? "success" : "warning"}>{c.status === "revisado" ? `Revisado por ${userName(c.reviewerId)}` : "Aguardando revisão"}</Badge></div>
-            {stale && <p role="alert" className="rounded border border-danger/40 bg-danger-bg p-2 text-sm text-danger">Resultado desatualizado: as entradas mudaram depois do cálculo. Calcule novamente.</p>}
+            {stale && c.result && <p role="alert" className="rounded border border-danger/40 bg-danger-bg p-2 text-sm text-danger">Resultado desatualizado: as entradas mudaram depois do cálculo. Calcule novamente.</p>}
             {c.result ? (
               <div className={stale ? "opacity-50" : ""}>
                 <dl className="space-y-1 text-sm">{c.result.map((r) => <div key={r.label} className="flex justify-between gap-3"><dt>{r.label}</dt><dd className="num font-semibold">{r.value}</dd></div>)}</dl>
@@ -109,7 +115,7 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
             ) : <p className="text-sm text-fg-muted">Sem resultado ainda.</p>}
             <div className="flex flex-wrap gap-2">
               {c.result && !stale && c.status !== "revisado" && user && canApprove(user.role) && <button className="btn btn-secondary" onClick={() => act.run((ctx) => updateRow("calculations", c.id, ctx, (x: Calculation) => ({ ...x, status: "revisado", reviewerId: ctx.actorId }), "Cálculo revisado"))}>Marcar como revisado</button>}
-              {c.result && <button className="btn btn-ghost" onClick={() => downloadText(`calculo-${c.id}.csv`, toCsv(["Item", "Valor"], [...c.result!.map((r) => [r.label, r.value]), ["", ""], ["Memória", ""], ...(c.memory ?? []).map((m) => [m, ""]), ["Aviso", "Demonstrativo — não validado"]]), "text/csv;charset=utf-8")}><Download aria-hidden className="size-4" /> Exportar CSV</button>}
+              {c.result && <button className="btn btn-ghost" onClick={() => downloadText(`calculo-${c.id}.csv`, toCsv(["Item", "Valor"], [...c.result!.map((r) => [r.label, r.value]), ["", ""], ["Memória", ""], ...(c.memory ?? []).map((m) => [m, ""]), ["Aviso", live ? "Regras aguardando validação jurídica" : "Demonstrativo — não validado"]]), "text/csv;charset=utf-8")}><Download aria-hidden className="size-4" /> Exportar CSV</button>}
               {c.result && <button className="btn btn-ghost" onClick={() => window.print()}>Imprimir / PDF</button>}
             </div>
             <Feedback error={act.error} />
@@ -121,13 +127,11 @@ export default function CalculoPage({ params }: PageProps<"/app/calculos/[id]">)
 }
 
 function Input({ label, value, onSave, kind, options, placeholder }: { label: string; value: string; onSave: (v: string) => void; kind?: "text" | "textarea" | "select"; options?: string[]; placeholder?: string }) {
-  const [v, setV] = useState(value);
-  const save = () => v !== value && onSave(v);
   return (
     <label className="block"><span className="label">{label}</span>
-      {kind === "textarea" ? <textarea rows={4} className="field num py-2" placeholder={placeholder} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} />
-        : kind === "select" ? <select className="field" value={v || options?.[0]} onChange={(e) => { setV(e.target.value); onSave(e.target.value); }}>{options?.map((o) => <option key={o}>{o}</option>)}</select>
-        : <input className="field num" placeholder={placeholder} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} />}
+      {kind === "textarea" ? <textarea rows={4} className="field num py-2" placeholder={placeholder} value={value} onChange={(e) => onSave(e.target.value)} />
+        : kind === "select" ? <select className="field" value={value || options?.[0]} onChange={(e) => onSave(e.target.value)}>{options?.map((o) => <option key={o}>{o}</option>)}</select>
+        : <input className="field num" placeholder={placeholder} value={value} onChange={(e) => onSave(e.target.value)} />}
     </label>
   );
 }

@@ -240,6 +240,24 @@ export const HELP_ARTICLES: HelpArticle[] = [
     related: ["revisar-extracao", "comparar-cenarios", "solicitar-documento"], keywords: ["CNIS", "CTPS", "PPP", "tempo de contribuição", "aposentadoria", "atividade especial", "auxílio-acidente", "carência", "vínculos", "relatório"], shots: [{ step: 1, caption: "Inteligência Jurídica com o botão Nova análise" }], ...R,
   },
   {
+    slug: "planejamento-previdenciario", title: "Planejamento previdenciário e cálculo de RMI", category: "Clientes e jurídico",
+    goal: "Ver a melhor aposentadoria hoje, as datas futuras de cada regra de transição, a RMI estimada e se vale a pena continuar contribuindo.", prerequisites: "Análise na Inteligência Jurídica com vínculos confirmados, sexo e data de nascimento informados.", who: "Administrador, Advogado(a) e Estagiário(a).",
+    steps: [
+      "Abra a análise e toque na aba “Planejamento e RMI”.",
+      "Em Premissas, escolha como o cliente vai contribuir daqui em diante e o salário. Marque “Avaliar aposentadoria da pessoa com deficiência” se for o caso e informe grau e período.",
+      "Se o CNIS não trouxer remunerações, abra “Salários informados manualmente”, digite competência e valor e toque em “Incluir salário”.",
+      "Toque em “Salvar e recalcular”. Confira a situação de hoje, cada data futura com requisitos, RMI, contribuições, retorno do investimento e a memória de cálculo.",
+      "Em Relatório, toque em “Baixar relatório em PDF”: o planejamento entra no relatório com premissas e fontes.",
+    ],
+    buttons: ["Incluir salário", "Salvar e recalcular", "Baixar relatório em PDF"],
+    expected: "Datas e valores calculados com índices oficiais (INPC/IBGE, teto do INSS, tábua de mortalidade do IBGE), com memória e fonte em cada regra.",
+    errors: [
+      { problem: "Aparece “Sem salários de contribuição”.", fix: "Leia um CNIS que tenha a relação de remunerações ou informe os salários manualmente." },
+      { problem: "A RMI parece diferente da do Meu INSS.", fix: "Confira descartes, competências abaixo do mínimo e vínculos sem data de fim. As regras desta versão aguardam validação jurídica." },
+    ],
+    related: ["inteligencia-juridica", "usar-calculos"], keywords: ["RMI", "planejamento", "aposentadoria", "regra de transição", "pontos", "pedágio", "descarte", "fator previdenciário", "PcD", "expectativa de vida"], shots: [{ step: 1, caption: "Aba Planejamento e RMI na análise" }], ...R,
+  },
+  {
     slug: "registrar-prazo", title: "Registrar e confirmar um prazo", category: "Clientes e jurídico",
     goal: "Calcular um prazo e confirmá-lo profissionalmente.", prerequisites: "Caso aberto.", who: "Registro: Advogado(a), Estagiário(a) e Administrador. Confirmação: Advogado(a) ou Administrador.",
     steps: [
@@ -423,7 +441,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
 
   // Novos (cobertura rota → artigo)
   {
-    slug: "usar-calculos", title: "Fazer um cálculo demonstrativo", category: "Clientes e jurídico",
+    slug: "usar-calculos", title: "Fazer um cálculo com índices oficiais", category: "Clientes e jurídico",
     goal: "Registrar entradas, ver a memória de cálculo e pedir revisão.", prerequisites: "Nenhum.", who: "Administrador, Advogado(a) e Estagiário(a).",
     steps: [
       "Abra Cálculos. No catálogo, toque no “+” do modelo desejado (“Novo cálculo”).",
@@ -432,7 +450,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "Um(a) advogado(a) confere e toca em “Marcar como revisado”. Use “Exportar CSV” ou “Imprimir / PDF” se precisar.",
     ],
     buttons: ["Novo cálculo", "Criar", "Calcular", "Marcar como revisado", "Exportar CSV"],
-    expected: "O resultado aparece com memória, premissas e o selo do status (Demonstrativo, Regras parciais ou Aguarda tabela oficial). Nenhum cálculo é “validado”. Mudar uma entrada invalida o resultado anterior.",
+    expected: "O resultado aparece com memória, premissas e o selo do status. Na operação real, atualização de débito, rescisão, horas extras, pensão em atraso, dosimetria e progressão usam índices oficiais (BCB/IBGE) versionados; as regras aguardam validação jurídica. Mudar uma entrada invalida o resultado anterior.",
     errors: [{ problem: "“Modelo sem motor implementado nesta fase.”", fix: "Esse tipo ainda não calcula sozinho: registre as entradas e anexe a memória feita pelo profissional." }, { problem: "“Mês ausente” na correção monetária.", fix: "Informe o índice de todos os meses, em ordem (AAAA-MM;taxa%). Série incompleta não é calculada." }],
     related: ["comparar-cenarios"], keywords: ["cálculo", "conta", "atualização", "juros", "horas extras", "rescisão", "correção monetária", "price", "sac", "financiamento", "pensão alimentícia", "dias-multa", "verbas rescisórias"], shots: [{ step: 1, caption: "Catálogo de cálculos por área" }, { step: 1, caption: "Cálculos no celular", mobile: true }], ...R,
   },
@@ -454,14 +472,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     slug: "usar-jornal-pesquisa", title: "Pesquisa jurídica e Jornal do Advogado", category: "Clientes e jurídico",
     goal: "Encontrar referências, salvar notícias e criar tarefa de revisão no caso.", prerequisites: "Nenhum.", who: "Administrador, Advogado(a) e Estagiário(a).",
     steps: [
-      "Em Pesquisa jurídica, use “Buscar nos exemplos” e os filtros. Itens marcados “Exemplos fictícios” não são fonte real; use “Fontes oficiais” para consultar.",
+      "Em Pesquisa jurídica, digite o assunto ou o número do tema em “Buscar precedentes”. Na operação real, os resultados vêm da base oficial de precedentes qualificados do STJ, com situação e tese; toque em “Abrir no STJ” para conferir e em “Copiar citação” para levar à peça. Na demonstração aparecem só exemplos fictícios marcados.",
       "No Jornal do Advogado, filtre por Área e Tipo e abra a notícia.",
       "Toque em “Salvar” para guardar. Use “Fonte oficial” para ler o original.",
       "Em casos relacionados, toque em “Criar tarefa de revisão” para o responsável conferir o impacto.",
     ],
-    buttons: ["Salvar", "Fonte oficial", "Criar tarefa de revisão"],
+    buttons: ["Abrir no STJ", "Copiar citação", "Salvar", "Fonte oficial", "Criar tarefa de revisão"],
     expected: "A tarefa aparece em Tarefas e no caso. Uma notícia nunca altera um caso sozinha.",
-    errors: [{ problem: "A notícia parece antiga.", fix: "Nesta fase são amostras com link para a fonte oficial; não há coleta automática." }],
+    errors: [{ problem: "Precedente com situação “Cancelado”.", fix: "Não cite: confira no portal do STJ qual tema o substituiu." }, { problem: "A notícia parece antiga.", fix: "Na operação real o Jornal coleta da Câmara e do Senado a cada 3 horas; na demonstração são amostras." }],
     related: ["abrir-caso"], keywords: ["jurisprudência", "notícia", "lei", "legislação", "súmula", "novidade"], shots: [{ step: 2, caption: "Jornal do Advogado" }], ...R,
   },
   {
