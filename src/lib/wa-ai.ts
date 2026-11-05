@@ -56,14 +56,28 @@ export async function geminiKeyFor(org: string) {
   return (await officeSecret(org, "gemini").catch(() => null)) ?? KEY;
 }
 
+/** Registro de uso SEM conteúdo: caracteres, tokens reais (quando o provedor devolve) e custo pelo preço oficial no banco. */
+export async function recordUsage(o: { org: string; actor: string | null; purpose: string; module: string; model: string; inputChars: number; outputChars: number; usage: { input: number; output: number } | null; keyOwner: "plataforma" | "escritorio" }) {
+  const db = supabaseAdmin();
+  const { data: p } = await db.rpc("ai_price", { p_model: o.model }).maybeSingle();
+  const pr = p as { input_per_mtok: number; output_per_mtok: number } | null;
+  // Sem tokens do provedor: estimativa por caracteres (≈4 caracteres por token), marcada como estimada.
+  const tin = o.usage?.input ?? Math.ceil(o.inputChars / 4), tout = o.usage?.output ?? Math.ceil(o.outputChars / 4);
+  const cost = pr ? (tin * Number(pr.input_per_mtok) + tout * Number(pr.output_per_mtok)) / 1e6 : 0;
+  await db.from("ai_usage").insert({ organization_id: o.org, actor_id: o.actor, purpose: o.purpose, module: o.module, model: o.model, input_chars: o.inputChars, output_chars: o.outputChars, input_tokens: o.usage?.input ?? null, output_tokens: o.usage?.output ?? null, cost_usd: Math.round(cost * 1e6) / 1e6, estimated: !o.usage, status: "concluido", key_owner: o.keyOwner });
+}
+
 /** Chamada ao Gemini (servidor). Devolve texto ou null em falha/tempo. */
-export async function gemini(system: string, history: { role: "user" | "model"; text: string }[], key = KEY): Promise<string | null> {
+export async function gemini(system: string, history: { role: "user" | "model"; text: string }[], key = KEY, onUsage?: (u: { input: number; output: number }) => void): Promise<string | null> {
   if (key.length < 20) return null;
+  // Teto mensal em US$ da plataforma (chave da plataforma): checado no banco antes de gerar custo.
+  if (key === KEY && (await supabaseAdmin().rpc("ai_platform_ok", { p_est_usd: 0.001 })).data === false) return null;
   const r = await fetch(`${BASE}/v1beta/models/${MODEL}:generateContent`, {
     method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: history.map((h) => ({ role: h.role, parts: [{ text: h.text.slice(0, 2000) }] })), generationConfig: { temperature: 0.3, maxOutputTokens: 600 } }),
   }).catch(() => null);
-  const j = (await r?.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
+  const j = (await r?.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number } } | null;
+  if (j?.usageMetadata) onUsage?.({ input: j.usageMetadata.promptTokenCount ?? 0, output: (j.usageMetadata.candidatesTokenCount ?? 0) + (j.usageMetadata.thoughtsTokenCount ?? 0) });
   const t = j?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim();
   return r?.ok && t ? t : null;
 }
@@ -104,8 +118,10 @@ export async function runJob(jobId: number, deps = { gemini, sendText, connectio
   // Cota diária reservada no banco ANTES de chamar o modelo (atômica: chamadas concorrentes não passam do limite).
   const { data: quota } = await db.rpc("ai_quota_take", { p_org: org, p_limit: DAILY_LIMIT });
   if (quota !== true) { await toHuman(org, conv, jobId, "limite diário da assistente atingido"); return "encaminhado"; }
-  const out = await deps.gemini(systemPrompt(o.name, agent), hist, await geminiKeyFor(org));
-  await db.from("ai_usage").insert({ organization_id: org, actor_id: null, purpose: "atendimento", model: MODEL, input_chars: hist.reduce((s, h) => s + h.text.length, 0), output_chars: out?.length ?? 0 });
+  const key = await geminiKeyFor(org);
+  let usage: { input: number; output: number } | null = null;
+  const out = await deps.gemini(systemPrompt(o.name, agent), hist, key, (u) => { usage = u; });
+  await recordUsage({ org, actor: null, purpose: "atendimento", module: "atendimento", model: MODEL, inputChars: hist.reduce((s, h) => s + h.text.length, 0), outputChars: out?.length ?? 0, usage, keyOwner: key === KEY ? "plataforma" : "escritorio" });
   if (!out) { await toHuman(org, conv, jobId, "assistente sem resposta (falha ou tempo)"); return "encaminhado"; }
   const { wantsHuman, reply } = handoffOut(out);
   // Portão: trava a conversa e confere modo + versão. Humano assumiu durante a geração ⇒ descartado aqui.

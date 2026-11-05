@@ -186,3 +186,23 @@ test("JUR-04: pesquisa traz precedentes reais do STJ com link oficial; cálculo 
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText(/Correção IPCA-E de 02\/2024 a 06\/2024: fator 1\.0/)).toBeVisible({ timeout: SLOW });
 });
+
+test("JUR-05: PDF escaneado pede confirmação antes de ir à IA; com OCR bloqueado nada é enviado", async ({ page }) => {
+  const [a] = await intel(orgA);
+  const blank = await PDFDocument.create(); blank.addPage([595, 842]);
+  const fid = `file-scan-${tag}`, did = `doc-scan-${tag}`, path = `${orgA}/${fid}/escaneado.pdf`;
+  await admin.storage.from("documentos").upload(path, Buffer.from(await blank.save()), { contentType: "application/pdf" });
+  await admin.from("org_records").insert([
+    { organization_id: orgA, collection: "files", id: fid, data: { id: fid, organizationId: orgA, name: "escaneado.pdf", mime: "application/pdf", size: 900, path, createdAt: new Date().toISOString() } },
+    { organization_id: orgA, collection: "documents", id: did, data: { id: did, organizationId: orgA, clientId: CLIENT, name: "escaneado.pdf", type: "CNIS", status: "recebido", sharedWithClient: false, hasFixtureExtraction: false, versions: [{ id: "v1", at: new Date().toISOString(), actorId: people.adv.id, fileId: fid, note: "QA" }] } },
+  ]).throwOnError();
+  const usageBefore = (await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("organization_id", orgA)).count ?? 0;
+  await login(page, people.adv);
+  await page.goto(`/app/inteligencia/${a.id}`);
+  const row = page.getByRole("listitem").filter({ hasText: "escaneado.pdf" });
+  await row.getByRole("button", { name: "Ler documento" }).click();
+  await expect(row.getByText(/1 página\(s\) sem texto/)).toBeVisible({ timeout: SLOW });
+  await row.getByRole("button", { name: "Ler com IA" }).click();
+  await expect(row.getByText(/faturamento do Google ainda não foi confirmado/)).toBeVisible({ timeout: SLOW });
+  expect((await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("organization_id", orgA)).count ?? 0).toBe(usageBefore);
+});

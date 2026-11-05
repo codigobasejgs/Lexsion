@@ -15,7 +15,7 @@ export function PrecedentSearch({ q, area, onQ, onArea }: { q: string; area: str
   const [state, setState] = useState<{ loading: boolean; items: Item[]; updatedAt: string | null; error: string | null }>({ loading: false, items: [], updatedAt: null, error: null });
   const [copied, setCopied] = useState<string | null>(null);
   useEffect(() => {
-    if (q.trim().length < 3 && !area) { setState((s) => ({ ...s, items: [], loading: false, error: null })); return; }
+    if (q.trim().length < 3 && !area) return; // sem busca: a tela mostra a orientação (derivada abaixo)
     const ctl = new AbortController();
     const t = setTimeout(() => {
       setState((s) => ({ ...s, loading: true, error: null }));

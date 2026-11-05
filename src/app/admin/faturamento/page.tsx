@@ -12,6 +12,7 @@ import { applyInvoiceEvent, INTEGRATION_STATUS_LABEL, INVOICE_STATUS_LABEL, type
 import { PLAN_LABEL } from "@/domain/tenancy";
 import { useLive } from "@/modules/shared";
 import { CommercialOrders } from "@/modules/admin/commercial";
+import { AiCosts } from "@/modules/admin/ai-costs";
 
 type Ev = Parameters<typeof applyInvoiceEvent>[1]["type"];
 
@@ -39,7 +40,7 @@ export default function FaturamentoPage() {
   };
 
   // Operação real: pedidos e assinaturas da InfinitePay, conferidos no payment_check (nada simulado).
-  if (live) return <><PageHeader title="Financeiro da plataforma" description="Contratações e renovações pagas pela InfinitePay (conta $marco-boggian). Separado dos honorários dos escritórios." /><CommercialOrders /></>;
+  if (live) return <><PageHeader title="Financeiro da plataforma" description="Contratações e renovações pagas pela InfinitePay (conta $marco-boggian). Separado dos honorários dos escritórios." /><CommercialOrders /><div className="mt-8"><AiCosts /></div></>;
   return (
     <>
       <PageHeader title="Financeiro da plataforma" description="Faturas da assinatura LexSion cobradas dos escritórios. Separado dos honorários que cada escritório cobra dos clientes dele." />

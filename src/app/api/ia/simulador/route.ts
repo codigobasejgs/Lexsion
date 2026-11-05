@@ -3,7 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { aiEnabled, GATE_MESSAGE } from "@/lib/feature-gates";
-import { gemini, geminiKeyFor, handoffOut, HANDOFF_ASK, systemPrompt } from "@/lib/wa-ai";
+import { gemini, geminiKeyFor, handoffOut, HANDOFF_ASK, recordUsage, systemPrompt } from "@/lib/wa-ai";
 
 // Simulador da assistente com o modelo REAL e o RASCUNHO atual (testar antes de publicar). Nunca envia nada ao
 // WhatsApp; a conversa de teste não é gravada (só a contagem de uso, finalidade "simulador").
@@ -29,8 +29,10 @@ export async function POST(req: NextRequest) {
   if (!org.ai_enabled_at) return err(412, "ai_disabled", "A IA ainda não foi habilitada pelo titular do escritório (Integrações → IA).");
   const last = history.at(-1)!.text;
   if (HANDOFF_ASK.test(last)) return NextResponse.json({ ok: true, data: { text: null, handoff: "contato pediu atendente (encaminhado sem chamar o modelo)" } });
-  const out = await gemini(systemPrompt(org.name, ag.data as Parameters<typeof systemPrompt>[1]), history, await geminiKeyFor(b.organizationId));
-  await supabaseAdmin().from("ai_usage").insert({ organization_id: b.organizationId, actor_id: auth.user.id, purpose: "simulador", model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash", input_chars: history.reduce((s, h) => s + h.text.length, 0), output_chars: out?.length ?? 0 });
+  const key = await geminiKeyFor(b.organizationId);
+  let usage: { input: number; output: number } | null = null;
+  const out = await gemini(systemPrompt(org.name, ag.data as Parameters<typeof systemPrompt>[1]), history, key, (u) => { usage = u; });
+  await recordUsage({ org: b.organizationId, actor: auth.user.id, purpose: "simulador", module: "assistente", model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash", inputChars: history.reduce((s, h) => s + h.text.length, 0), outputChars: out?.length ?? 0, usage, keyOwner: key === (process.env.GEMINI_API_KEY ?? "") ? "plataforma" : "escritorio" });
   if (!out) return NextResponse.json({ ok: true, data: { text: null, handoff: "assistente sem resposta (no WhatsApp, a conversa iria para a equipe)" } });
   const { wantsHuman, reply } = handoffOut(out);
   return NextResponse.json({ ok: true, data: { text: reply, handoff: wantsHuman ? "a assistente encaminhou ao atendente" : null } });

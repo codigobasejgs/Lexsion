@@ -15,7 +15,7 @@ const sa = { email: `qa-psa-${tag}@lexsion-qa.invalid`, password: pw(), id: "" }
 const staff = { email: `qa-pst-${tag}@lexsion-qa.invalid`, password: pw(), id: "" };
 let admin: SupabaseClient;
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "serial", timeout: 4 * SLOW });
 test.skip(!ON, "Supabase não configurado neste ambiente");
 async function login(page: Page, u: { email: string; password: string }) {
   await page.goto("/entrar");
@@ -36,7 +36,7 @@ test.afterAll(async () => {
   for (const u of [sa, staff]) if (u.id) await admin.auth.admin.deleteUser(u.id);
 });
 
-test("PLAT-01: Super Admin dá papel de Suporte sem Financeiro; a pessoa vê só o liberado; revogar corta o acesso", async ({ page, browser }) => {
+test("PLAT-01: Super Admin dá papel de Suporte sem Financeiro; a pessoa vê só o liberado; revogar corta o acesso", async ({ page, browser, isMobile, viewport }) => {
   await login(page, sa);
   await page.goto("/admin/equipe");
   await page.getByLabel("E-mail da conta já cadastrada").fill(staff.email);
@@ -47,10 +47,12 @@ test("PLAT-01: Super Admin dá papel de Suporte sem Financeiro; a pessoa vê só
   await expect(page.getByRole("status")).toContainText(staff.email, { timeout: SLOW });
   await expect(page.getByTestId("equipe-plataforma")).toContainText(staff.email);
   // A pessoa entra: menu sem Financeiro e sem Equipe; URL direta do Financeiro bloqueada.
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext({ viewport, isMobile });
   const p2 = await ctx.newPage();
   await login(p2, staff);
-  const nav = p2.getByRole("navigation", { name: "Super Admin" }).first();
+  // No celular o menu fica recolhido atrás de "Abrir menu".
+  if ((viewport?.width ?? 1440) < 1024) await p2.getByRole("button", { name: "Abrir menu" }).click({ timeout: SLOW });
+  const nav = p2.getByRole("navigation", { name: "Super Admin" }).locator("visible=true").first();
   await expect(nav.getByRole("link", { name: "Suporte" })).toBeVisible({ timeout: SLOW });
   await expect(nav.getByRole("link", { name: "Financeiro da plataforma" })).toHaveCount(0);
   await expect(nav.getByRole("link", { name: "Equipe da plataforma" })).toHaveCount(0);

@@ -38,6 +38,7 @@ const present = (t) => fs.existsSync(path.join(dir, `${t}.json`));
 await db.exec("delete from public.collection_policies; delete from public.legal_source_providers");
 if (present("saas_plans")) await db.exec("delete from public.saas_plans");
 if (present("saas_supplier_profile")) await db.exec("delete from public.saas_supplier_profile");
+for (const t of ["ai_prices", "ai_budgets", "ai_settings"]) if (present(t)) await db.exec(`delete from public.${t}`);
 for (const t of ORDER) {
   if (!present(t)) continue;
   const rows = JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), "utf8"));

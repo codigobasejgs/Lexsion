@@ -29,7 +29,7 @@ export interface Bond {
   reviewedAt?: string;
   note?: string;
 }
-export interface SourceDoc { kind: "CNIS" | "CTPS" | "PPP"; documentId: string; fileId: string; fileName: string; pages: number; readAt: string; rulesVersion: string }
+export interface SourceDoc { kind: "CNIS" | "CTPS" | "PPP"; documentId: string; fileId: string; fileName: string; pages: number; readAt: string; rulesVersion: string; ocrPages?: number[]; ocrModel?: string }
 export interface IntelData {
   version: 1;
   sex: Sex | null;

@@ -86,26 +86,26 @@ type SaveFn = (next: IntelData, text: string, notice?: string) => Promise<unknow
 
 function Documents({ a, d, docs, real, orgId, onRead }: { a: Assessment; d: IntelData; docs: { id: string; name: string; type: DocType; versions?: { fileId?: string; mime?: string }[] }[]; real: boolean; orgId: string; onRead: SaveFn }) {
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<{ doc: string; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ doc: string; text: string; ocrPages?: number } | null>(null);
   const [upload, setUpload] = useState<DocType | null>(null);
   const relevant = docs.filter((x) => ["CNIS", "CTPS", "PPP"].includes(x.type));
-  const read = async (doc: (typeof relevant)[number]) => {
+  const read = async (doc: (typeof relevant)[number], ocr = false) => {
     setBusy(doc.id); setMsg(null);
     try {
-      const res = await fetch("/api/inteligencia/extrair", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, documentId: doc.id, kind: doc.type }) });
+      const res = await fetch("/api/inteligencia/extrair", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, documentId: doc.id, kind: doc.type, ocr }) });
       const j = await res.json().catch(() => null);
-      if (!j?.ok) { setMsg({ doc: doc.id, text: j?.error?.message ?? "Não foi possível ler agora. Tente de novo." }); return; }
-      const src: SourceDoc = { kind: doc.type as SourceDoc["kind"], documentId: doc.id, fileId: j.data.fileId, fileName: j.data.fileName || doc.name, pages: j.data.pages, readAt: j.data.readAt, rulesVersion: j.data.rulesVersion };
+      if (!j?.ok) { setMsg({ doc: doc.id, text: j?.error?.message ?? "Não foi possível ler agora. Tente de novo.", ocrPages: j?.error?.code === "needs_ocr" ? j.error.pages : undefined }); return; }
+      const src: SourceDoc = { kind: doc.type as SourceDoc["kind"], documentId: doc.id, fileId: j.data.fileId, fileName: j.data.fileName || doc.name, pages: j.data.pages, readAt: j.data.readAt, rulesVersion: j.data.rulesVersion, ...(j.data.ocr ? { ocrPages: j.data.ocr.pages, ocrModel: j.data.ocr.model } : {}) };
       const next = doc.type === "CNIS" ? mergeCnis(d, j.data.reading, src) : doc.type === "CTPS" ? mergeCtps(d, j.data.reading, src) : mergePpp(d, j.data.reading, src);
       const n = doc.type === "CNIS" ? j.data.reading.bonds.length : doc.type === "CTPS" ? j.data.reading.contracts.length : j.data.reading.periods.length;
       const unread = j.data.reading.unread.length;
-      await onRead(next, `Leitura de ${doc.type}: ${doc.name}`, `${doc.type} lido: ${n} registro(s)${unread ? `, ${unread} trecho(s) não lido(s) com segurança` : ""}. Revise em Vínculos${doc.type === "PPP" ? " e Atividade especial" : ""}.`);
+      await onRead(next, `Leitura de ${doc.type}: ${doc.name}`, `${doc.type} lido: ${n} registro(s)${unread ? `, ${unread} trecho(s) não lido(s) com segurança` : ""}. Revise em Vínculos${doc.type === "PPP" ? " e Atividade especial" : ""}.${j.data.ocr ? ` ${j.data.ocr.pages.length} página(s) lida(s) por IA${j.data.ocr.cached ? " (reaproveitada, sem custo)" : ""}: confira com atenção.` : ""}`);
     } finally { setBusy(null); }
   };
   return (
     <section className="panel p-4 text-sm">
       <h2 className="mb-1 font-semibold">Documentos do cliente</h2>
-      <p className="mb-3 text-fg-muted">Leitura de PDF com texto (o extrato baixado do Meu INSS, a CTPS Digital e o PPP digital), feita no servidor da LexSion, sem IA e sem envio a terceiros. Documento escaneado ou foto precisa de OCR, que está desativado até a confirmação do faturamento do provedor de IA.</p>
+      <p className="mb-3 text-fg-muted">Leitura de PDF com texto (o extrato baixado do Meu INSS, a CTPS Digital e o PPP digital), feita no servidor da LexSion, sem IA e sem envio a terceiros. Páginas escaneadas e fotos só são lidas por IA (Google Gemini, conta paga, sem uso para treino) quando você confirmar, dentro dos limites do escritório.</p>
       {!real && <p className="mb-3 rounded-[var(--radius-control)] border border-info/30 bg-info-bg p-2 text-info">Na demonstração os arquivos ficam só no navegador: a leitura automática funciona na operação real.</p>}
       {!relevant.length ? <p className="text-fg-muted">Nenhum CNIS, CTPS ou PPP enviado para este cliente.</p> : (
         <ul className="divide-y divide-line">{relevant.map((doc) => {
@@ -114,9 +114,9 @@ function Documents({ a, d, docs, real, orgId, onRead }: { a: Assessment; d: Inte
           return (
             <li key={doc.id} className="flex flex-wrap items-center gap-2 py-2">
               <Badge icon={false}>{doc.type}</Badge>
-              <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{doc.name}{src && <span className="block text-xs text-fg-muted">Lido em {new Date(src.readAt).toLocaleString("pt-BR")} · {src.pages} pág.</span>}</span>
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{doc.name}{src && <span className="block text-xs text-fg-muted">Lido em {new Date(src.readAt).toLocaleString("pt-BR")} · {src.pages} pág.{src.ocrPages?.length ? ` · ${src.ocrPages.length} por IA` : ""}</span>}</span>
               <button className="btn btn-secondary min-h-9" disabled={!real || !hasFile || busy !== null} onClick={() => read(doc)}><FileSearch aria-hidden className="size-4" /> {busy === doc.id ? "Lendo…" : src ? "Ler de novo" : "Ler documento"}</button>
-              {msg?.doc === doc.id && <p role="alert" className="w-full text-warning">{msg.text}</p>}
+              {msg?.doc === doc.id && <div role="alert" className="w-full space-y-2 text-warning"><p>{msg.text}</p>{msg.ocrPages ? <div className="rounded-[var(--radius-control)] border border-line p-3 text-fg"><p>Ler {msg.ocrPages} página(s) com IA? O arquivo é enviado ao Google Gemini (conta paga: o conteúdo não é usado para treinar modelos), conta no limite de páginas do escritório e o resultado precisa de revisão.</p><button className="btn btn-primary mt-2 min-h-9" disabled={busy !== null} onClick={() => read(doc, true)}>Ler com IA</button></div> : null}</div>}
             </li>
           );
         })}</ul>
@@ -173,7 +173,7 @@ function Bonds({ d, r, onSave, actorId }: { d: IntelData; r: ReturnType<typeof d
               </div>
               <p className="num mt-1">{fmt(b.start)} a {b.end ? fmt(b.end) : b.lastRemuneration ? `sem data de fim (últ. remuneração ${b.lastRemuneration})` : "sem data de fim"}{b.original && <span className="ml-2 text-xs text-fg-muted">lido: {fmt(b.original.start)} a {fmt(b.original.end)}</span>}</p>
               {b.indicators.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{b.indicators.map((i) => <Badge key={i} tone="warning" icon={false}>{i}{CNIS_INDICATORS[i] ? `: ${CNIS_INDICATORS[i]}` : ""}</Badge>)}</div>}
-              {b.evidence ? <p className="mt-1 text-xs text-fg-muted">Fonte: {b.evidence.fileName ?? "documento"}, pág. {b.evidence.page} · confiança {b.confidence} · “{b.evidence.excerpt}”</p> : <p className="mt-1 text-xs text-fg-muted">Incluído manualmente{b.reviewerId ? ` por ${userName(b.reviewerId)}` : ""}.</p>}
+              {b.evidence ? <p className="mt-1 text-xs text-fg-muted">Fonte: {b.evidence.fileName ?? "documento"}, pág. {b.evidence.page}{d.sources.some((x) => x.documentId === b.evidence!.documentId && x.ocrPages?.includes(b.evidence!.page)) ? " (lida por IA — conferir no documento)" : ""} · confiança {b.confidence} · “{b.evidence.excerpt}”</p> : <p className="mt-1 text-xs text-fg-muted">Incluído manualmente{b.reviewerId ? ` por ${userName(b.reviewerId)}` : ""}.</p>}
               {contribs.length > 0 && <details className="mt-1 text-xs"><summary className="cursor-pointer text-fg-muted">{contribs.length} competência(s) lidas</summary><ul className="num mt-1 grid grid-cols-2 gap-x-4 sm:grid-cols-4">{contribs.map((c) => <li key={c.month + c.evidence.page}>{c.month.slice(5)}/{c.month.slice(0, 4)}: {c.amount == null ? "—" : c.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}{c.indicators.length ? ` ${c.indicators.join(" ")}` : ""}</li>)}</ul></details>}
               <div className="mt-2 flex flex-wrap gap-2">
                 {b.status !== "confirmado" && b.status !== "corrigido" && <button className="btn btn-secondary min-h-9" onClick={() => setBond(b.id, { status: "confirmado" }, `Vínculo confirmado: ${b.origin}`)}><Check aria-hidden className="size-4" /> Confirmar</button>}

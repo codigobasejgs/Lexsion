@@ -3,7 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { aiEnabled, GATE_MESSAGE } from "@/lib/feature-gates";
-import { geminiKeyFor } from "@/lib/wa-ai";
+import { geminiKeyFor, recordUsage } from "@/lib/wa-ai";
 
 // IA jurídica (Google Gemini) no SERVIDOR. Regras:
 // 1) só com IA habilitada pelo titular (consentimento registrado e auditado);
@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
   const key = await geminiKeyFor(b.organizationId);
   if (key.length < 20) return err(503, "not_configured", "IA sem chave: cadastre a chave do Gemini em Integrações.");
 
+  const platformKey = key === (process.env.GEMINI_API_KEY ?? "");
+  if (platformKey && (await supabaseAdmin().rpc("ai_platform_ok", { p_est_usd: 0.002 })).data === false) return err(429, "budget", "Limite mensal de uso de IA da plataforma atingido. Tente no próximo mês ou cadastre a chave do escritório.");
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
     method: "POST", headers: { "x-goog-api-key": key, "Content-Type": "application/json" }, signal: AbortSignal.timeout(60_000),
     body: JSON.stringify({
@@ -41,9 +43,10 @@ export async function POST(req: NextRequest) {
       generationConfig: { temperature: 0.2, maxOutputTokens: 1500 },
     }),
   }).catch(() => null);
-  const j = (await r?.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null;
+  const j = (await r?.json().catch(() => null)) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number } } | null;
   const text = j?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("").trim();
   if (!r?.ok || !text) return err(502, "ai_failed", "A IA não respondeu agora. Tente de novo em instantes.");
-  await supabaseAdmin().from("ai_usage").insert({ organization_id: b.organizationId, actor_id: auth.user.id, purpose: b.purpose, model: MODEL, input_chars: ctx.length, output_chars: text.length });
+  const um = j?.usageMetadata;
+  await recordUsage({ org: b.organizationId, actor: auth.user.id, purpose: b.purpose, module: "assistente", model: MODEL, inputChars: ctx.length, outputChars: text.length, usage: um ? { input: um.promptTokenCount ?? 0, output: (um.candidatesTokenCount ?? 0) + (um.thoughtsTokenCount ?? 0) } : null, keyOwner: platformKey ? "plataforma" : "escritorio" });
   return NextResponse.json({ ok: true, data: { text, model: MODEL, requiresHumanReview: true } });
 }
