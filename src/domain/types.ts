@@ -691,8 +691,8 @@ export interface AuditEvent extends OrgEntity {
 
 /** Análise especializada ligada ao caso (paridade: BPC/LOAS, PPP/atividade especial, perícia). Resultado é sempre revisável. */
 export interface Assessment extends OrgEntity {
-  kind: "bpc" | "ppp";
-  caseId: ID;
+  kind: "bpc" | "ppp" | "intel"; // intel = Inteligência Jurídica (análise previdenciária real, ligada ao cliente)
+  caseId: ID; // "" quando a análise não está ligada a um caso
   clientId: ID;
   title: string;
   status: "rascunho" | "aguardando_revisao" | "revisado";

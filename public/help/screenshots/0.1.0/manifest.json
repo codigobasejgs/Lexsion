@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generatedAt": "2026-11-03T19:22:45.638Z",
+  "generatedAt": "2026-11-05T15:22:32.750Z",
   "shots": [
     {
       "article": "entender-modo-demo",
@@ -221,6 +221,17 @@
       "selector": "text=Dados extraídos",
       "fixture": "FIXTURE_VERSION atual (dados fictícios)",
       "out": "public/help/screenshots/0.1.0/revisar-extracao-2.png"
+    },
+    {
+      "article": "inteligencia-juridica",
+      "step": 1,
+      "mobile": false,
+      "caption": "Inteligência Jurídica com o botão Nova análise",
+      "route": "/app/inteligencia",
+      "profile": "Helena Prado",
+      "selector": "role=button[name=\"Nova análise\"]",
+      "fixture": "FIXTURE_VERSION atual (dados fictícios)",
+      "out": "public/help/screenshots/0.1.0/inteligencia-juridica-1.png"
     },
     {
       "article": "registrar-prazo",

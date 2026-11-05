@@ -16,6 +16,7 @@ export const ROUTE_HELP: { prefix: string; article: string; title: string; tour?
   { prefix: "/app/audiencias", article: "agendar-pericia", title: "Agendar perícia ou audiência", tour: "agenda" },
   { prefix: "/app/pericias", article: "agendar-pericia", title: "Agendar perícia ou audiência", tour: "agenda" },
   { prefix: "/app/documentos", article: "solicitar-documento", title: "Solicitar documento ao cliente", tour: "documentos" },
+  { prefix: "/app/inteligencia", article: "inteligencia-juridica", title: "Analisar CNIS, CTPS e PPP na Inteligência Jurídica" },
   { prefix: "/app/previdenciario", article: "comparar-cenarios", title: "Revisar vínculos e comparar cenários previdenciários", tour: "previdenciario" },
   { prefix: "/app/calculos", article: "usar-calculos", title: "Fazer um cálculo demonstrativo" },
   { prefix: "/app/requisitorios", article: "acompanhar-rpv", title: "Acompanhar RPV e precatórios" },

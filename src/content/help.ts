@@ -221,6 +221,25 @@ export const HELP_ARTICLES: HelpArticle[] = [
     related: ["solicitar-documento", "comparar-cenarios"], shots: [{ step: 2, caption: "Dados extraídos ao lado do documento" }], ...R,
   },
   {
+    slug: "inteligencia-juridica", title: "Analisar CNIS, CTPS e PPP na Inteligência Jurídica", category: "Clientes e jurídico",
+    goal: "Ler os documentos previdenciários do cliente com a página de origem de cada dado, revisar e gerar o relatório técnico.", prerequisites: "Cliente cadastrado e o CNIS (PDF baixado do Meu INSS), a CTPS Digital ou o PPP em PDF. Nunca peça a senha gov.br do cliente.", who: "Administrador, Advogado(a) e Estagiário(a). Só Advogado(a) ou Administrador marca como revisada.",
+    steps: [
+      "Abra Inteligência Jurídica, toque em “Nova análise”, escolha o cliente e toque em “Criar análise”.",
+      "Em Documentos, envie o CNIS, a CTPS ou o PPP e toque em “Ler documento”. A leitura acontece no servidor da LexSion, sem IA. PDF escaneado ou foto ainda não é lido (OCR desativado) e nada é inventado.",
+      "Em Vínculos, compare cada vínculo com o trecho e a página citados. Toque em “Confirmar”, “Corrigir” ou “Descartar”. Só vínculos revisados entram na contagem.",
+      "Confira Linha do tempo, Pendências, Atividade especial (marque o tempo especial e veja o checklist do PPP), Auxílio-acidente e Possibilidades (informe sexo e data de referência).",
+      "Em Relatório, toque em “Baixar relatório em PDF”. Depois de conferir, o advogado(a) toca em “Marcar como revisada”.",
+    ],
+    buttons: ["Nova análise", "Criar análise", "Ler documento", "Confirmar", "Corrigir", "Descartar", "Baixar relatório em PDF", "Marcar como revisada"],
+    expected: "Vínculos revisados com fonte, tempo e carência calculados, pendências listadas e relatório em PDF com as fontes normativas.",
+    errors: [
+      { problem: "Aparece “Documento sem texto”.", fix: "O arquivo é escaneado ou foto. Baixe o PDF original no Meu INSS ou na CTPS Digital, ou inclua os vínculos com “Incluir vínculo manual”." },
+      { problem: "O tempo aparece zerado.", fix: "Os vínculos lidos começam “Aguardando revisão”. Confirme ou corrija em Vínculos." },
+      { problem: "A conversão de tempo especial não aparece.", fix: "Informe o sexo em Possibilidades e marque o período como especial. Só o tempo até 13/11/2019 é convertido." },
+    ],
+    related: ["revisar-extracao", "comparar-cenarios", "solicitar-documento"], keywords: ["CNIS", "CTPS", "PPP", "tempo de contribuição", "aposentadoria", "atividade especial", "auxílio-acidente", "carência", "vínculos", "relatório"], shots: [{ step: 1, caption: "Inteligência Jurídica com o botão Nova análise" }], ...R,
+  },
+  {
     slug: "registrar-prazo", title: "Registrar e confirmar um prazo", category: "Clientes e jurídico",
     goal: "Calcular um prazo e confirmá-lo profissionalmente.", prerequisites: "Caso aberto.", who: "Registro: Advogado(a), Estagiário(a) e Administrador. Confirmação: Advogado(a) ou Administrador.",
     steps: [

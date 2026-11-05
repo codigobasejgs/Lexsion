@@ -185,7 +185,7 @@ export default function Cliente360({ params }: PageProps<"/app/clientes/[id]">) 
                   <span className="min-w-0 flex-1"><span className="block font-medium [overflow-wrap:anywhere]">{d.name}</span><span className="block text-xs text-fg-muted">{d.type}{d.receivedAt ? ` · recebido ${formatInstant(d.receivedAt)}` : ""}{d.type === "Laudo" ? " · dado de saúde, acesso restrito" : ""}</span></span>
                   {d.type === "Laudo" && <Lock aria-label="Acesso restrito" className="size-4 text-warning" />}
                   <Badge tone={DOC_STATUS[d.status].tone}>{DOC_STATUS[d.status].label}</Badge>
-                  {d.type === "CNIS" && <Link href="/app/previdenciario/analises/pa-joao" className="btn btn-secondary min-h-9">Revisar extração</Link>}
+                  {["CNIS", "CTPS", "PPP"].includes(d.type) && (mode === "real" ? <Link href={`/app/inteligencia?cliente=${client.id}`} className="btn btn-secondary min-h-9">Analisar</Link> : d.type === "CNIS" && <Link href="/app/previdenciario/analises/pa-joao" className="btn btn-secondary min-h-9">Revisar extração</Link>)}
                 </li>
               ))}</ul>
             ) : <EmptyState title="Nenhum documento" text="Documentos recebidos ou solicitados aparecerão aqui." />

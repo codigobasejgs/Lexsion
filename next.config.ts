@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   experimental: {
     useOffline: true,
   },
+  // Leitura de PDF no servidor: carregar o pacote do node_modules (o empacotador quebra o build legado do pdfjs).
+  serverExternalPackages: ["pdfjs-dist"],
   turbopack: {
     rules: {
       "*.css": {

@@ -1,7 +1,7 @@
 import {
   AlarmClock, Banknote, BarChart3, BookOpen, Bot, Briefcase, Building2, CalendarDays, Calculator, CreditCard, FileSignature, FileText, FolderOpen,
   GraduationCap, Home, KanbanSquare, Landmark, LayoutGrid, ListChecks, Megaphone, MessagesSquare, Newspaper, Palette, Plug, Scale, ScrollText,
-  Search, Settings, Upload, Users, UsersRound, Workflow, GitBranch,
+  BrainCircuit, Search, Settings, Upload, Users, UsersRound, Workflow, GitBranch,
 } from "lucide-react";
 import type { Area } from "@/domain/permissions";
 
@@ -34,6 +34,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/app/processos", label: "Processos", icon: Landmark, area: "casos" },
       { href: "/app/documentos", label: "Documentos", icon: FolderOpen, area: "documentos" },
       { href: "/app/previdenciario", label: "Previdenciário", icon: Scale, area: "previdenciario" },
+      { href: "/app/inteligencia", label: "Inteligência Jurídica", icon: BrainCircuit, area: "previdenciario" },
       { href: "/app/calculos", label: "Cálculos", icon: Calculator, area: "calculos" },
       { href: "/app/requisitorios", label: "RPV e precatórios", icon: Landmark, area: "requisitorios" },
       { href: "/app/minutas", label: "Minutas e modelos", icon: FileText, area: "minutas" },
