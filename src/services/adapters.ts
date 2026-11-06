@@ -84,7 +84,7 @@ export const signatureAdapter: SignatureAdapter = {
   createEnvelope: async () => ({ ok: true, data: { envelopeId: `sim-${cid()}`, simulated: true }, correlationId: cid() }),
 };
 export const legalDataAdapter: LegalDataAdapter = {
-  info: { id: "datajud", name: "CNJ DataJud e tribunais", category: "juridico", mode: "not_configured", status: "planned", owner: "platform", requires: ["DATAJUD_API_KEY (chave pública do CNJ, pode mudar)"], notes: "Só metadados públicos (capa e movimentações); sem partes, inteiro teor ou sigilosos. Termos do CNJ restringem uso comercial: avaliar antes de conectar." },
+  info: { id: "datajud", name: "CNJ DataJud e tribunais", category: "juridico", mode: "not_configured", status: "planned", owner: "platform", requires: ["DATAJUD_API_KEY (chave pública do CNJ, pode mudar)"], notes: "Consulta pontual por número CNJ (capa e andamentos), para uso de trabalho do escritório; sem partes, inteiro teor ou sigilosos. Uso conforme o termo de uso do CNJ (sem revenda nem exploração comercial dos dados)." },
   search: async () => ({ ok: true, data: { found: false, reason: "Consulta processual ainda não conectada. Cadastre o andamento manualmente." }, correlationId: cid() }),
 };
 export const storageAdapter: ObjectStorageAdapter = {

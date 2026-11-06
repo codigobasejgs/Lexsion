@@ -6,6 +6,7 @@ import { Guard } from "@/components/guard";
 import { Badge, EmptyState, PageHeader, SimulatedBadge } from "@/components/ui";
 import { SearchBox, useLive, useUrlState } from "@/modules/shared";
 import { PrecedentSearch } from "@/modules/research/precedents";
+import { DatajudLookup } from "@/modules/research/datajud";
 
 // Fontes reais apontam para portais oficiais de pesquisa (abrir em nova aba).
 // Resultados "Exemplo fictício" NÃO são precedentes reais e não trazem número de processo.
@@ -37,6 +38,7 @@ export default function PesquisaPage() {
     <Guard area="pesquisa">
       <div className="mx-auto max-w-[1100px]">
         <PageHeader title="Pesquisa jurídica" description={live ? "Precedentes qualificados do STJ (base oficial aberta) e atalhos para os portais dos tribunais. Nenhum precedente é gerado: tudo vem da fonte, com link." : "Pesquise nas fontes oficiais (abrem em nova aba). A busca interna usa apenas exemplos fictícios marcados — nenhum número de precedente é inventado."} />
+        {live && <DatajudLookup initial={url.get("cnj") ?? ""} />}
         {live && <PrecedentSearch q={q} area={area} onQ={(v) => url.set("q", v || null)} onArea={(v) => url.set("area", v || null)} />}
         <section className="panel mb-6 p-4">
           <h2 className="mb-2 font-semibold">Fontes oficiais</h2>

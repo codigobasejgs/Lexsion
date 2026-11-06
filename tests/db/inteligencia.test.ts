@@ -59,10 +59,10 @@ describe("Inteligência jurídica — RLS", () => {
     expect((await as(U.superadmin, "select id from public.source_sync_runs")).length).toBe(1);
     expect(await denied(U.superadmin, "select public.acquire_sync_lock('camara-proposicoes', 60)")).toMatch(/permission denied/);
   });
-  it("catálogo honesto: ativas só Câmara e as fontes oficiais abertas (BCB, STJ); DataJud aguarda licença", async () => {
+  it("catálogo honesto: coleta agendada só Câmara, BCB e STJ; DataJud ativo apenas sob demanda (sem coleta)", async () => {
     const r = await as<{ id: string; status: string; enabled: boolean }>(U.adminA, "select id, status, enabled from public.legal_source_providers order by id");
     expect(r.filter((x) => x.enabled).map((x) => x.id)).toEqual(["bcb-sgs", "camara-proposicoes", "stj-precedentes"]);
-    expect(r.find((x) => x.id === "datajud-cnj")?.status).toBe("AGUARDA_LICENCA");
+    expect(r.find((x) => x.id === "datajud-cnj")).toMatchObject({ status: "REAL_ATIVA", enabled: false });
   });
 });
 

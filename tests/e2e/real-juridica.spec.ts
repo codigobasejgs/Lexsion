@@ -206,3 +206,17 @@ test("JUR-05: PDF escaneado pede confirmação antes de ir à IA; com OCR bloque
   await expect(row.getByText(/faturamento do Google ainda não foi confirmado/)).toBeVisible({ timeout: SLOW });
   expect((await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("organization_id", orgA)).count ?? 0).toBe(usageBefore);
 });
+
+test("JUR-06: consulta DataJud por número CNJ (número sintético válido) responde e fica auditada", async ({ page }) => {
+  // Número inventado com dígito verificador correto: o CNJ responde "nenhum registro"; nenhum processo real é consultado.
+  const make = (n: string, ano: string, j: string, tr: string, o: string) => { const dv = 98 - Number(BigInt(`${n}${ano}${j}${tr}${o}00`) % BigInt(97)); return `${n}-${String(dv).padStart(2, "0")}.${ano}.${j}.${tr}.${o}`; };
+  const cnj = make("9999990", "2099", "4", "01", "9999");
+  await login(page, people.adv);
+  await page.goto("/app/pesquisa");
+  const box = page.getByTestId("datajud");
+  await box.getByLabel("Número CNJ").fill(cnj);
+  await box.getByRole("button", { name: "Consultar" }).click();
+  await expect(box.getByText(/Nenhum registro público encontrado|O DataJud não respondeu/)).toBeVisible({ timeout: SLOW });
+  const { data } = await admin.from("audit_logs").select("entity_id,detail").eq("organization_id", orgA).eq("action", "datajud.consulta");
+  expect(data?.[0]?.entity_id).toBe(cnj);
+});
